@@ -71,8 +71,8 @@ export function buildHooks<Definitions extends EndpointDefinitions>({
               void dispatch(
                 unsubscribeQueryResult({
                   endpoint: name,
-                  serializedQueryArgs: promise.arg.serializedQueryArgs,
-                  requestId: promise.requestId,
+                  serializedQueryArgs: (promise as any).arg.serializedQueryArgs,
+                  requestId: (promise as any).requestId,
                 })
               );
           }, [args, dispatch]);
@@ -90,7 +90,9 @@ export function buildHooks<Definitions extends EndpointDefinitions>({
           useEffect(() => {
             return () => {
               if (promiseRef.current) {
-                dispatch(unsubscribeMutationResult({ endpoint: name, requestId: promiseRef.current.requestId }));
+                dispatch(
+                  unsubscribeMutationResult({ endpoint: name, requestId: (promiseRef as any).current.requestId })
+                );
               }
             };
           }, [dispatch]);
@@ -100,11 +102,13 @@ export function buildHooks<Definitions extends EndpointDefinitions>({
               let promise: ReturnType<AsyncThunkAction<any, any, any>>;
               batch(() => {
                 if (promiseRef.current) {
-                  dispatch(unsubscribeMutationResult({ endpoint: name, requestId: promiseRef.current.requestId }));
+                  dispatch(
+                    unsubscribeMutationResult({ endpoint: name, requestId: (promiseRef as any).current.requestId })
+                  );
                 }
                 promise = dispatch(mutationActions[name](args));
                 promiseRef.current = promise;
-                setRequestId(promise.requestId);
+                setRequestId((promise as any).requestId);
               });
               return promise!;
             },

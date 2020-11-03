@@ -15,7 +15,10 @@
   },
   "alias": {
     "@rtk-incubator/simple-query": "./../../dist",
-    "@rtk-incubator/simple-query/dist": "./../../dist"
+    "@rtk-incubator/simple-query/dist": "./../../dist",
+    "react": "./../../node_modules/react",
+    "react-dom": "./../../node_modules/react-dom",
+    "react-redux": "./../../node_modules/react-redux"
   },
   "devDependencies": {
     "@testing-library/jest-dom": "5.11.5",

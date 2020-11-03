@@ -13,13 +13,7 @@
     "react-redux": "7.2.2",
     "react-router-dom": "5.2.0"
   },
-  "alias": {
-    "@rtk-incubator/simple-query": "./../../dist",
-    "@rtk-incubator/simple-query/dist": "./../../dist",
-    "react": "./../../node_modules/react",
-    "react-dom": "./../../node_modules/react-dom",
-    "react-redux": "./../../node_modules/react-redux"
-  },
+
   "devDependencies": {
     "@testing-library/jest-dom": "5.11.5",
     "@testing-library/react": "11.1.0",

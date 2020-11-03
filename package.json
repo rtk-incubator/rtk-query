@@ -17,7 +17,7 @@
     "build": "tsdx build",
     "test": "tsdx test",
     "lint": "tsdx lint",
-    "prepare": "tsdx build",
+    "prepare": "tsdx build; ./prepare-examples.sh",
     "size": "size-limit",
     "format": "prettier --write \"src/**/*.ts\"",
     "analyze": "size-limit --why"

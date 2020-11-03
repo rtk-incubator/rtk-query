@@ -1,0 +1,16 @@
+{
+  "include": ["./src/**/*"],
+  "compilerOptions": {
+    "moduleResolution": "node",
+    "allowSyntheticDefaultImports": true,
+    "strict": true,
+    "esModuleInterop": true,
+    "lib": ["dom", "es2015"],
+    "jsx": "react",
+    "baseUrl": ".",
+    "paths": {
+      "@rtk-incubator/simple-query": ["./../../dist"],
+      "@rtk-incubator/simple-query/*": ["./../../dist"]
+    }
+  }
+}

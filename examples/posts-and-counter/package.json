@@ -1,0 +1,72 @@
+{
+  "name": "rtk-simple-query-demo",
+  "version": "1.0.0",
+  "description": "",
+  "keywords": [],
+  "main": "src/index.tsx",
+  "dependencies": {
+    "@reduxjs/toolkit": "https://pkg.csb.dev/reduxjs/redux-toolkit/commit/56994225/@reduxjs/toolkit",
+    "@rtk-incubator/simple-query": "https://pkg.csb.dev/rtk-incubator/simple-query/commit/fcea624c/@rtk-incubator/simple-query",
+    "msw": "0.21.3",
+    "react": "17.0.0",
+    "react-dom": "17.0.0",
+    "react-redux": "7.2.2",
+    "react-router-dom": "5.2.0"
+  },
+  "alias": {
+    "@rtk-incubator/simple-query": "./../../dist",
+    "@rtk-incubator/simple-query/dist": "./../../dist"
+  },
+  "devDependencies": {
+    "@testing-library/jest-dom": "5.11.5",
+    "@testing-library/react": "11.1.0",
+    "@testing-library/user-event": "12.1.10",
+    "@types/jest": "^26.0.15",
+    "@types/node": "^14.14.6",
+    "@types/react": "16.9.19",
+    "@types/react-dom": "16.9.5",
+    "@types/react-redux": "7.1.9",
+    "@types/react-router-dom": "5.1.6",
+    "jest": "^26.6.2",
+    "jest-dom": "^4.0.0",
+    "jest-extended": "^0.11.5",
+    "parcel-bundler": "^1.12.4",
+    "parcel-plugin-static-files-copy": "^2.5.0",
+    "ts-jest": "^26.4.3",
+    "typescript": "^4.0.5",
+    "whatwg-fetch": "^3.4.1"
+  },
+  "scripts": {
+    "start": "parcel ./src/index.html",
+    "build": "parcel build ./src/index.html",
+    "test": "jest --env=jsdom",
+    "prebuild": "rm -rf dist/"
+  },
+  "staticFiles": {
+    "staticPath": "public",
+    "watcherGlob": "**"
+  },
+  "jest": {
+    "preset": "ts-jest",
+    "moduleFileExtensions": [
+      "ts",
+      "tsx",
+      "js"
+    ],
+    "setupFilesAfterEnv": [
+      "<rootDir>/src/setupTests.ts"
+    ],
+    "moduleNameMapper": {
+      ".+\\.css$": "<rootDir>/src/mocks/styleMock.ts"
+    },
+    "testMatch": [
+      "**/*.(test|spec).(ts|tsx|js|jsx)"
+    ]
+  },
+  "browserslist": [
+    ">0.2%",
+    "not dead",
+    "not ie <= 11",
+    "not op_mini all"
+  ]
+}

@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "",
   "keywords": [],
-  "main": "src/index.tsx",
+  "main": "./index.html",
   "dependencies": {
     "@reduxjs/toolkit": "https://pkg.csb.dev/reduxjs/redux-toolkit/commit/56994225/@reduxjs/toolkit",
     "@rtk-incubator/simple-query": "https://pkg.csb.dev/rtk-incubator/simple-query/commit/fcea624c/@rtk-incubator/simple-query",
@@ -34,8 +34,8 @@
     "whatwg-fetch": "^3.4.1"
   },
   "scripts": {
-    "start": "parcel ./src/index.html",
-    "build": "parcel build ./src/index.html",
+    "start": "parcel ./index.html",
+    "build": "parcel build ./index.html",
     "test": "jest --env=jsdom",
     "prebuild": "rm -rf dist/"
   },

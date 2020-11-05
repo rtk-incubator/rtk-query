@@ -1,16 +1,27 @@
 {
-  "include": ["./src/**/*"],
   "compilerOptions": {
-    "moduleResolution": "node",
+    "target": "es5",
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "esnext"
+    ],
+    "allowJs": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "strict": true,
-    "esModuleInterop": true,
-    "lib": ["dom", "es2015"],
+    "forceConsistentCasingInFileNames": true,
+    "noFallthroughCasesInSwitch": false,
+    "module": "esnext",
+    "moduleResolution": "node",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
     "jsx": "react",
-    "baseUrl": ".",
-    "paths": {
-      "@rtk-incubator/simple-query": ["./../../dist"],
-      "@rtk-incubator/simple-query/*": ["./../../dist"]
-    }
-  }
+    "baseUrl": "."
+  },
+  "include": [
+    "src"
+  ]
 }

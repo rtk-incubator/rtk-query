@@ -1,12 +1,12 @@
 import { AnyAction, AsyncThunk, Middleware, ThunkDispatch } from '@reduxjs/toolkit';
-import { batch } from 'react-redux';
+import { batch as reactBatch } from 'react-redux';
 import { QueryState, QueryStatus, RootState } from './apiState';
 import { QueryActions } from './buildActionMaps';
 import { InternalState, InvalidateQueryResult, UnsubscribeQueryResult } from './buildSlice';
 import { MutationThunkArg } from './buildThunks';
 import { calculateProvidedBy, EndpointDefinitions } from './endpointDefinitions';
 
-const batchIfPossible = typeof batch !== 'undefined' ? batch : () => {};
+const batch = typeof reactBatch !== 'undefined' ? reactBatch : (fn: Function) => fn();
 
 export function buildMiddleware<Definitions extends EndpointDefinitions, ReducerPath extends string>({
   reducerPath,
@@ -57,7 +57,8 @@ export function buildMiddleware<Definitions extends EndpointDefinitions, Reducer
           (toInvalidate[invalidate.endpoint] ??= new Set()).add(invalidate.serializedQueryArgs);
         }
       }
-      batchIfPossible(() => {
+
+      batch(() => {
         for (const [endpoint, collectedArgs] of Object.entries(toInvalidate)) {
           for (const serializedQueryArgs of collectedArgs) {
             const querySubState = (state.queries as QueryState<any>)[endpoint]?.[serializedQueryArgs];

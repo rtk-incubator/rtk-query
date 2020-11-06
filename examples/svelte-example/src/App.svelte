@@ -13,9 +13,9 @@
     const selector = counterApi.selectors.query.getCount();
     const unsubscribeSelector = store.subscribe(() => ({ data, status, error } = selector(store.getState())));
 
-    const increment = async () => ({ payload: data } = await store.dispatch(incrementCount(1)));
+    const increment = () => store.dispatch(incrementCount(1));
 
-    const decrement = async () => ({ payload: data } = await store.dispatch(decrementCount(1)));
+    const decrement = () => store.dispatch(decrementCount(1));
 
     $: loading = status === QueryStatus.pending;
 

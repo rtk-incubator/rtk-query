@@ -6,6 +6,8 @@ import { InternalState, InvalidateQueryResult, UnsubscribeQueryResult } from './
 import { MutationThunkArg } from './buildThunks';
 import { calculateProvidedBy, EndpointDefinitions } from './endpointDefinitions';
 
+const batchIfPossible = typeof batch !== 'undefined' ? batch : () => {};
+
 export function buildMiddleware<Definitions extends EndpointDefinitions, ReducerPath extends string>({
   reducerPath,
   endpointDefinitions,
@@ -55,7 +57,7 @@ export function buildMiddleware<Definitions extends EndpointDefinitions, Reducer
           (toInvalidate[invalidate.endpoint] ??= new Set()).add(invalidate.serializedQueryArgs);
         }
       }
-      batch(() => {
+      batchIfPossible(() => {
         for (const [endpoint, collectedArgs] of Object.entries(toInvalidate)) {
           for (const serializedQueryArgs of collectedArgs) {
             const querySubState = (state.queries as QueryState<any>)[endpoint]?.[serializedQueryArgs];

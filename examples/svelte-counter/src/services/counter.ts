@@ -17,7 +17,7 @@ export const counterApi = createApi({
             query: (amount) => ({
                 url: `increment`,
                 method: 'PUT',
-                body: JSON.stringify({ amount }),
+                body: { amount },
             }),
             invalidates: [{ type: 'Counter' }],
         }),

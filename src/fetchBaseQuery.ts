@@ -1,5 +1,5 @@
 import { QueryApi } from './buildThunks';
-import { isPlainObject } from './utils';
+import { isPlainObject, joinUrls } from './utils';
 
 interface FetchArgs extends RequestInit {
   url: string;
@@ -13,24 +13,23 @@ const defaultValidateStatus = (response: Response) => response.status >= 200 && 
 
 const isJsonContentType = (headers: Headers) => headers.get('content-type')?.trim()?.startsWith('application/json');
 
-// accept `params` and automatically stringify and set the url or whatnot
-// JSON.stringify(body) if body is set and type of content is json
 // note: and fetchBaseQuery should probably have a prepareHeaders method option --- baseQuery has access to thunkApi aka (dispatch, getState)
-export function fetchBaseQuery({ baseUrl }: { baseUrl: string } = { baseUrl: window.location.href }) {
+export function fetchBaseQuery({ baseUrl }: { baseUrl?: string } = {}) {
   return async (arg: string | FetchArgs, { signal, rejectWithValue }: QueryApi) => {
-    const {
+    let {
       url,
-      method = 'GET',
+      method = 'GET' as const,
       headers = undefined,
       body = undefined,
       params = undefined,
-      responseHandler = 'json',
+      responseHandler = 'json' as const,
       validateStatus = defaultValidateStatus,
       ...rest
     } = typeof arg == 'string' ? { url: arg } : arg;
     let config: RequestInit = {
       method,
       signal,
+      body,
       ...rest,
     };
     config.headers = new Headers(headers);
@@ -42,16 +41,15 @@ export function fetchBaseQuery({ baseUrl }: { baseUrl: string } = { baseUrl: win
       config.body = JSON.stringify(body);
     }
 
-    const urlObject = new URL(url, baseUrl);
+    url = joinUrls(baseUrl, url);
     if (params) {
       const searchParams = new URLSearchParams(params);
-      searchParams.forEach((k, v) => {
-        urlObject.searchParams.append(k, v);
-      });
+      url += `?${searchParams.toString()}`;
     }
-    const response = await fetch(urlObject.href, config);
+    const response = await fetch(url, config);
 
     let resultData;
+
     switch (responseHandler) {
       case 'json':
         resultData = await response.json();

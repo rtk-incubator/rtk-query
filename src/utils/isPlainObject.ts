@@ -1,14 +1,17 @@
 /**
- * Determine if a value is a plain Object
- *
- * @param {Object} val The value to test
- * @return {boolean} True if value is a plain Object, otherwise false
+ * @param {any} obj The object to inspect.
+ * @returns {boolean} True if the argument appears to be a plain object.
  */
-export function isPlainObject(val: any) {
-  if (toString.call(val) !== '[object Object]') {
-    return false;
+export function isPlainObject(obj: any) {
+  if (typeof obj !== 'object' || obj === null) return false;
+
+  let proto = Object.getPrototypeOf(obj);
+  if (proto === null) return true;
+
+  let baseProto = proto;
+  while (Object.getPrototypeOf(baseProto) !== null) {
+    baseProto = Object.getPrototypeOf(baseProto);
   }
 
-  var prototype = Object.getPrototypeOf(val);
-  return prototype === null || prototype === Object.prototype;
+  return proto === baseProto;
 }

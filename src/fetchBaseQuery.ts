@@ -1,5 +1,6 @@
 import { QueryApi } from './buildThunks';
-import { isPlainObject, joinUrls } from './utils';
+import { joinUrls } from './utils';
+import { isPlainObject } from '@reduxjs/toolkit';
 
 interface FetchArgs extends RequestInit {
   url: string;

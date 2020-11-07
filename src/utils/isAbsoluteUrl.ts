@@ -1,16 +1,9 @@
-// from https://github.com/sindresorhus/is-absolute-url
+/**
+ * If either :// or // is present consider it to be an absolute url
+ *
+ * @param url string
+ */
 
 export function isAbsoluteUrl(url: string) {
-  if (typeof url !== 'string') {
-    throw new TypeError(`Expected a \`string\`, got \`${typeof url}\``);
-  }
-
-  // Don't match Windows paths `c:\`
-  if (/^[a-zA-Z]:\\/.test(url)) {
-    return false;
-  }
-
-  // Scheme: https://tools.ietf.org/html/rfc3986#section-3.1
-  // Absolute URL: https://tools.ietf.org/html/rfc3986#section-4.3
-  return /^[a-zA-Z][a-zA-Z\d+\-.]*:/.test(url);
+  return new RegExp(`(^|:)//`).test(url);
 }

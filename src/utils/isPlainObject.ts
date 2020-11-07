@@ -1,17 +1,21 @@
 /**
- * @param {any} obj The object to inspect.
+ * Returns true if the passed value is "plain" object, i.e. an object whose
+ * protoype is the root `Object.prototype`. This includes objects created
+ * using object literals, but not for instance for class instances.
+ *
+ * @param {any} value The value to inspect.
  * @returns {boolean} True if the argument appears to be a plain object.
  */
-export function isPlainObject(obj: any) {
-  if (typeof obj !== 'object' || obj === null) return false;
 
-  let proto = Object.getPrototypeOf(obj);
-  if (proto === null) return true;
+// TODO: Borrowed from RTK until a release is cut where it is exported
 
-  let baseProto = proto;
-  while (Object.getPrototypeOf(baseProto) !== null) {
-    baseProto = Object.getPrototypeOf(baseProto);
+export function isPlainObject(value: unknown): value is object {
+  if (typeof value !== 'object' || value === null) return false;
+
+  let proto = value;
+  while (Object.getPrototypeOf(proto) !== null) {
+    proto = Object.getPrototypeOf(proto);
   }
 
-  return proto === baseProto;
+  return Object.getPrototypeOf(value) === proto;
 }

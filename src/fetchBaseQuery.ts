@@ -3,7 +3,7 @@ import { isPlainObject, joinUrls } from './utils';
 
 interface FetchArgs extends RequestInit {
   url: string;
-  params?: URLSearchParams | Record<string, string>;
+  params?: Record<string, any>;
   body?: any;
   responseHandler?: 'json' | 'text' | ((response: Response) => Promise<any>);
   validateStatus?: (response: Response, body: any) => boolean;
@@ -43,28 +43,20 @@ export function fetchBaseQuery({ baseUrl }: { baseUrl?: string } = {}) {
       config.body = JSON.stringify(body);
     }
 
-    url = joinUrls(baseUrl, url);
-
     if (params) {
-      const searchParams = new URLSearchParams(params);
-      url += `?${searchParams.toString()}`;
+      const divider = ~url.indexOf('?') ? '&' : '?';
+      const query = new URLSearchParams(params);
+      url += divider + query;
     }
+
+    url = joinUrls(baseUrl, url);
 
     const response = await fetch(url, config);
 
-    let resultData;
-
-    switch (responseHandler) {
-      case 'json':
-        resultData = await response.json();
-        break;
-      case 'text':
-        resultData = await response.text();
-        break;
-      default:
-        resultData = await responseHandler(response);
-        break;
-    }
+    const resultData =
+      typeof responseHandler === 'function'
+        ? await responseHandler(response)
+        : await response[responseHandler || 'text']();
 
     return validateStatus(response, resultData)
       ? resultData

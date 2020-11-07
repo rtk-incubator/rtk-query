@@ -14,6 +14,7 @@
 
     onMount(async () => {
         ({ refetch: getCount } = store.dispatch(counterApi.queryActions.getCount()));
+        store.dispatch(counterApi.queryActions.getAbsoluteTest())
     });
 </script>
 

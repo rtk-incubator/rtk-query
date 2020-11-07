@@ -6,11 +6,27 @@ interface CountResponse {
 
 export const counterApi = createApi({
     reducerPath: 'counterApi',
-    baseQuery: fetchBaseQuery(),
+    baseQuery: fetchBaseQuery({
+        baseUrl: '/',
+    }),
     entityTypes: ['Counter'],
     endpoints: (build) => ({
+        getAbsoluteTest: build.query<any, void>({
+            query: () => ({
+                url: 'https://mocked.data',
+                params: {
+                    hello: 'friend',
+                },
+            }),
+        }),
         getCount: build.query<CountResponse, void>({
-            query: () => `/count`,
+            query: () => ({
+                url: `/count?=${'whydothis'}`,
+                params: {
+                    test: 'param',
+                    additional: 1,
+                },
+            }),
             provides: [{ type: 'Counter' }],
         }),
         incrementCount: build.mutation<CountResponse, number>({

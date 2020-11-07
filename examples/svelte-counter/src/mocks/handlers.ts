@@ -4,6 +4,13 @@ import { rest } from 'msw';
 let count = 0;
 
 export const handlers = [
+    rest.get('https://mocked.data', (req, res, ctx) => {
+        return res(
+            ctx.json({
+                great: 'success',
+            }),
+        );
+    }),
     rest.put<{ amount: number }>('/increment', (req, res, ctx) => {
         const { amount } = req.body;
         count = count += amount;

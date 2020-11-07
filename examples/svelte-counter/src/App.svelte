@@ -1,6 +1,6 @@
 <script lang="ts">
     import { onMount } from 'svelte';
-    import { QueryStatus } from '../../../dist';
+    import { QueryStatus } from '@rtk-incubator/simple-query/dist';
     import { counterApi } from './services/counter';
     import { store } from './store';
 

@@ -14,10 +14,10 @@ export const counterApi = createApi({
             provides: [{ type: 'Counter' }],
         }),
         incrementCount: build.mutation<CountResponse, number>({
-            query: (body) => ({
+            query: (amount) => ({
                 url: `/increment`,
-                method: 'PUT', 
-                body, // Very clever!
+                method: 'PUT',
+                body: { amount },
             }),
             invalidates: [{ type: 'Counter' }],
         }),

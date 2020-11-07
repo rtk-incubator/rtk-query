@@ -11,6 +11,15 @@ export const counterApi = createApi({
     }),
     entityTypes: ['Counter'],
     endpoints: (build) => ({
+        getError: build.query({
+            query: (_: void) => '/error',
+        }),
+        getNetworkError: build.query({
+            query: (_: void) => '/network-error',
+        }),
+        getHeaderError: build.query({
+            query: (_: void) => '/mismatched-header-error',
+        }),
         getAbsoluteTest: build.query<any, void>({
             query: () => ({
                 url: 'https://mocked.data',

@@ -4,6 +4,21 @@ import { rest } from 'msw';
 let count = 0;
 
 export const handlers = [
+    rest.get('/error', (req, res, ctx) => {
+        return res(
+            ctx.status(500),
+            ctx.json({
+                message: 'what is this doing!',
+                data: [{ some: 'key' }],
+            }),
+        );
+    }),
+    rest.get('/network-error', (req, res, ctx) => {
+        return res.networkError('Fake network error');
+    }),
+    rest.get('/mismatched-header-error', (req, res, ctx) => {
+        return res(ctx.text('oh hello there'), ctx.set('Content-Type', 'application/hal+banana'));
+    }),
     rest.get('https://mocked.data', (req, res, ctx) => {
         return res(
             ctx.json({

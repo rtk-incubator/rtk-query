@@ -32,7 +32,9 @@ export function fetchBaseQuery({ baseUrl }: { baseUrl?: string } = {}) {
       body,
       ...rest,
     };
+
     config.headers = new Headers(headers);
+
     if (!config.headers.has('content-type')) {
       config.headers.set('content-type', 'application/json');
     }
@@ -42,10 +44,12 @@ export function fetchBaseQuery({ baseUrl }: { baseUrl?: string } = {}) {
     }
 
     url = joinUrls(baseUrl, url);
+
     if (params) {
       const searchParams = new URLSearchParams(params);
       url += `?${searchParams.toString()}`;
     }
+
     const response = await fetch(url, config);
 
     let resultData;

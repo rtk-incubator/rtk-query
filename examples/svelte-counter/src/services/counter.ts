@@ -11,7 +11,7 @@ export const counterApi = createApi({
     endpoints: (build) => ({
         getCount: build.query<CountResponse, void>({
             query: () => 'count',
-            provides: ['Counter'],
+            provides: [{ type: 'Counter' }],
         }),
         getCountById: build.query<CountResponse, number>({
             query: (id: number) => `${id}`,

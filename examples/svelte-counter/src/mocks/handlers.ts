@@ -44,7 +44,7 @@ export const handlers = [
         const { amount } = req.body;
         const { id } = req.params;
 
-        if (!counters[id]) {
+        if (typeof counters[id] === 'undefined') {
             return res(ctx.json({ message: 'Counter not found' }), ctx.status(402));
         }
 

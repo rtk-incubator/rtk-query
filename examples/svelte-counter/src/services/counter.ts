@@ -36,7 +36,7 @@ export const counterApi = createApi({
                     additional: 1,
                 },
             }),
-            provides: [{ type: 'Counter' }],
+            provides: ['Counter'],
         }),
         incrementCount: build.mutation<CountResponse, number>({
             query: (amount) => ({
@@ -44,15 +44,35 @@ export const counterApi = createApi({
                 method: 'PUT',
                 body: { amount },
             }),
-            invalidates: [{ type: 'Counter' }],
+            invalidates: ['Counter'],
         }),
         decrementCount: build.mutation<CountResponse, number>({
-            query: (amount) => ({
-                url: `decrement`,
-                method: 'PUT',
-                body: { amount },
+            query: (amount) =>  ({
+                    url: `decrement`,
+                    method: 'PUT',
+                    body: { amount },
             }),
-            invalidates: [{ type: 'Counter' }],
+            invalidates: ['Counter'],
+        }),
+        getCountById: build.query<CountResponse, number>({
+            query: (id: number) => `${id}`,
+            provides: (_, id) => [{ type: 'Counter', id }],
+        }),
+        incrementCountById: build.mutation<CountResponse, { id: number; amount: number }>({
+            query: ({ id, amount }) => ({
+                    url: `${id}/increment`,
+                    method: 'PUT',
+                    body: { amount },
+            }),
+            invalidates: (_, { id }) => [{ type: 'Counter', id }],
+        }),
+        decrementCountById: build.mutation<CountResponse, { id: number; amount: number }>({
+            query: ({ id, amount }) => ({
+                    url: `${id}/decrement`,
+                    method: 'PUT',
+                    body: { amount },
+            }),
+            invalidates: (_, { id }) => [{ type: 'Counter', id }],
         }),
     }),
 });

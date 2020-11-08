@@ -1,0 +1,3 @@
+- dependent queries using `skip`
+- polling (TODO)
+- pre-seeding the cache by dispatching a non-subscribing queryAction from a parent component

@@ -41,7 +41,8 @@ export function buildMiddleware<Definitions extends EndpointDefinitions, Reducer
       );
       const toInvalidate: { [endpoint: string]: Set<string> } = {};
       for (const entity of invalidateEntities) {
-        const provided = state.provided[entity.type];
+        const entityType = typeof entity === 'string' ? entity : entity.type;
+        const provided = state.provided[entityType];
         if (!provided) {
           continue;
         }

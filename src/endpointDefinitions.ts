@@ -19,7 +19,8 @@ export type GetResultDescriptionFn<EntityTypes extends string, ResultType, Query
 export type EntityDescription<EntityType> = { type: EntityType; id?: number | string };
 export type ResultDescription<EntityTypes extends string, ResultType, QueryArg> =
   | ReadonlyArray<EntityDescription<EntityTypes>>
-  | GetResultDescriptionFn<EntityTypes, ResultType, QueryArg>;
+  | GetResultDescriptionFn<EntityTypes, ResultType, QueryArg>
+  | ReadonlyArray<EntityTypes>;
 
 export interface QueryDefinition<QueryArg, InternalQueryArgs, EntityTypes extends string, ResultType>
   extends BaseEndpointDefinition<QueryArg, InternalQueryArgs, ResultType> {

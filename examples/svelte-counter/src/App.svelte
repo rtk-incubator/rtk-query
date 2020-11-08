@@ -3,6 +3,9 @@
     import { QueryStatus } from '../../../dist';
     import { counterApi } from './services/counter';
     import { store } from './store';
+    import Counter from './Counter.svelte'
+
+    let counters = [] as number[];
 
     const { incrementCount, decrementCount } = counterApi.mutationActions;
 
@@ -44,4 +47,11 @@
     <button on:click={() => store.dispatch(incrementCount(1, { track: false }))}>Increase</button>
     <button on:click={() => store.dispatch(decrementCount(1, { track: false }))}>Decrease</button>
     <button on:click={getCount} disabled={loading}>Refetch count</button>
+
+    <hr />
+    <h3>Custom counters!</h3><button on:click={() => { counters = [...counters, counters.length + 1] }}>Add counter</button>
+
+    {#each counters as id}
+		<Counter {id} />
+	{/each}
 </main>

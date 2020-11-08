@@ -14,7 +14,6 @@ const defaultValidateStatus = (response: Response) => response.status >= 200 && 
 
 const isJsonContentType = (headers: Headers) => headers.get('content-type')?.trim()?.startsWith('application/json');
 
-// note: and fetchBaseQuery should probably have a prepareHeaders method option --- baseQuery has access to thunkApi aka (dispatch, getState)
 export function fetchBaseQuery({ baseUrl }: { baseUrl?: string } = {}) {
   return async (arg: string | FetchArgs, { signal, rejectWithValue }: QueryApi) => {
     let {

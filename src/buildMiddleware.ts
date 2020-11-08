@@ -38,12 +38,10 @@ export function buildMiddleware<Definitions extends EndpointDefinitions, Reducer
         endpointDefinitions[action.meta.arg.endpoint].invalidates,
         action.payload,
         action.meta.arg.arg
-        // state.mutations[action.meta.arg.endpoint]?.[action.meta.requestId]?.arg,
       );
       const toInvalidate: { [endpoint: string]: Set<string> } = {};
       for (const entity of invalidateEntities) {
-        const entityType = typeof entity === 'string' ? entity : entity.type;
-        const provided = state.provided[entityType];
+        const provided = state.provided[entity.type];
         if (!provided) {
           continue;
         }

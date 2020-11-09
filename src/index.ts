@@ -3,7 +3,7 @@ import { buildThunks, QueryApi } from './buildThunks';
 import { buildSlice } from './buildSlice';
 import { buildActionMaps } from './buildActionMaps';
 import { buildSelectors } from './buildSelectors';
-import { buildHooks } from './buildHooks';
+import { buildHooks, buildQueryHook, buildMutationHook } from './buildHooks';
 import { buildMiddleware } from './buildMiddleware';
 import { EndpointDefinitions, EndpointBuilder, DefinitionType } from './endpointDefinitions';
 import type { CombinedState, QueryStatePhantomType } from './apiState';
@@ -14,6 +14,15 @@ export { QueryStatus } from './apiState';
 function defaultSerializeQueryArgs(args: any) {
   return JSON.stringify(args);
 }
+
+// Maybe this type of concept should be moved into a react specific package like `@rtk-incubator/simple-query/react`
+export const useQuery = (service: any, method: any, opts?: any) => {
+  return buildQueryHook(method, service.queryActions, service.selectors.query)(opts);
+};
+
+export const useMutation = (service: any, method: any) => {
+  return buildMutationHook(method, service.mutationActions, service.selectors.mutation)();
+};
 
 export function createApi<
   InternalQueryArgs,

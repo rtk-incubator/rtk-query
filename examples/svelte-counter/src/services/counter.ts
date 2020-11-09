@@ -20,8 +20,8 @@ export const counterApi = createApi({
         getHeaderError: build.query({
             query: (_: void) => '/mismatched-header-error',
         }),
-        getAbsoluteTest: build.query<any, void>({
-            query: () => ({
+        getAbsoluteTest: build.query({
+            query: (_: void) => ({
                 url: 'https://mocked.data',
                 params: {
                     hello: 'friend',
@@ -47,30 +47,35 @@ export const counterApi = createApi({
             invalidates: ['Counter'],
         }),
         decrementCount: build.mutation<CountResponse, number>({
-            query: (amount) =>  ({
-                    url: `decrement`,
-                    method: 'PUT',
-                    body: { amount },
+            query: (amount) => ({
+                url: `decrement`,
+                method: 'PUT',
+                body: { amount },
             }),
             invalidates: ['Counter'],
         }),
         getCountById: build.query<CountResponse, number>({
-            query: (id: number) => `${id}`,
+            query: (id: number) => ({
+                url: `${id}`,
+                params: {
+                    test: 'param',
+                },
+            }),
             provides: (_, id) => [{ type: 'Counter', id }],
         }),
         incrementCountById: build.mutation<CountResponse, { id: number; amount: number }>({
             query: ({ id, amount }) => ({
-                    url: `${id}/increment`,
-                    method: 'PUT',
-                    body: { amount },
+                url: `${id}/increment`,
+                method: 'PUT',
+                body: { amount },
             }),
             invalidates: (_, { id }) => [{ type: 'Counter', id }],
         }),
         decrementCountById: build.mutation<CountResponse, { id: number; amount: number }>({
             query: ({ id, amount }) => ({
-                    url: `${id}/decrement`,
-                    method: 'PUT',
-                    body: { amount },
+                url: `${id}/decrement`,
+                method: 'PUT',
+                body: { amount },
             }),
             invalidates: (_, { id }) => [{ type: 'Counter', id }],
         }),

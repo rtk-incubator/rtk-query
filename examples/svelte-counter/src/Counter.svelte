@@ -8,12 +8,9 @@
 
     const { incrementCountById, decrementCountById } = counterApi.mutationActions;
 
-    let incrementStatus, decrementStatus;
     $: ({ data, status: getStatus, error } = counterApi.selectors.query.getCountById(id)($store));
-    $: ({ status: incrementStatus } = counterApi.selectors.query.getCountById(id)($store));
-    $: ({ status: decrementStatus } = counterApi.selectors.query.getCountById(id)($store));
 
-    $: loading = [incrementStatus, decrementStatus, getStatus].some(status => status === QueryStatus.pending);
+    $: loading = getStatus === QueryStatus.pending;
 
     onMount(() => {
         store.dispatch(counterApi.queryActions.getCountById(id));

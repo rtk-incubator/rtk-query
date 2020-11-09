@@ -122,9 +122,7 @@ export function buildActionMaps<Definitions extends EndpointDefinitions, Interna
             );
         },
         updateSubscriptionOptions(options: SubscriptionOptions) {
-          dispatch(
-            updateSubscriptionOptions({ requestId: thunkResult.requestId, endpoint, serializedQueryArgs, options })
-          );
+          dispatch(updateSubscriptionOptions({ requestId, endpoint, serializedQueryArgs, options }));
         },
       });
     };

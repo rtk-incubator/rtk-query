@@ -1,6 +1,6 @@
 import { AnyAction, AsyncThunk, Middleware, MiddlewareAPI, ThunkDispatch } from '@reduxjs/toolkit';
 import { batch as reactBatch } from 'react-redux';
-import { QueryStatus, QuerySubState, QuerySubstateIdentifier, RootState } from './apiState';
+import { QueryState, QueryStatus, QuerySubState, QuerySubstateIdentifier, RootState } from './apiState';
 import { QueryActions } from './buildActionMaps';
 import { QueryResultSelectors } from './buildSelectors';
 import { InternalState, SliceActions } from './buildSlice';
@@ -94,9 +94,11 @@ export function buildMiddleware<Definitions extends EndpointDefinitions, Reducer
     batch(() => {
       for (const [endpoint, collectedArgs] of Object.entries(toInvalidate)) {
         for (const serializedQueryArgs of collectedArgs) {
-          const querySubState = querySelectors[endpoint](serializedQueryArgs)(rootState);
+          const querySubState = (state.queries as QueryState<any>)[endpoint]?.[serializedQueryArgs];
+          // const querySubState = querySelectors[endpoint]?.(serializedQueryArgs)(rootState);
+
           if (querySubState) {
-            if (querySubState.subscribers.length === 0) {
+            if (Object.keys(querySubState.subscribers).length === 0) {
               api.dispatch(removeQueryResult({ endpoint, serializedQueryArgs }));
             } else if (querySubState.status !== QueryStatus.uninitialized) {
               const startQuery = queryActions[endpoint];

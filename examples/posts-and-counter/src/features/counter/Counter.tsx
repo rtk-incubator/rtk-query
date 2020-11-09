@@ -5,10 +5,9 @@ import { useQuery, useMutation } from '@rtk-incubator/simple-query/dist';
 
 export function Counter() {
   // const { data } = counterApi.hooks.getCount.useQuery();
-  const { data } = useQuery(counterApi, 'getCount') as any;
+  const { data } = useQuery(counterApi, 'getCount');
   const [increment, incrementResult] = useMutation(counterApi, 'incrementCount');
   // const [increment, incrementResult] = counterApi.hooks.incrementCount.useMutation();
-
   const [decrement, decrementResult] = counterApi.hooks.decrementCount.useMutation();
 
   return (

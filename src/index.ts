@@ -1,9 +1,9 @@
 import type { AnyAction, Reducer } from '@reduxjs/toolkit';
 import { buildThunks, QueryApi } from './buildThunks';
 import { buildSlice } from './buildSlice';
-import { buildActionMaps } from './buildActionMaps';
-import { buildSelectors } from './buildSelectors';
-import { buildHooks, buildQueryHook, buildMutationHook } from './buildHooks';
+import { buildActionMaps, MutationActions, QueryActions } from './buildActionMaps';
+import { buildSelectors, MutationResultSelectors, QueryResultSelectors } from './buildSelectors';
+import { buildHooks, buildQueryHook, buildMutationHook, QueryHookOptions, Hooks } from './buildHooks';
 import { buildMiddleware } from './buildMiddleware';
 import { EndpointDefinitions, EndpointBuilder, DefinitionType } from './endpointDefinitions';
 import type { CombinedState, QueryStatePhantomType } from './apiState';
@@ -15,13 +15,30 @@ function defaultSerializeQueryArgs(args: any) {
   return JSON.stringify(args);
 }
 
-// Maybe this type of concept should be moved into a react specific package like `@rtk-incubator/simple-query/react`
-export const useQuery = (service: any, method: any, opts?: any) => {
-  return buildQueryHook(method, service.queryActions, service.selectors.query)(opts);
+type CreateApiType = {
+  queryActions: QueryActions<any>;
+  mutationActions: MutationActions<any>;
+  selectors: {
+    query: QueryResultSelectors<any, any>;
+    mutation: MutationResultSelectors<any, any>;
+  };
+  hooks: Hooks<any>;
 };
 
-export const useMutation = (service: any, method: any) => {
-  return buildMutationHook(method, service.mutationActions, service.selectors.mutation)();
+// Maybe this type of concept should be moved into a react specific package like `@rtk-incubator/simple-query/react`
+export const useQuery = <Service extends CreateApiType, Method extends keyof Service['hooks']>(
+  service: Service,
+  method: Method,
+  opts?: QueryHookOptions
+) => {
+  return buildQueryHook(method as string, service.queryActions, service.selectors.query)(opts);
+};
+
+export const useMutation = <Service extends CreateApiType, Method extends keyof Service['hooks']>(
+  service: Service,
+  method: Method
+) => {
+  return buildMutationHook(method as string, service.mutationActions, service.selectors.mutation)();
 };
 
 export function createApi<

@@ -15,10 +15,10 @@ export enum QueryStatus {
   rejected = 'rejected',
 }
 type Subscribers = string[];
-type QueryKeys<Definitions extends EndpointDefinitions> = {
+export type QueryKeys<Definitions extends EndpointDefinitions> = {
   [K in keyof Definitions]: Definitions[K] extends QueryDefinition<any, any, any, any> ? K : never;
 }[keyof Definitions];
-type MutationKeys<Definitions extends EndpointDefinitions> = {
+export type MutationKeys<Definitions extends EndpointDefinitions> = {
   [K in keyof Definitions]: Definitions[K] extends MutationDefinition<any, any, any, any> ? K : never;
 }[keyof Definitions];
 type QueryArgs<D extends BaseEndpointDefinition<any, any, any>> = D extends BaseEndpointDefinition<infer QA, any, any>

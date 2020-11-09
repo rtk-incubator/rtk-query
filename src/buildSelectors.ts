@@ -1,5 +1,12 @@
 import { createNextState } from '@reduxjs/toolkit';
-import { MutationSubState, QueryStatus, QuerySubState, RootState as _RootState } from './apiState';
+import {
+  MutationSubState,
+  QueryStatus,
+  QueryKeys,
+  QuerySubState,
+  RootState as _RootState,
+  MutationKeys,
+} from './apiState';
 import {
   EndpointDefinitions,
   QueryDefinition,
@@ -12,13 +19,13 @@ import type { InternalState } from './buildSlice';
 export const skipSelector = Symbol('skip selector');
 
 export type QueryResultSelectors<Definitions extends EndpointDefinitions, RootState> = {
-  [K in keyof Definitions]: Definitions[K] extends QueryDefinition<infer QueryArg, any, any, infer ResultType>
+  [K in QueryKeys<Definitions>]: Definitions[K] extends QueryDefinition<infer QueryArg, any, any, infer ResultType>
     ? (queryArg: QueryArg | typeof skipSelector) => (state: RootState) => QuerySubState<Definitions[K]>
     : never;
 };
 
 export type MutationResultSelectors<Definitions extends EndpointDefinitions, RootState> = {
-  [K in keyof Definitions]: Definitions[K] extends MutationDefinition<any, any, any, infer ResultType>
+  [K in MutationKeys<Definitions>]: Definitions[K] extends MutationDefinition<any, any, any, infer ResultType>
     ? (requestId: string | typeof skipSelector) => (state: RootState) => MutationSubState<Definitions[K]>
     : never;
 };

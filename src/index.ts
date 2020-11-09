@@ -15,7 +15,7 @@ function defaultSerializeQueryArgs(args: any) {
   return JSON.stringify(args);
 }
 
-type CreateApiType = {
+interface CreateApiType {
   queryActions: QueryActions<any>;
   mutationActions: MutationActions<any>;
   selectors: {
@@ -23,10 +23,10 @@ type CreateApiType = {
     mutation: MutationResultSelectors<any, any>;
   };
   hooks: Hooks<any>;
-};
+}
 
 // Maybe this type of concept should be moved into a react specific package like `@rtk-incubator/simple-query/react`
-export const useQuery = <Service extends CreateApiType, Method extends keyof Service['hooks']>(
+export const useQuery = <Service extends CreateApiType, Method extends keyof Service['queryActions']>(
   service: Service,
   method: Method,
   opts?: QueryHookOptions
@@ -34,7 +34,7 @@ export const useQuery = <Service extends CreateApiType, Method extends keyof Ser
   return buildQueryHook(method as string, service.queryActions, service.selectors.query)(opts);
 };
 
-export const useMutation = <Service extends CreateApiType, Method extends keyof Service['hooks']>(
+export const useMutation = <Service extends CreateApiType, Method extends keyof Service['mutationActions']>(
   service: Service,
   method: Method
 ) => {

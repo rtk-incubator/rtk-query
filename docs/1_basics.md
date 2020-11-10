@@ -3,8 +3,8 @@
 Step 1: Create your api:
 
 ```ts
-import {createApi} from '@rtk-incubator/simple-query'
-import {ListResponse, User} from './types'
+import { createApi, fetchBaseQuery } from '@rtk-incubator/simple-query'
+import { ListResponse, User } from './types'
 
 export const api = createApi({
   reducerPath: 'testApi',
@@ -43,22 +43,28 @@ const store = configureStore({
 Step 3: use the hooks in your React components
 
 ```tsx
-import {api} from './api'
-import {User} from './types'
+import { api } from './api';
+import { User } from './types';
 
 function UsersList() {
-    const { status, data } = api.hooks.getUsers.useQuery();
-    if (status === 'rejected') {
-        return <>An error occured!</>
-    }
-    if (status !== 'fulfilled') {
-        return <>Loading!</>
-    }
-    return {data.data.map(user => <UserDetails key={user.id} user={user} />)}
+  const { status, data } = api.hooks.getUsers.useQuery();
+  if (status === 'rejected') {
+    return <>An error occured!</>;
+  }
+  if (status !== 'fulfilled') {
+    return <>Loading!</>;
+  }
+  return (
+    <div>
+      {data.data.map((user) => (
+        <UserDetails key={user.id} user={user} />
+      ))}
+    </div>
+  );
 }
 
-function User({user}: {user: User}) {
-const [updateUser, updateResult] = api.hooks.updateUser.useMutation();
+function User({ user }: { user: User }) {
+  const [updateUser, updateResult] = api.hooks.updateUser.useMutation();
 
   return (
     <div>

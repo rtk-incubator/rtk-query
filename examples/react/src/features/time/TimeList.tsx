@@ -74,23 +74,8 @@ const TimeDisplay = ({ offset, label }: { offset: string; label: string }) => {
   const [pollingInterval, setPollingInterval] = useState(0);
   const { data, status, refetch } = timeApi.hooks.getTime.useQuery(offset, { pollingInterval });
 
-  const [fetching, setIsFetchingIndicator] = useState(false);
-
-  const timerRef = useRef<any>();
-
-  useEffect(() => {
-    if (status !== QueryStatus.pending) return;
-
-    setIsFetchingIndicator(true);
-    timerRef.current = setTimeout(() => setIsFetchingIndicator(false), 500);
-  }, [status]);
-
-  useEffect(() => {
-    return () => clearTimeout(timerRef.current);
-  }, []);
-
   return (
-    <div style={{ ...(fetching ? { background: '#e6ffe8' } : {}) }}>
+    <div style={{ ...(QueryStatus.pending === status ? { background: '#e6ffe8' } : {}) }}>
       <p>
         {data?.time && new Date(data.time).toLocaleTimeString()} - {label}
       </p>

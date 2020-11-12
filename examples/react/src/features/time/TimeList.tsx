@@ -1,9 +1,11 @@
-import { current, nanoid } from '@reduxjs/toolkit';
-import React, { useRef, useState } from 'react';
+import { nanoid } from '@reduxjs/toolkit';
+import React, { useState } from 'react';
 import { useEffect } from 'react';
 import { QueryStatus } from '@rtk-incubator/simple-query/dist';
 import { timeApi } from '../../app/services/times';
 import { Container } from '../common/Container';
+import { useTypedSelector } from '../../app/store';
+import { selectGlobalPollingEnabled, selectPollingConfigByApp } from '../polling/pollingSlice';
 
 const timezones: Record<string, string> = {
   '-12:00': '(GMT -12:00) Eniwetok, Kwajalein',
@@ -71,8 +73,15 @@ const intervalOptions = [
 ];
 
 const TimeDisplay = ({ offset, label }: { offset: string; label: string }) => {
+  const globalPolling = useTypedSelector(selectGlobalPollingEnabled);
+  const { enabled: timesPolling } = useTypedSelector((state) => selectPollingConfigByApp(state, 'times'));
+
+  const canPoll = globalPolling && timesPolling;
+
   const [pollingInterval, setPollingInterval] = useState(0);
-  const { data, status, refetch } = timeApi.hooks.getTime.useQuery(offset, { pollingInterval });
+  const { data, status, refetch } = timeApi.hooks.getTime.useQuery(offset, {
+    pollingInterval: canPoll ? pollingInterval : 0,
+  });
 
   return (
     <div style={{ ...(QueryStatus.pending === status ? { background: '#e6ffe8' } : {}) }}>

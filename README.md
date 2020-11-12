@@ -30,7 +30,7 @@ interface ListResponse<T> {
 
 // api initialization
 const api = createApi({
-  reducerPath: 'testApi',
+  reducerKey: 'testApi',
   baseQuery: fetchBaseQuery({ baseUrl: 'https://reqres.in/api' }),
   entityTypes: [],
   endpoints: (builder) => ({
@@ -53,7 +53,7 @@ const api = createApi({
         return {
           url: `users`,
           method: 'POST',
-          body: JSON.stringify(data),
+          body: data,
         };
       },
     }),
@@ -62,7 +62,7 @@ const api = createApi({
         return {
           url: `users/${id}`,
           method: 'PATCH',
-          body: JSON.stringify(patch),
+          body: patch,
         };
       },
     }),
@@ -80,7 +80,7 @@ const api = createApi({
 // store setup
 const store = configureStore({
   reducer: {
-    testApi: api.reducer, // "testApi" here has to match the `reducerPath` option for `createApi`
+    [api.reducerKey]: api.reducer,
   },
   middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(api.middleware),
 });
@@ -111,7 +111,7 @@ This allows to easily query data from the server and send requests to the server
 
 ```diff
 const api = createApi({
-  reducerPath: 'testApi',
+  reducerKey: 'testApi',
   baseQuery: fetchBaseQuery({ baseUrl: 'https://reqres.in/api' }),
 -  entityTypes: [],
 +  entityTypes: ['User'],
@@ -122,7 +122,7 @@ const api = createApi({
           url: `users?page=${page}`,
         };
       },
-+      provides: [{type: 'User'}]
++      provides: ['User']
     }),
     // ...
     createUser: builder.mutation<User, Partial<User>>({
@@ -130,10 +130,10 @@ const api = createApi({
         return {
           url: `users`,
           method: 'POST',
-          body: JSON.stringify(data),
+          body: data,
         };
       },
-+      invalidates: [{type: 'User'}]
++      invalidates: ['User']
     }),
 ```
 
@@ -143,7 +143,7 @@ Now, whenever the `createUser` mutation is triggered, all currently used queries
 
 ```diff
 const api = createApi({
-  reducerPath: 'testApi',
+  reducerKey: 'testApi',
   baseQuery: fetchBaseQuery({ baseUrl: 'https://reqres.in/api' }),
   endpoints: (builder) => ({
     listUsers: builder.query<ListResponse<User>, number | void>({
@@ -152,7 +152,7 @@ const api = createApi({
           url: `users?page=${page}`,
         };
       },
--      provides: [{type: 'User'}]
+-      provides: ['User']
 +      provides: result => [...result.data.map(user => ({type: 'User', id: user.id} as const)), {type: 'User', id: 'LIST'}]
     }),
     getUser: builder.query<SingleResponse<User>, number>({
@@ -162,17 +162,17 @@ const api = createApi({
         };
       },
 -      provides: [{type: 'User'}]
-+      provides: (_, arg) => [({type: 'User', id: arg})]
++      provides: (_, arg) => [{type: 'User', id: arg}]
     }),
     createUser: builder.mutation<User, Partial<User>>({
       query(data) {
         return {
           url: `users`,
           method: 'POST',
-          body: JSON.stringify(data),
+          body: data,
         };
       },
--      invalidates: [{type: 'User'}]
+-      invalidates: ['User']
 +      invalidates: [{type: 'User', id: 'LIST'}]
     }),
     updateUser: builder.mutation<User, { id: number; patch: Partial<User> }>({
@@ -180,10 +180,10 @@ const api = createApi({
         return {
           url: `users/${id}`,
           method: 'PATCH',
-          body: JSON.stringify(patch),
+          body: patch,
         };
       },
--      invalidates: [{type: 'User'}]
+-      invalidates: ['User']
 +      invalidates: result => [{type: 'User', id: result.id}]
     }),
     deleteUser: builder.mutation<void, number>({
@@ -193,14 +193,14 @@ const api = createApi({
           method: 'DELETE',
         };
       },
--      invalidates: [{type: 'User'}]
+-      invalidates: ['User']
 +      invalidates: (_, arg) => [({type: 'User', id: arg})]
     }),
 ```
 
 notable things:
 
-- `invalidates` and `provides` can both be an array of `{entity: string, id?: string|number}` or a callback that returns such an array. That function will be passed the result as the first argument and the argument originally passed into the `query` method as the second argument.
+- `invalidates` and `provides` can both be an array of `{entity: string, id?: string|number}`, an array of entity types such as `['User', 'Comment']`, or a callback that returns such an array. That function will be passed the result as the first argument and the argument originally passed into the `query` method as the second argument.
 - `updateUser` and `deleteUser` will now invalidate only queries that provided entities with these specific ids
 - likewise, `getUser` now provides an entity with a specific id
 - `listUsers` now provides all entities with id from the fetch result. Also, it provides a User with the id `"LIST"`. This id is chosen arbitrarily. It enables `createUser` to invalidate all list-type queries - after all, depending of the sort order, that newly created user could show up in any of those lists.

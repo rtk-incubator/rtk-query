@@ -41,18 +41,18 @@ function updateMutationSubstateIfExists(
 }
 
 export function buildSlice({
-  reducerPath,
+  reducerKey,
   queryThunk,
   mutationThunk,
   endpointDefinitions: definitions,
 }: {
-  reducerPath: string;
+  reducerKey: string;
   queryThunk: AsyncThunk<unknown, QueryThunkArg<any>, {}>;
   mutationThunk: AsyncThunk<unknown, MutationThunkArg<any>, {}>;
   endpointDefinitions: EndpointDefinitions;
 }) {
   const querySlice = createSlice({
-    name: `${reducerPath}/queries`,
+    name: `${reducerKey}/queries`,
     initialState: {} as QueryState<any>,
     reducers: {
       removeQueryResult(draft, { payload: { queryCacheKey } }: PayloadAction<QuerySubstateIdentifier>) {
@@ -98,7 +98,7 @@ export function buildSlice({
     },
   });
   const mutationSlice = createSlice({
-    name: `${reducerPath}/mutations`,
+    name: `${reducerKey}/mutations`,
     initialState: {} as MutationState<any>,
     reducers: {
       unsubscribeResult(draft, action: PayloadAction<MutationSubstateIdentifier>) {
@@ -138,7 +138,7 @@ export function buildSlice({
   });
 
   const invalidationSlice = createSlice({
-    name: `${reducerPath}/invalidation`,
+    name: `${reducerKey}/invalidation`,
     initialState: {} as InvalidationState<string>,
     reducers: {},
     extraReducers(builder) {
@@ -168,7 +168,7 @@ export function buildSlice({
   });
 
   const subscriptionSlice = createSlice({
-    name: `${reducerPath}/subscriptions`,
+    name: `${reducerKey}/subscriptions`,
     initialState: {} as SubscriptionState,
     reducers: {
       updateSubscriptionOptions(

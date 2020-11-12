@@ -24,18 +24,18 @@ function defaultSerializeQueryArgs(args: any, endpoint: string) {
 export function createApi<
   InternalQueryArgs,
   Definitions extends EndpointDefinitions,
-  ReducerPath extends string,
+  ReducerKey extends string,
   EntityTypes extends string
 >({
   baseQuery,
-  reducerPath,
+  reducerKey,
   serializeQueryArgs: _serializeQueryArgs = defaultSerializeQueryArgs,
   endpoints,
   keepUnusedDataFor = 60,
 }: {
   baseQuery(args: InternalQueryArgs, api: QueryApi): any;
   entityTypes: readonly EntityTypes[];
-  reducerPath: ReducerPath;
+  reducerKey: ReducerKey;
   serializeQueryArgs?: SerializeQueryArgs<InternalQueryArgs>;
   endpoints(build: EndpointBuilder<InternalQueryArgs, EntityTypes>): Definitions;
   keepUnusedDataFor?: number;
@@ -49,21 +49,21 @@ export function createApi<
     mutation: (x) => ({ ...x, type: DefinitionType.mutation }),
   });
 
-  const { queryThunk, mutationThunk } = buildThunks({ baseQuery, reducerPath, endpointDefinitions });
+  const { queryThunk, mutationThunk } = buildThunks({ baseQuery, reducerKey, endpointDefinitions });
 
   const { reducer: _reducer, actions: sliceActions } = buildSlice({
     endpointDefinitions,
     queryThunk,
     mutationThunk,
-    reducerPath,
+    reducerKey,
   });
 
-  const reducer = (_reducer as any) as Reducer<State & QueryStatePhantomType<ReducerPath>, AnyAction>;
+  const reducer = (_reducer as any) as Reducer<State & QueryStatePhantomType<ReducerKey>, AnyAction>;
 
   const { querySelectors, mutationSelectors } = buildSelectors({
     serializeQueryArgs,
     endpointDefinitions,
-    reducerPath,
+    reducerKey,
   });
 
   const { mutationActions, queryActions } = buildActionMaps({
@@ -77,7 +77,7 @@ export function createApi<
   });
 
   const { middleware } = buildMiddleware({
-    reducerPath,
+    reducerKey,
     endpointDefinitions,
     queryThunk,
     mutationThunk,
@@ -94,7 +94,7 @@ export function createApi<
   });
 
   return {
-    reducerPath,
+    reducerKey,
     queryActions,
     mutationActions,
     reducer,

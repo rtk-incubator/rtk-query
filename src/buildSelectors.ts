@@ -42,22 +42,22 @@ const defaultMutationSubState = createNextState(
   }
 );
 
-export function buildSelectors<InternalQueryArgs, Definitions extends EndpointDefinitions, ReducerPath extends string>({
+export function buildSelectors<InternalQueryArgs, Definitions extends EndpointDefinitions, ReducerKey extends string>({
   serializeQueryArgs,
   endpointDefinitions,
-  reducerPath,
+  reducerKey,
 }: {
   serializeQueryArgs: InternalSerializeQueryArgs<InternalQueryArgs>;
   endpointDefinitions: Definitions;
-  reducerPath: ReducerPath;
+  reducerKey: ReducerKey;
 }) {
-  type RootState = _RootState<Definitions, string, ReducerPath>;
+  type RootState = _RootState<Definitions, string, ReducerKey>;
   const querySelectors = Object.entries(endpointDefinitions).reduce((acc, [name, endpoint]) => {
     if (isQueryDefinition(endpoint)) {
       acc[name] = (arg?) => (rootState) =>
         (arg === skipSelector
           ? undefined
-          : (rootState[reducerPath] as InternalState).queries[serializeQueryArgs(endpoint.query(arg), name)]) ??
+          : (rootState[reducerKey] as InternalState).queries[serializeQueryArgs(endpoint.query(arg), name)]) ??
         defaultQuerySubState;
     }
     return acc;
@@ -69,7 +69,7 @@ export function buildSelectors<InternalQueryArgs, Definitions extends EndpointDe
   const mutationSelectors = Object.entries(endpointDefinitions).reduce((acc, [name, endpoint]) => {
     if (isMutationDefinition(endpoint)) {
       acc[name] = (mutationId: string | typeof skipSelector) => (rootState) =>
-        (mutationId === skipSelector ? undefined : rootState[reducerPath].mutations[mutationId]) ??
+        (mutationId === skipSelector ? undefined : rootState[reducerKey].mutations[mutationId]) ??
         defaultMutationSubState;
     }
     return acc;

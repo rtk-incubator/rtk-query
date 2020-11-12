@@ -5,7 +5,7 @@ interface CountResponse {
 }
 
 export const counterApi = createApi({
-    reducerPath: 'counterApi',
+    reducerKey: 'counterApi',
     baseQuery: fetchBaseQuery(),
     entityTypes: ['Counter'],
     endpoints: (build) => ({

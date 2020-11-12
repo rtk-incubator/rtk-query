@@ -106,19 +106,19 @@ export type MutationState<D extends EndpointDefinitions> = {
   [requestId: string]: MutationSubState<D[string]> | undefined;
 };
 
-const __phantomType_ReducerPath = Symbol();
+const __phantomType_ReducerKey = Symbol();
 export interface QueryStatePhantomType<Identifier extends string> {
-  [__phantomType_ReducerPath]: Identifier;
+  [__phantomType_ReducerKey]: Identifier;
 }
 
 export type RootState<
   Definitions extends EndpointDefinitions,
   EntityTypes extends string,
-  ReducerPath extends string
+  ReducerKey extends string
 > = {
-  [P in ReducerPath]: CombinedState<Definitions, EntityTypes> & QueryStatePhantomType<P>;
+  [P in ReducerKey]: CombinedState<Definitions, EntityTypes> & QueryStatePhantomType<P>;
 };
 
-export type InternalRootState<ReducerPath extends string> = {
-  [_ in ReducerPath]: CombinedState<any, string>;
+export type InternalRootState<ReducerKey extends string> = {
+  [_ in ReducerKey]: CombinedState<any, string>;
 };

@@ -5,7 +5,7 @@ interface TimeResponse {
 }
 
 export const timeApi = createApi({
-  reducerPath: 'timeApi',
+  reducerKey: 'timeApi',
   baseQuery: fetchBaseQuery(),
   entityTypes: ['Time'],
   endpoints: (build) => ({

@@ -25,21 +25,21 @@ function defaultPostProcess(baseQueryReturnValue: unknown) {
   return baseQueryReturnValue;
 }
 
-export function buildThunks<InternalQueryArgs, ReducerPath extends string>({
-  reducerPath,
+export function buildThunks<InternalQueryArgs, ReducerKey extends string>({
+  reducerKey,
   baseQuery,
   endpointDefinitions,
 }: {
   baseQuery(args: InternalQueryArgs, api: QueryApi): any;
-  reducerPath: ReducerPath;
+  reducerKey: ReducerKey;
   endpointDefinitions: EndpointDefinitions;
 }) {
   const queryThunk = createAsyncThunk<
     unknown,
     QueryThunkArg<InternalQueryArgs>,
-    { state: InternalRootState<ReducerPath> }
+    { state: InternalRootState<ReducerKey> }
   >(
-    `${reducerPath}/executeQuery`,
+    `${reducerKey}/executeQuery`,
     (arg, { signal, rejectWithValue }) => {
       return baseQuery(arg.internalQueryArgs, { signal, rejectWithValue }).then(
         endpointDefinitions[arg.endpoint].postProcess ?? defaultPostProcess
@@ -47,7 +47,7 @@ export function buildThunks<InternalQueryArgs, ReducerPath extends string>({
     },
     {
       condition(arg, { getState }) {
-        let requestState = getState()[reducerPath]?.queries?.[arg.queryCacheKey];
+        let requestState = getState()[reducerKey]?.queries?.[arg.queryCacheKey];
         return !(requestState?.status === 'pending' || (requestState?.status === 'fulfilled' && !arg.forceRefetch));
       },
       dispatchConditionRejection: true,
@@ -57,8 +57,8 @@ export function buildThunks<InternalQueryArgs, ReducerPath extends string>({
   const mutationThunk = createAsyncThunk<
     unknown,
     MutationThunkArg<InternalQueryArgs>,
-    { state: InternalRootState<ReducerPath> }
-  >(`${reducerPath}/executeMutation`, (arg, { signal, rejectWithValue }) => {
+    { state: InternalRootState<ReducerKey> }
+  >(`${reducerKey}/executeMutation`, (arg, { signal, rejectWithValue }) => {
     return baseQuery(arg.internalQueryArgs, { signal, rejectWithValue }).then(
       endpointDefinitions[arg.endpoint].postProcess ?? defaultPostProcess
     );

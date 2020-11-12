@@ -18,7 +18,7 @@ describe('examples', () => {
   }
 
   const api = createApi({
-    reducerPath: 'api',
+    reducerKey: 'api',
     baseQuery({ url, method = 'GET', body }: QueryArg) {
       /*
           return fetch(`https://example.com/${url}`, {

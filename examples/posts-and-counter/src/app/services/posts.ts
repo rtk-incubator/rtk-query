@@ -8,7 +8,7 @@ export interface Post {
 type PostsResponse = Post[];
 
 export const postApi = createApi({
-  reducerPath: 'postsApi',
+  reducerKey: 'postsApi',
   baseQuery: fetchBaseQuery(),
   entityTypes: ['Posts'],
   endpoints: (build) => ({

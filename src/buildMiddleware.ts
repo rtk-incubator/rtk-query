@@ -10,27 +10,27 @@ const batch = typeof reactBatch !== 'undefined' ? reactBatch : (fn: Function) =>
 type QueryStateMeta<T> = Record<string, undefined | T>;
 type TimeoutId = ReturnType<typeof setTimeout>;
 
-export function buildMiddleware<Definitions extends EndpointDefinitions, ReducerPath extends string>({
-  reducerPath,
+export function buildMiddleware<Definitions extends EndpointDefinitions, ReducerKey extends string>({
+  reducerKey,
   endpointDefinitions,
   queryThunk,
   mutationThunk,
   keepUnusedDataFor,
   sliceActions: { removeQueryResult, unsubscribeQueryResult, updateSubscriptionOptions },
 }: {
-  reducerPath: ReducerPath;
+  reducerKey: ReducerKey;
   endpointDefinitions: EndpointDefinitions;
   queryThunk: AsyncThunk<unknown, QueryThunkArg<any>, {}>;
   mutationThunk: AsyncThunk<unknown, MutationThunkArg<any>, {}>;
   sliceActions: SliceActions;
   keepUnusedDataFor: number;
 }) {
-  type Api = MiddlewareAPI<ThunkDispatch<any, any, AnyAction>, RootState<Definitions, string, ReducerPath>>;
+  type Api = MiddlewareAPI<ThunkDispatch<any, any, AnyAction>, RootState<Definitions, string, ReducerKey>>;
 
   const currentRemovalTimeouts: QueryStateMeta<TimeoutId> = {};
 
   const currentPolls: QueryStateMeta<{ nextPollTimestamp: number; timeout?: TimeoutId; pollingInterval: number }> = {};
-  const middleware: Middleware<{}, RootState<Definitions, string, ReducerPath>, ThunkDispatch<any, any, AnyAction>> = (
+  const middleware: Middleware<{}, RootState<Definitions, string, ReducerKey>, ThunkDispatch<any, any, AnyAction>> = (
     api
   ) => (next) => (action) => {
     const result = next(action);
@@ -66,7 +66,7 @@ export function buildMiddleware<Definitions extends EndpointDefinitions, Reducer
   return { middleware };
 
   function invalidateEntities(entities: readonly FullEntityDescription<string>[], api: Api) {
-    const state = api.getState()[reducerPath];
+    const state = api.getState()[reducerKey];
 
     const toInvalidate = new Set<QueryCacheKey>();
     for (const entity of entities) {
@@ -123,8 +123,8 @@ export function buildMiddleware<Definitions extends EndpointDefinitions, Reducer
   }
 
   function startNextPoll({ queryCacheKey }: QuerySubstateIdentifier, api: Api) {
-    const querySubState = api.getState()[reducerPath].queries[queryCacheKey];
-    const subscriptions = api.getState()[reducerPath].subscriptions[queryCacheKey];
+    const querySubState = api.getState()[reducerKey].queries[queryCacheKey];
+    const subscriptions = api.getState()[reducerKey].subscriptions[queryCacheKey];
 
     if (!querySubState || querySubState.status === QueryStatus.uninitialized) return;
 
@@ -159,8 +159,8 @@ export function buildMiddleware<Definitions extends EndpointDefinitions, Reducer
   }
 
   function updatePollingInterval({ queryCacheKey }: QuerySubstateIdentifier, api: Api) {
-    const querySubState = api.getState()[reducerPath].queries[queryCacheKey];
-    const subscriptions = api.getState()[reducerPath].subscriptions[queryCacheKey];
+    const querySubState = api.getState()[reducerKey].queries[queryCacheKey];
+    const subscriptions = api.getState()[reducerKey].subscriptions[queryCacheKey];
 
     if (!querySubState || querySubState.status === QueryStatus.uninitialized) {
       return;

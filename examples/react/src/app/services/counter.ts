@@ -18,7 +18,7 @@ export const counterApi = createApi({
         return {
           url: `increment`,
           method: 'PUT',
-          body: JSON.stringify({ amount }),
+          body: { amount },
         };
       },
       invalidates: ['Counter'],
@@ -28,7 +28,7 @@ export const counterApi = createApi({
         return {
           url: `decrement`,
           method: 'PUT',
-          body: JSON.stringify({ amount }),
+          body: { amount },
         };
       },
       invalidates: ['Counter'],

@@ -47,10 +47,10 @@ export const counterApi = createApi({
             invalidates: ['Counter'],
         }),
         decrementCount: build.mutation<CountResponse, number>({
-            query: (amount) =>  ({
-                    url: `decrement`,
-                    method: 'PUT',
-                    body: { amount },
+            query: (amount) => ({
+                url: `decrement`,
+                method: 'PUT',
+                body: { amount },
             }),
             invalidates: ['Counter'],
         }),
@@ -60,17 +60,17 @@ export const counterApi = createApi({
         }),
         incrementCountById: build.mutation<CountResponse, { id: number; amount: number }>({
             query: ({ id, amount }) => ({
-                    url: `${id}/increment`,
-                    method: 'PUT',
-                    body: { amount },
+                url: `${id}/increment`,
+                method: 'PUT',
+                body: { amount },
             }),
             invalidates: (_, { id }) => [{ type: 'Counter', id }],
         }),
         decrementCountById: build.mutation<CountResponse, { id: number; amount: number }>({
             query: ({ id, amount }) => ({
-                    url: `${id}/decrement`,
-                    method: 'PUT',
-                    body: { amount },
+                url: `${id}/decrement`,
+                method: 'PUT',
+                body: { amount },
             }),
             invalidates: (_, { id }) => [{ type: 'Counter', id }],
         }),

@@ -68,7 +68,7 @@
     <button on:click={() => { counters = [...counters, nanoid()] }}>Add counter</button>
     {#if counters.length >= 2}
     <div>
-        <button class="button-link" on:click={() => globalPollingEnabled.set(!$globalPollingEnabled)}>Global polling is {$globalPollingEnabled ? 'on':'off'}</button>
+        <button class="button-link" on:click={() => globalPollingEnabled.set(!$globalPollingEnabled)}>Turn {$globalPollingEnabled ? 'off':'on'} polling</button>
     </div>
     {/if}
     

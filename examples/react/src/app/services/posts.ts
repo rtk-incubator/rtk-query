@@ -27,8 +27,8 @@ export const postApi = createApi({
       invalidates: ['Posts'],
     }),
     getPost: build.query<Post, number>({
-      query: (id) => `posts/${id}`,
-      provides: (_, id) => [{ type: 'Posts', id }],
+      query: (id) => ({ url: `posts/${id}` }),
+      provides: ({ id }) => [{ type: 'Posts', id }],
     }),
     updatePost: build.mutation<Post, Partial<Post>>({
       query(data) {

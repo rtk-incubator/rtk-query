@@ -51,6 +51,7 @@ export const PostDetail = () => {
   const [isEditing, setIsEditing] = useState(false);
 
   const { data: post, status } = postApi.hooks.getPost.useQuery(id);
+  console.log('id', id, post, status);
 
   const [updatePost, { status: updateStatus }] = postApi.hooks.updatePost.useMutation();
 

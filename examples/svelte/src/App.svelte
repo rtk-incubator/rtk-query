@@ -5,10 +5,22 @@
     import { store } from './store';
     import Counter from './Counter.svelte'
 
-    let pollingInterval = 3000;
+    let pollingInterval = 0;
     let counters = [] as number[];
+    let queryRef;
+
+    const pollingOptions = [
+        { value: 0, label: '0 - off' },
+        { value: 1000, label: '1s' },
+        { value: 5000, label: '5s' },
+        { value: 10000, label: '10s' },
+        { value: 60000, label: '1m' }
+    ]
 
     const { incrementCount, decrementCount } = counterApi.mutationActions;
+
+    // Whenever the polling interval changes, update the reference
+    $: queryRef?.updateSubscriptionOptions({ pollingInterval })
 
     $: ({ data, status, error } = counterApi.selectors.query.getCount()($store));
 
@@ -17,11 +29,7 @@
     let getCount = () => {};
 
     onMount(async () => {
-        ({ refetch: getCount } = store.dispatch(counterApi.queryActions.getCount()));
-        store.dispatch(counterApi.queryActions.getAbsoluteTest())
-        store.dispatch(counterApi.queryActions.getError());
-        store.dispatch(counterApi.queryActions.getNetworkError());
-        store.dispatch(counterApi.queryActions.getHeaderError());
+        queryRef = ({ refetch: getCount } = store.dispatch(counterApi.queryActions.getCount()));
     });
 </script>
 
@@ -52,8 +60,12 @@
     <button on:click={() => store.dispatch(incrementCount(1, { track: false }))}>Increase</button>
     <button on:click={() => store.dispatch(decrementCount(1, { track: false }))}>Decrease</button>
     <button on:click={getCount} disabled={loading}>Refetch count</button>
-    <button on:click={() => store.dispatch(counterApi.queryActions.getCount(null, { subscriptionOptions: { pollingInterval } }))}>Update Polling</button>
-    <input type="number" bind:value={pollingInterval} />
+    <button on:click={() => queryRef.updateSubscription({ pollingInterval })}>Update Polling</button>
+    <select bind:value={pollingInterval}>
+        {#each pollingOptions as { value, label }}
+        <option {value}>{label}</option>
+        {/each}
+    </select>
     <hr />
     <h3>Custom counters!</h3><button on:click={() => { counters = [...counters, counters.length + 1] }}>Add counter</button>
 

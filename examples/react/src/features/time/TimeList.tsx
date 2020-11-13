@@ -1,8 +1,8 @@
 import { nanoid } from '@reduxjs/toolkit';
 import React, { useState } from 'react';
 import { useEffect } from 'react';
-import { QueryStatus } from '@rtk-incubator/rtk-query/dist';
-import { timeApi } from '../../app/services/times';
+import { QueryStatus } from '@rtk-incubator/rtk-query';
+import { useGetTimeQuery } from '../../app/services/times';
 import { Container } from '../common/Container';
 import { useTypedSelector } from '../../app/store';
 import { selectGlobalPollingEnabled, selectPollingConfigByApp } from '../polling/pollingSlice';
@@ -79,7 +79,7 @@ const TimeDisplay = ({ offset, label }: { offset: string; label: string }) => {
   const canPoll = globalPolling && timesPolling;
 
   const [pollingInterval, setPollingInterval] = useState(0);
-  const { data, status, refetch } = timeApi.hooks.getTime.useQuery(offset, {
+  const { data, status, refetch } = useGetTimeQuery(offset, {
     pollingInterval: canPoll ? pollingInterval : 0,
   });
 

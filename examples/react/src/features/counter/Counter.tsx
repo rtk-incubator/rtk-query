@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import styles from './Counter.module.css';
-import { counterApi } from '../../app/services/counter';
+import { useDecrementCountMutation, useGetCountQuery, useIncrementCountMutation } from '../../app/services/counter';
 
 export function Counter({ id, onRemove }: { id?: string; onRemove?: () => void }) {
   const [pollingInterval, setPollingInterval] = useState(10000);
-  const { data } = counterApi.hooks.getCount.useQuery(undefined, { pollingInterval });
-  const [increment, incrementResult] = counterApi.hooks.incrementCount.useMutation();
+  const { data } = useGetCountQuery(undefined, { pollingInterval });
+  const [increment, incrementResult] = useIncrementCountMutation();
 
-  const [decrement, decrementResult] = counterApi.hooks.decrementCount.useMutation();
+  const [decrement, decrementResult] = useDecrementCountMutation();
 
   return (
     <div>

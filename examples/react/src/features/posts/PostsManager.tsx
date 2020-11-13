@@ -1,14 +1,14 @@
-import { QueryStatus } from '@rtk-incubator/rtk-query/dist';
+import { QueryStatus } from '@rtk-incubator/rtk-query';
 import React, { useState } from 'react';
 import { Route, Switch, useHistory } from 'react-router-dom';
-import { Post, postApi } from '../../app/services/posts';
+import { Post, useAddPostMutation, useGetPostsQuery } from '../../app/services/posts';
 import { PostDetail } from './PostDetail';
 import './PostsManager.css';
 
 const AddPost = () => {
   const initialValue = { name: '' };
   const [post, setPost] = useState<Partial<Post>>(initialValue);
-  const [addPost, { status }] = postApi.hooks.addPost.useMutation();
+  const [addPost, { status }] = useAddPostMutation();
   const loading = status === QueryStatus.pending;
 
   const handleChange = ({ target }: React.ChangeEvent<HTMLInputElement>) => {
@@ -45,7 +45,7 @@ const PostListItem = ({ data: { name, id }, onSelect }: { data: Post; onSelect: 
 };
 
 const PostList = () => {
-  const { data: posts, status } = postApi.hooks.getPosts.useQuery();
+  const { data: posts, status } = useGetPostsQuery();
   const { push } = useHistory();
 
   if (status === QueryStatus.pending) {

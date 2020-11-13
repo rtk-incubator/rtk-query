@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useHistory, useParams } from 'react-router-dom';
-import { QueryStatus } from '@rtk-incubator/rtk-query/dist';
-import { postApi } from '../../app/services/posts';
+import { QueryStatus } from '@rtk-incubator/rtk-query';
+import { useGetPostQuery, useUpdatePostMutation, useDeletePostMutation } from '../../app/services/posts';
 
 const EditablePostName = ({
   name: initialName,
@@ -35,7 +35,7 @@ const EditablePostName = ({
 };
 
 const PostJsonDetail = ({ id }: { id: number }) => {
-  const { data: post } = postApi.hooks.getPost.useQuery(id);
+  const { data: post } = useGetPostQuery(id);
 
   return (
     <div className="row" style={{ background: '#eee' }}>
@@ -50,11 +50,11 @@ export const PostDetail = () => {
 
   const [isEditing, setIsEditing] = useState(false);
 
-  const { data: post, status } = postApi.hooks.getPost.useQuery(id);
+  const { data: post, status } = useGetPostQuery(id);
 
-  const [updatePost, { status: updateStatus }] = postApi.hooks.updatePost.useMutation();
+  const [updatePost, { status: updateStatus }] = useUpdatePostMutation();
 
-  const [deletePost, { status: deleteStatus }] = postApi.hooks.deletePost.useMutation();
+  const [deletePost, { status: deleteStatus }] = useDeletePostMutation();
   const isUpdating = QueryStatus.pending === updateStatus;
   const isDeleting = QueryStatus.pending === deleteStatus;
 

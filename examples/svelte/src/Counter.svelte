@@ -7,12 +7,12 @@
     import { store } from './store';
 
     const { incrementCountById, decrementCountById } = counterApi.mutationActions;
-
-    let incrementStatus, decrementStatus;
+    
+    let lastIncrementRequestId, lastDecrementRequestId, incrementStatus, decrementStatus;
     $: ({ data, status: getStatus, error } = counterApi.selectors.query.getCountById(id)($store));
-    $: ({ status: incrementStatus } = counterApi.selectors.mutation.incrementCountById(id)($store));
-    $: ({ status: decrementStatus } = counterApi.selectors.mutation.decrementCountById(id)($store));
-
+    $: ({ status: decrementStatus } = counterApi.selectors.mutation.decrementCountById(lastDecrementRequestId)($store));
+    $: ({ status: incrementStatus} = counterApi.selectors.mutation.incrementCountById(lastIncrementRequestId)($store));
+ 
     $: loading = [incrementStatus, decrementStatus, getStatus].some(status => status === QueryStatus.pending);
 
     onMount(() => {
@@ -37,8 +37,8 @@
 
 <main>
     <span class="count">{data?.count || 0}</span>
-    <button on:click={() => store.dispatch(incrementCountById({ id, amount: 1 }, { track: false }))} disabled={loading}>Increase</button>
-    <button on:click={() => store.dispatch(decrementCountById({ id, amount: 1 }, { track: false }))} disabled={loading}>Decrease</button>
+    <button on:click={() => ({ requestId: lastIncrementRequestId } = store.dispatch(incrementCountById({ id, amount: 1 }, { track: true })))} disabled={loading}>Increase</button>
+    <button on:click={() => ({ requestId: lastDecrementRequestId } = store.dispatch(decrementCountById({ id, amount: 1 }, { track: true })))} disabled={loading}>Decrease</button>
     <small>(id: {id})</small>
 
 </main>

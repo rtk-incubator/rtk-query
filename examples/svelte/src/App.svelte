@@ -1,36 +1,24 @@
 <script lang="ts">
     import { onMount } from 'svelte';
-    import { QueryStatus } from '@rtk-incubator/simple-query/dist';
     import { counterApi } from './services/counter';
-    import { store } from './store';
+    import { globalPollingEnabled, store } from './store';
     import Counter from './Counter.svelte'
-
-    let pollingInterval = 0;
-    let counters = [] as number[];
-    let queryRef;
-
-    const pollingOptions = [
-        { value: 0, label: '0 - off' },
-        { value: 1000, label: '1s' },
-        { value: 5000, label: '5s' },
-        { value: 10000, label: '10s' },
-        { value: 60000, label: '1m' }
-    ]
-
+    import { nanoid } from '@reduxjs/toolkit';
+    
     const { incrementCount, decrementCount } = counterApi.mutationActions;
-
-    // Whenever the polling interval changes, update the reference
-    $: queryRef?.updateSubscriptionOptions({ pollingInterval })
-
-    $: ({ data, status, error } = counterApi.selectors.query.getCount()($store));
-
-    $: loading = status === QueryStatus.pending;
-
+    
+    let counters: string[] = [];
+    let spookyMode = true;
+    
     let getCount = () => {};
-
+    let queryRef;
+    
     onMount(async () => {
         queryRef = ({ refetch: getCount } = store.dispatch(counterApi.queryActions.getCount()));
     });
+    
+    $: ({ data } = counterApi.selectors.query.getCount()($store));
+
 </script>
 
 <style>
@@ -48,6 +36,17 @@
         font-weight: 100;
     }
 
+    .button-link {
+        background: none;
+        border: none;
+        padding: 0;
+        color: #069;
+        text-decoration: underline;
+        cursor: pointer;
+    }
+
+    .stop { margin-top: 150px}
+
     @media (min-width: 640px) {
         main {
             max-width: none;
@@ -59,17 +58,36 @@
     <h1>{data?.count || 0}</h1>
     <button on:click={() => store.dispatch(incrementCount(1, { track: false }))}>Increase</button>
     <button on:click={() => store.dispatch(decrementCount(1, { track: false }))}>Decrease</button>
-    <button on:click={getCount} disabled={loading}>Refetch count</button>
-    <button on:click={() => queryRef.updateSubscription({ pollingInterval })}>Update Polling</button>
-    <select bind:value={pollingInterval}>
-        {#each pollingOptions as { value, label }}
-        <option {value}>{label}</option>
-        {/each}
-    </select>
+   
     <hr />
-    <h3>Custom counters!</h3><button on:click={() => { counters = [...counters, counters.length + 1] }}>Add counter</button>
-
+    <h3>Haunted counters?</h3>
+    <p>
+        <small>We heard that any counters you might add below are haunted! 
+        </small>
+    </p>
+    <button on:click={() => { counters = [...counters, nanoid()] }}>Add counter</button>
+    {#if counters.length >= 2}
+    <div>
+        <button class="button-link" on:click={() => globalPollingEnabled.set(!$globalPollingEnabled)}>Global polling is {$globalPollingEnabled ? 'on':'off'}</button>
+    </div>
+    {/if}
+    
     {#each counters as id}
 		<Counter {id} />
-	{/each}
+    {/each}
+    
+    {#if counters.length >= 1}
+        <div class="stop">
+            <small>
+            <button class="button-link" on:click|once={() => {
+                spookyMode = false;
+                store.dispatch(counterApi.mutationActions.stop()).then(() => {
+                    spookyMode = false
+                    globalPollingEnabled.set(false)
+                });
+            }}>{ spookyMode ? `I'm scared, stop it!` : `No fun`}
+            </button>
+        </small>
+        </div>
+{/if}
 </main>

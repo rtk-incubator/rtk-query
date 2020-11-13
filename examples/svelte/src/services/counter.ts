@@ -11,36 +11,15 @@ export const counterApi = createApi({
     }),
     entityTypes: ['Counter'],
     endpoints: (build) => ({
-        getError: build.query({
-            query: (_: void) => '/error',
-        }),
-        getNetworkError: build.query({
-            query: (_: void) => '/network-error',
-        }),
-        getHeaderError: build.query({
-            query: (_: void) => '/mismatched-header-error',
-        }),
-        getAbsoluteTest: build.query<any, void>({
-            query: () => ({
-                url: 'https://mocked.data',
-                params: {
-                    hello: 'friend',
-                },
-            }),
-        }),
         getCount: build.query<CountResponse, void>({
             query: () => ({
-                url: `/count?=${'whydothis'}`,
-                params: {
-                    test: 'param',
-                    additional: 1,
-                },
+                url: `count`,
             }),
             provides: ['Counter'],
         }),
         incrementCount: build.mutation<CountResponse, number>({
             query: (amount) => ({
-                url: `/increment`,
+                url: `increment`,
                 method: 'PUT',
                 body: { amount },
             }),
@@ -54,11 +33,11 @@ export const counterApi = createApi({
             }),
             invalidates: ['Counter'],
         }),
-        getCountById: build.query<CountResponse, number>({
-            query: (id: number) => `${id}`,
+        getCountById: build.query<CountResponse, string>({
+            query: (id: string) => `${id}`,
             provides: (_, id) => [{ type: 'Counter', id }],
         }),
-        incrementCountById: build.mutation<CountResponse, { id: number; amount: number }>({
+        incrementCountById: build.mutation<CountResponse, { id: string; amount: number }>({
             query: ({ id, amount }) => ({
                 url: `${id}/increment`,
                 method: 'PUT',
@@ -66,13 +45,19 @@ export const counterApi = createApi({
             }),
             invalidates: (_, { id }) => [{ type: 'Counter', id }],
         }),
-        decrementCountById: build.mutation<CountResponse, { id: number; amount: number }>({
+        decrementCountById: build.mutation<CountResponse, { id: string; amount: number }>({
             query: ({ id, amount }) => ({
                 url: `${id}/decrement`,
                 method: 'PUT',
                 body: { amount },
             }),
             invalidates: (_, { id }) => [{ type: 'Counter', id }],
+        }),
+        stop: build.mutation<any, void>({
+            query: () => ({
+                url: 'stop',
+                method: 'PUT',
+            }),
         }),
     }),
 });

@@ -90,7 +90,7 @@ function Home() {
   return (
     <Layout
       title={`${siteConfig.title}`}
-      description="rtk-query is an advanced data fetching and caching tool, designed to simplify common cases for loading data in a web application."
+      description="RTK Query is an advanced data fetching and caching tool, designed to simplify common cases for loading data in a web application."
     >
       <header className={clsx('hero hero--primary', styles.heroBanner)}>
         <div className="container">

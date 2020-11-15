@@ -3,8 +3,9 @@ const { resolve } = require('path');
 const { linkDocblocks, transpileCodeblocks } = require('remark-typescript-tools');
 
 module.exports = {
-  title: 'Powerful data fetching and caching capabilities for every everyone',
-  tagline: 'Data fetching and proper cache management is hard. Stop writing complex logic by hand and see how rtk-query can simplify your application -- on any framework.',
+  title: 'Powerful data fetching and caching for everyone',
+  tagline:
+    'Caching and network request management can be very hard. We make it easy so you can spend more time focusing on your product.',
   url: 'https://rtk-query-docs.netlify.app/',
   baseUrl: '/',
   onBrokenLinks: 'throw',
@@ -16,7 +17,7 @@ module.exports = {
       title: 'RTK Query',
       logo: {
         alt: 'RTK Query Logo',
-        src: 'img/logo.svg',
+        src: 'img/redux.svg',
       },
       items: [
         {

@@ -3,6 +3,7 @@ id: svelte
 title: Svelte
 sidebar_label: Svelte
 hide_title: true
+hide_table_of_contents: true
 ---
 
 # `Svelte Example`

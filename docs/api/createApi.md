@@ -26,11 +26,11 @@ The main point where you will define a service to use in your application.
 
 ### `entityTypes`
 
-Specifying entity types is optional, but you should define them so that they can be used for caching and invalidation. When defining an entity type, you will be able to add them with `provides` and invalidate them with `invalidates` when configuring (endpoints)[./#endpoints]
+Specifying entity types is optional, but you should define them so that they can be used for caching and invalidation. When defining an entity type, you will be able to add them with `provides` and invalidate them with `invalidates` when configuring [endpoints](./#endpoints).
 
 ### `reducerPath`
 
-The `reducerPath` is a _unique_ key that your service will be mounted to in your store.
+The `reducerPath` is a _unique_ key that your service will be mounted to in your store. Defaults to `api`.
 
 ### `serializeQueryArgs`
 
@@ -46,4 +46,4 @@ function defaultSerializeQueryArgs(args: any, endpoint: string) {
 
 ### `keepUnusedDataFor`
 
-Defaults to 60. This is how long we'll keep your data cached for. If you change this, please note that it is in seconds, not ms.
+Defaults to `60` _(this value is in seconds)_. This is how long we'll keep your data cached for **after** the last component unsubscribes. For example, if you query an endpoint, then unmount the component, then mount another component that makes the same request within the given time frame, we'll serve up the most recent value from the cache.

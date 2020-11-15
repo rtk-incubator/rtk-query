@@ -3,6 +3,7 @@ id: react-hooks
 title: React Hooks
 sidebar_label: React Hooks
 hide_title: true
+hide_table_of_contents: true
 ---
 
 # `React Hooks Example`

@@ -41,7 +41,9 @@ What you'll see below is this:
 3. A moment after that, a `Pokemon` component for 'pikachu' is added, and a new request happens.
 4. When you click 'Refetch' of a particular pokemon type, it'll update all of them with one request.
 
-> Try clicking the 'Add bulbasaur' button. You'll observe the same behavior described above until you click the 'Refetch' button on one of the components.
+:::note Try it out
+Click the 'Add bulbasaur' button. You'll observe the same behavior described above until you click the 'Refetch' button on one of the components.
+:::
 
 <iframe src="https://codesandbox.io/embed/concepts-queries-deduping-caching-5qy3n?fontsize=14&hidenavigation=1&theme=dark"
      style={{ width: '100%', height: '800px', border: 0, borderRadius: '4px', overflow: 'hidden' }}

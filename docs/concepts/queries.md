@@ -21,7 +21,13 @@ When you perform a `query`, we automatically serialize the request parameters an
 
 By default, if you add a component that makes the same query as an existing one, no request will be performed.
 
-In some cases, you may want to skip this behavior and force a refetch - in that case, you can specifiy `forceRefetch` in the query options.
+In some cases, you may want to skip this behavior and force a refetch - in that case, you can call `refetch` that is returned by the hook.
+
+> If you're not using React Hooks, you can access `refetch` like this:
+>
+> ```ts
+> const { status, data, error, refetch } = dispatch(pokemonApi.actions.getPokemon('bulbasaur'));
+> ```
 
 ### Observing caching behavior
 

@@ -3,8 +3,8 @@ const { resolve } = require('path');
 const { linkDocblocks, transpileCodeblocks } = require('remark-typescript-tools');
 
 module.exports = {
-  title: 'RTK Query',
-  tagline: 'An advanced data fetching & caching library built on redux-toolkit',
+  title: 'Powerful data fetching and caching capabilities for every everyone',
+  tagline: 'Data fetching and proper cache management is hard. Stop writing complex logic by hand and see how rtk-query can simplify your application -- on any framework.',
   url: 'https://rtk-query-docs.netlify.app/',
   baseUrl: '/',
   onBrokenLinks: 'throw',

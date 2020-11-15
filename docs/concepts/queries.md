@@ -13,9 +13,9 @@ By default, `rtk-query` ships with [fetchBaseQuery](../api/fetchBaseQuery), whic
 
 > Depending on your environment, you may need to polyfill `fetch` with `whatwg-fetch` if you choose to use `fetchBaseQuery` or `fetch` on it's own.
 
-### Query Keys
+### Query Cache Keys
 
-When you perform a `query`, we automatically serialize the request parameters and create an internal `queryKey` for the request. Any future request that has the same `queryKey` will be de-duped against the original, and will share updates if a `refetch` is trigged on the query from any subscribed component.
+When you perform a query, we automatically serialize the request parameters and create an internal `queryCacheKey` for the request. Any future request that has the same `queryCacheKey` will be de-duped against the original, and will share updates if a `refetch` is trigged on the query from any subscribed component.
 
 ### Avoiding unnecessary requests
 

@@ -33,8 +33,7 @@ If you're a React user, make sure that you've installed `react-redux`. If you're
 
 To get started as a very basic example, let's create a very simple service that queries the publicly available [PokeAPI](https://pokeapi.co/).
 
-```ts
-// services/pokemon.ts
+```ts title="src/services/pokemon.ts"
 
 import { createApi, fetchBaseQuery } from '@rtk-incubator/simple-query/dist';
 
@@ -57,7 +56,7 @@ With `rtk-query`, you define your entire API definition in one place _in most ca
 
 ### Add the service to your store
 
-```ts
+```ts title="src/store.ts"
 import { configureStore } from '@reduxjs/toolkit';
 import { pokemonApi } from './services/pokemon';
 
@@ -72,7 +71,7 @@ export const store = configureStore({
 
 ### Wrap your application with the `Provider`
 
-```ts
+```ts title="src/index.tsx"
 import * as React from 'react';
 import { render } from 'react-dom';
 import { Provider } from 'react-redux';
@@ -93,7 +92,7 @@ render(
 
 Once a service has been defined, you can import the hooks to make a request.
 
-```ts
+```ts title="src/App.tsx"
 import * as React from 'react';
 import { hooks } from './services/pokemon';
 

@@ -3,19 +3,19 @@ const { resolve } = require('path');
 const { linkDocblocks, transpileCodeblocks } = require('remark-typescript-tools');
 
 module.exports = {
-  title: 'Simple Query',
-  tagline: 'A simple data fetching & caching library built on redux-toolkit',
-  url: 'https://simple-query.js.org',
+  title: 'RTK Query',
+  tagline: 'An advanced data fetching & caching library built on redux-toolkit',
+  url: 'https://rtk-query-docs.netlify.app/',
   baseUrl: '/',
   onBrokenLinks: 'throw',
   favicon: 'img/favicon.ico',
   organizationName: 'rtk-incubator', // Usually your GitHub org/user name.
-  projectName: 'simple-query', // Usually your repo name.
+  projectName: 'rtk-query', // Usually your repo name.
   themeConfig: {
     navbar: {
-      title: 'Simple Query',
+      title: 'RTK Query',
       logo: {
-        alt: 'Simple Query Logo',
+        alt: 'RTK Query Logo',
         src: 'img/logo.svg',
       },
       items: [
@@ -31,7 +31,7 @@ module.exports = {
         },
         // { to: 'blog', label: 'Blog', position: 'left' },
         {
-          href: 'https://github.com/rtk-incubator/simple-query',
+          href: 'https://github.com/rtk-incubator/rtk-query',
           label: 'GitHub',
           position: 'right',
         },
@@ -79,7 +79,7 @@ module.exports = {
             // },
             {
               label: 'GitHub',
-              href: 'https://github.com/rtk-incubator/simple-query',
+              href: 'https://github.com/rtk-incubator/rtk-query',
             },
           ],
         },
@@ -93,7 +93,7 @@ module.exports = {
       {
         docs: {
           path: '../docs',
-          include: ['{api,assets,introduction,tutorials,usage}/*.{md,mdx}'],
+          include: ['{api,assets,concepts,introduction,tutorials,usage}/*.{md,mdx}'],
           routeBasePath: '/',
           sidebarPath: require.resolve('./sidebars.js'),
           // Please change this to your repo.

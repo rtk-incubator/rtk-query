@@ -1,28 +1,23 @@
 module.exports = {
   docs: {
     Introduction: ['introduction/quick-start'],
-    // Tutorials: ['tutorials/basic-tutorial', 'tutorials/intermediate-tutorial', 'tutorials/advanced-tutorial'],
-    // 'Using Redux Toolkit': ['usage/usage-guide', 'usage/usage-with-typescript'],
-    'Concepts': [
+    Concepts: [
       // defaults,
       // fetchBaseQuery
       'concepts/queries',
+      'concepts/error-handling',
       'concepts/mutations',
       'concepts/polling',
       'concepts/prefetching',
       'concepts/pagination',
-      // queries
-      // mutations
-      // polling
-      // prefetching
-      // pagination
       // infinite
     ],
-    'API Reference': [
-      'api/createApi'
-    ],
+    'API Reference': ['api/createApi'],
     Examples: [
       // simple
+      'examples/react-hooks',
+      'examples/react-class-components',
+      'examples/svelte',
     ],
   },
 };

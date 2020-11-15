@@ -12,7 +12,7 @@ const features = [
     imageUrl: 'img/undraw_docusaurus_mountain.svg',
     description: (
       <>
-        Simple Query was designed as a straight-forward fetching &amp; caching library that solves the majority of use
+        RTK Query was designed as a straight-forward fetching &amp; caching library that solves the majority of use
         cases.
       </>
     ),
@@ -27,7 +27,7 @@ const features = [
     imageUrl: 'img/undraw_docusaurus_react.svg',
     description: (
       <>
-        Simple Query runs anywhere Redux runs and isn't limited to React. Although we provide Hooks for convenience,
+        RTK Query runs anywhere Redux runs and isn't limited to React. Although we provide React Hooks for convenience,
         it's a breeze to integrate with Svelte, Vue, or any other framework of your choice.
       </>
     ),

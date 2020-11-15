@@ -93,7 +93,7 @@ module.exports = {
       {
         docs: {
           path: '../docs',
-          include: ['{api,assets,concepts,introduction,tutorials,usage}/*.{md,mdx}'],
+          include: ['{api,assets,concepts,introduction,examples}/*.{md,mdx}'],
           routeBasePath: '/',
           sidebarPath: require.resolve('./sidebars.js'),
           // Please change this to your repo.

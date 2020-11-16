@@ -26,7 +26,7 @@ The main point where you will define a service to use in your application.
 
 ### `entityTypes`
 
-Specifying entity types is optional, but you should define them so that they can be used for caching and invalidation. When defining an entity type, you will be able to add them with `provides` and invalidate them with `invalidates` when configuring [endpoints](./#endpoints).
+Specifying entity types is optional, but you should define them so that they can be used for caching and invalidation. When defining an entity type, you will be able to add them with `provides` and invalidate them with `invalidates` when configuring [endpoints](#endpoints).
 
 ### `reducerPath`
 

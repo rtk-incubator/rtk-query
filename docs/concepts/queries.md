@@ -7,9 +7,9 @@ hide_title: true
 
 # `Queries`
 
-This is the most basic feature of `rtk-query`. A `query` can be performed with any data fetching library of your choice, but we recommend that you only use queries for requests that retrieve data. For anything that alters data on the server or will possibly invalidate the cache, you should use a [Mutation](./mutations).
+This is the most basic feature of `RTK Query`. A `query` can be performed with any data fetching library of your choice, but we recommend that you only use queries for requests that retrieve data. For anything that alters data on the server or will possibly invalidate the cache, you should use a [Mutation](./mutations).
 
-By default, `rtk-query` ships with [fetchBaseQuery](../api/fetchBaseQuery), which is just a lightweight [fetch](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API) wrapper that automatically handles request headers and response parsing in a manner similar to common libraries like `axios`.
+By default, `RTK Query` ships with [fetchBaseQuery](../api/fetchBaseQuery), which is just a lightweight [fetch](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API) wrapper that automatically handles request headers and response parsing in a manner similar to common libraries like `axios`.
 
 > Depending on your environment, you may need to polyfill `fetch` with `whatwg-fetch` if you choose to use `fetchBaseQuery` or `fetch` on it's own.
 

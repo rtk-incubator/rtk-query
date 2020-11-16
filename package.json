@@ -27,7 +27,7 @@
     "lint": "tsdx lint",
     "prepare": "yarn build; ./prepare-examples.sh",
     "size": "size-limit",
-    "format": "prettier --write \"src/**/*.ts\" \"**/*.md\"",
+    "format": "prettier --write \"src/**/*.ts\" \"**/*.md{x}\"",
     "analyze": "size-limit --why"
   },
   "husky": {

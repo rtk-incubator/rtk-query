@@ -1,5 +1,5 @@
 ---
-id: conditional-fetching 
+id: conditional-fetching
 title: Conditional Fetching
 sidebar_label: Conditional Fetching
 hide_title: true
@@ -10,14 +10,17 @@ hide_title: true
 If you want to prevent a query from automatically running, you can use the `skip` parameter in a hook.
 
 ```ts title="Skip example"
+const Pokemon = ({ name, skip }: { name: string; skip: boolean }) => {
+  const { data, error, status } = hooks.getPokemonByName.useQuery(name, {
+    skip,
+  });
 
-const Pokemon({ name, skip }: { name: string; skip: boolean }) => {
-    const { data, error, status } = hooks.getPokemonByName.useQuery(name, {
-        skip
-      });
-    
-    return <div>{name} - {status}</div>
-}
+  return (
+    <div>
+      {name} - {status}
+    </div>
+  );
+};
 ```
 
 When `skip` is `true`:
@@ -34,9 +37,10 @@ When `skip` is `true`:
 
 ### Example
 
-<iframe src="https://codesandbox.io/embed/concepts-conditional-fetching-tdrz9?fontsize=14&hidenavigation=1&theme=dark"
-     style={{ width: '100%', height: '600px', border: 0, borderRadius: '4px', overflow: 'hidden' }}
-     title="rtk-query-react-hooks-example"
-     allow="geolocation; microphone; camera; midi; vr; accelerometer; gyroscope; payment; ambient-light-sensor; encrypted-media; usb" 
-     sandbox="allow-modals allow-forms allow-popups allow-scripts allow-same-origin"
+<iframe
+  src="https://codesandbox.io/embed/concepts-conditional-fetching-tdrz9?fontsize=14&hidenavigation=1&theme=dark"
+  style={{ width: '100%', height: '600px', border: 0, borderRadius: '4px', overflow: 'hidden' }}
+  title="rtk-query-react-hooks-example"
+  allow="geolocation; microphone; camera; midi; vr; accelerometer; gyroscope; payment; ambient-light-sensor; encrypted-media; usb"
+  sandbox="allow-modals allow-forms allow-popups allow-scripts allow-same-origin"
 ></iframe>

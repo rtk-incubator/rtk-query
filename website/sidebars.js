@@ -15,7 +15,7 @@ module.exports = {
     ],
     'API Reference': ['api/createApi', 'api/fetchBaseQuery'],
     Examples: [
-      // simple
+      'examples/examples-overview',
       'examples/react-hooks',
       'examples/react-class-components',
       'examples/svelte',

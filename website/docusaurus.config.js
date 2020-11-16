@@ -42,16 +42,14 @@ module.exports = {
       style: 'dark',
       links: [
         {
-          title: 'Docs',
+          title: 'Resources',
           items: [
-            // {
-            //   label: 'Style Guide',
-            //   to: 'docs/',
-            // },
-            // {
-            //   label: 'Second Doc',
-            //   to: 'docs/doc2/',
-            // },
+            {
+              label: 'Quick Start',
+              to: '/introduction/quick-start',
+            },
+            { label: 'API Reference', to: '/api/createApi' },
+            { label: 'Examples', to: '/examples/react-hooks' },
           ],
         },
         {
@@ -65,10 +63,6 @@ module.exports = {
               label: 'Discord',
               href: 'https://discordapp.com/invite/reactiflux',
             },
-            // {
-            //   label: 'Twitter',
-            //   href: 'https://twitter.com/docusaurus',
-            // },
           ],
         },
         {
@@ -98,7 +92,7 @@ module.exports = {
           routeBasePath: '/',
           sidebarPath: require.resolve('./sidebars.js'),
           // Please change this to your repo.
-          // editUrl: 'https://github.com/rtk-incubator/simple-query',
+          editUrl: 'https://github.com/rtk-incubator/simple-query/edit/main/docs',
           remarkPlugins: [
             [
               linkDocblocks,

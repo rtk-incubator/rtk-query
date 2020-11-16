@@ -130,8 +130,7 @@ export const customApi = createApi({
 ```
 
 ### Handling non-standard Response status codes
-
-By default, we will `reject` any `Response` that has a status code that is `< 200` or `> 299` and set it to an error. This is the same behavior you've most likely experienced with `axios` and other popular libraries. In the event that you have a non-standard API you're dealing with, you can use the `validateStatus` option to customize this behavior.
+By default, we will `reject` any `Response` that does not have a status code of `2xx` and set it to an error This is the same behavior you've most likely experienced with `axios` and other popular libraries. In the event that you have a non-standard API you're dealing with, you can use the `validateStatus` option to customize this behavior.
 
 ```ts title="Using a custom validateStatus"
 export const customApi = createApi({
@@ -140,7 +139,7 @@ export const customApi = createApi({
     getUsers: builder.query({
       query: () => ({
         url: `users`,
-        validateStatus: (response, result) => result.status === 200 && !result.isError, // Our tricky API always returns a 200, but sets an `isError` property when there is an error.
+        validateStatus: (response, result) => response.status === 200 && !result.isError, // Our tricky API always returns a 200, but sets an `isError` property when there is an error.
       }),
     }),
   }),

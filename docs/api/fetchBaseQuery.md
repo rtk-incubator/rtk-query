@@ -22,7 +22,7 @@ function fetchBaseQuery({
 
 ### Using `fetchBaseQuery`
 
-To use it, simplify import it when you are [creating an API service definition](../introduction/quick-start#create-an-api-service).
+To use it, simply import it when you are [creating an API service definition](../introduction/quick-start#create-an-api-service).
 
 ```ts title="src/services/pokemon.ts"
 import { createApi, fetchBaseQuery } from '@rtk-incubator/rtk-query';
@@ -37,8 +37,8 @@ export const pokemonApi = createApi({
     updatePokemon: builder.mutation({
         query: ({ name, patch }) => ({
           url: `pokemon/${name}`,
-          method: 'PATCH', // When making a mutation, we specify the method of PATCH/PUT/POST for REST endpoints
-          body: patch, // fetchBaseQuery automatically adds `content-type: application/json` and calls JSON.stringify(patch) for you
+          method: 'PATCH', // When performing a mutation, you typically use a method of PATCH/PUT/POST/DELETE for REST endpoints
+          body: patch, // fetchBaseQuery automatically adds `content-type: application/json` to the Headers and calls `JSON.stringify(patch)`
         })
       },
     })
@@ -64,7 +64,7 @@ const defaultValidateStatus = (response: Response) => response.status >= 200 && 
 
 ### Setting the body
 
-By default, we assume that every request you make will be `json`, so in those cases all you have to do is set the `url` and pass a `body` object. For other implementations, you can manually set the `Headers` to specify the content type.
+By default, `fetchBaseQuery` assumes that every request you make will be `json`, so in those cases all you have to do is set the `url` and pass a `body` object when appropriate. For other implementations, you can manually set the `Headers` to specify the content type.
 
 #### json
 
@@ -99,7 +99,7 @@ By default, we assume that every request you make will be `json`, so in those ca
 
 ### Setting the query string
 
-`fetchBaseQuery` provides a simple wrapper like you'd find elsewhere that converts an `object` to serialized query params for you.
+`fetchBaseQuery` provides a simple mechanism that converts an `object` to a serialized query string. If this doesn't suit your needs, you can always build your own querystring and set it in the `url`.
 
 ```ts
   endpoints: (builder) => ({
@@ -113,9 +113,9 @@ By default, we assume that every request you make will be `json`, so in those ca
 
 ### Parsing a Response
 
-By default, we'll assume that every `Response` you get will be parsed as `json`. In the event that you don't want that to happen, you can specify an alternative response handler like `text`, or take complete control and use a custom function that takes the raw `Response` object &mdash; allowing you to use any [`Body` method](https://developer.mozilla.org/en-US/docs/Web/API/Body).
+By default, `fetchBaseQuery` assumes that every `Response` you get will be parsed as `json`. In the event that you don't want that to happen, you can specify an alternative response handler like `text`, or take complete control and use a custom function that accepts the raw `Response` object &mdash; allowing you to use any [`Body` method](https://developer.mozilla.org/en-US/docs/Web/API/Body).
 
-```ts title="Parse a response as text"
+```ts title="Parse a Response as text"
 export const customApi = createApi({
   baseQuery: fetchBaseQuery({ baseUrl: '/api/' }),
   endpoints: (builder) => ({
@@ -131,7 +131,7 @@ export const customApi = createApi({
 
 ### Handling non-standard Response status codes
 
-By default, we will `reject` any `Response` that does not have a status code of `2xx` and set it to an error This is the same behavior you've most likely experienced with `axios` and other popular libraries. In the event that you have a non-standard API you're dealing with, you can use the `validateStatus` option to customize this behavior.
+By default, `fetchBaseQuery` will `reject` any `Response` that does not have a status code of `2xx` and set it to `error`. This is the same behavior you've most likely experienced with `axios` and other popular libraries. In the event that you have a non-standard API you're dealing with, you can use the `validateStatus` option to customize this behavior.
 
 ```ts title="Using a custom validateStatus"
 export const customApi = createApi({

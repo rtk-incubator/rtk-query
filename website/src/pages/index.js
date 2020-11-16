@@ -59,11 +59,14 @@ const libFeatures = [
   'Polling',
   'Parallel queries',
   'Dependent queries',
+  'Paginated queries',
   'Skip queries',
   'Lagged queries',
   'Automatic garbage collection',
   'Prefetching',
   'Runs on every framework',
+  'Transport and protocol agnostic',
+  'Built with TypeScript'
 ];
 
 const Checkmark = () => {

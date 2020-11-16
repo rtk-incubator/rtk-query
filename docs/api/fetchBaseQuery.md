@@ -115,14 +115,14 @@ By default, we assume that every request you make will be `json`, so in those ca
 
 By default, we'll assume that every `Response` you get will be parsed as `json`. In the event that you don't want that to happen, you can specify an alternative response handler like `text`, or take complete control and use a custom function that takes the raw `Response` object &mdash; allowing you to use any [`Body` method](https://developer.mozilla.org/en-US/docs/Web/API/Body).
 
-```ts title="Parse a response as formData"
+```ts title="Parse a response as text"
 export const customApi = createApi({
   baseQuery: fetchBaseQuery({ baseUrl: '/api/' }),
   endpoints: (builder) => ({
     getUsers: builder.query({
       query: () => ({
         url: `users`,
-        responseHandler: (response) => response.formData(),
+        responseHandler: (response) => response.text(), // This is the same as passing 'text'
       }),
     }),
   }),
@@ -130,6 +130,7 @@ export const customApi = createApi({
 ```
 
 ### Handling non-standard Response status codes
+
 By default, we will `reject` any `Response` that does not have a status code of `2xx` and set it to an error This is the same behavior you've most likely experienced with `axios` and other popular libraries. In the event that you have a non-standard API you're dealing with, you can use the `validateStatus` option to customize this behavior.
 
 ```ts title="Using a custom validateStatus"

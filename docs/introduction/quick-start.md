@@ -7,7 +7,7 @@ hide_title: true
 
 # Quick Start
 
-`rtk-query` is an advanced data fetching and caching tool, designed to simplify common cases for loading data in a web application.  `rtk-query` itself is built on top of [Redux-Toolkit](https://redux-toolkit.js.org/) and uses [Redux](https://redux.js.org/) internally for its architecture. Although knowledge of Redux and RTK are not required to use this library, we recommend checking out all of the additional global store management capabilities they provide, as well as installing the [devtools](https://github.com/reduxjs/redux-devtools).
+`rtk-query` is an advanced data fetching and caching tool, designed to simplify common cases for loading data in a web application. `rtk-query` itself is built on top of [Redux-Toolkit](https://redux-toolkit.js.org/) and uses [Redux](https://redux.js.org/) internally for its architecture. Although knowledge of Redux and RTK are not required to use this library, we recommend checking out all of the additional global store management capabilities they provide, as well as installing the [devtools](https://github.com/reduxjs/redux-devtools).
 
 `rtk-query` is currently in an alpha state of development, with the goal of eventually including it directly in the Redux Toolkit library.
 
@@ -25,8 +25,6 @@ npm i @reduxjs/toolkit @rtk-incubator/rtk-query
 
 If you're a React user, make sure that you've installed `react-redux`. If you're a TypeScript user, you should also install `@types/react-redux`.
 
-
-
 ## Setting up your store and API service
 
 ### Create an API service
@@ -34,8 +32,7 @@ If you're a React user, make sure that you've installed `react-redux`. If you're
 To get started as a very basic example, let's create a very simple service that queries the publicly available [PokeAPI](https://pokeapi.co/).
 
 ```ts title="src/services/pokemon.ts"
-
-import { createApi, fetchBaseQuery } from '@rtk-incubator/simple-query/dist';
+import { createApi, fetchBaseQuery } from '@rtk-incubator/rtk-query';
 
 export const pokemonApi = createApi({
   reducerPath: 'pokemonApi',

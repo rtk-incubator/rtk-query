@@ -1,15 +1,16 @@
 ---
-id: comparison 
+id: comparison
 title: Comparison
 sidebar_label: Comparison
 hide_title: true
+hide_table_of_contents: true
 ---
 
 # Comparison
 
 > This comparison table strives to be as accurate and as unbiased as possible. If you use any of these libraries and feel the information could be improved, feel free to suggest changes (with notes or evidence of claims) by [opening an issue](https://github.com/rtk-incubator/rtk-query/issues/new).
 
-| x                                  | rtk-query                        | react-query              | apollo                                                                              | urql                                                                                                        |
+| x                                  | rtk-query                               | react-query              | apollo                                                                              | urql                                                                                                        |
 | ---------------------------------- | --------------------------------------- | ------------------------ | ----------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
 | supported protocols                | any, REST included                      | any, none included       | GraphQL                                                                             | GraphQL                                                                                                     |
 | api definition                     | declarative                             | on use                   | GraphQL schema                                                                      | GraphQL schema                                                                                              |

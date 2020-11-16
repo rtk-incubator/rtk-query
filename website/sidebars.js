@@ -12,7 +12,7 @@ module.exports = {
       'concepts/pagination',
       // infinite
     ],
-    'API Reference': ['api/createApi'],
+    'API Reference': ['api/createApi', 'api/fetchBaseQuery'],
     Examples: [
       // simple
       'examples/react-hooks',

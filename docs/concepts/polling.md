@@ -34,7 +34,7 @@ In an action creator without React Hooks:
 const { data, status, error, refetch } = store.dispatch(actions.getCountById(id, { subscriptionOptions: { pollingInterval: 3000}}))
 ```
 :::note Usage without React Hooks
-If you use polling without the convience of React Hooks, you will need to manually call `updateSubscriptionOptions` on the promise ref to update the interval. This approach varies by framework but is possible everywhere. See the [Svelte Example](../examples/svelte) for one possibility.
+If you use polling without the convenience of React Hooks, you will need to manually call `updateSubscriptionOptions` on the promise ref to update the interval. This approach varies by framework but is possible everywhere. See the [Svelte Example](../examples/svelte) for one possibility.
 :::
 
 ```ts

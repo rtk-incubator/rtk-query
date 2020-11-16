@@ -29,8 +29,8 @@ const features = [
     imageUrl: 'img/undraw_docusaurus_react.svg',
     description: (
       <>
-        RTK Query runs anywhere Redux runs and isn't limited to React. Although we provide React Hooks for convenience,
-        it's a breeze to integrate with Svelte, Vue, or any other framework of your choice.
+        RTK Query runs anywhere Redux runs and isn't limited to React. Although RTK Query provides React Hooks for
+        convenience, it's a breeze to integrate with Svelte, Vue, or any other framework of your choice.
       </>
     ),
   },
@@ -66,7 +66,7 @@ const libFeatures = [
   'Prefetching',
   'Runs on every framework',
   'Transport and protocol agnostic',
-  'Built with TypeScript'
+  'Built with TypeScript',
 ];
 
 const Checkmark = () => {

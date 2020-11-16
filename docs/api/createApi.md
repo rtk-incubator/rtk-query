@@ -34,7 +34,7 @@ The `reducerPath` is a _unique_ key that your service will be mounted to in your
 
 ### `serializeQueryArgs`
 
-Accepts a custom function if you'd like to change the serialization behavior for any reason. By default, we do this:
+Accepts a custom function if you have a need to change the serialization behavior for any reason. Defaults to:
 
 ```ts no-compile
 function defaultSerializeQueryArgs(args: any, endpoint: string) {

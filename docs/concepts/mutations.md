@@ -7,14 +7,14 @@ hide_title: true
 
 # `Mutations`
 
-Unlike `useQuery`, `useMutation` returns a tuple. The first item in the tuple is the `trigger` and the second element contains an object with `status`, `error`, and `data`. Additionally, we also make available `internalQueryArgs`, `originalArgs`,
-and `endpoint` for inspection.
+Unlike `useQuery`, `useMutation` returns a tuple. The first item in the tuple is the `trigger` function and the second element contains an object with `status`, `error`, and `data`. Additionally, `useMutation` also makes `internalQueryArgs`, `originalArgs`,
+and `endpoint` available for inspection.
 
-Also unlike the `useQuery` hook, the `useMutation` hook doesn't execute automatically. To run a mutation we have to call the `trigger` function.
+Also unlike the `useQuery` hook, the `useMutation` hook doesn't execute automatically. To run a mutation you have to call the `trigger` function.
 
 ### Basic mutation
 
-This is a modified version of the complete example you can see at the bottom of the page to highlight the `updatePost` mutation. In this scenario, we've fetched a post with `useQuery`, and then we have a component that allows us to edit the name of a post.
+This is a modified version of the complete example you can see at the bottom of the page to highlight the `updatePost` mutation. In this scenario, a post is fetched with `useQuery`, and then a `EditablePostName` component is rendered that allows us to edit the name of the post.
 
 ```ts title="src/features/posts/PostDetail.tsx"
 export const PostDetail = () => {
@@ -23,8 +23,8 @@ export const PostDetail = () => {
   const { data: post, status } = postApi.hooks.getPost.useQuery(id);
 
   const [
-    updatePost, // This is our mutation trigger
-    { status: updateStatus }, // We can inspect the status of the mutation
+    updatePost, // This is the mutation trigger
+    { status: updateStatus }, // You can inspect the status of the mutation
   ] = postApi.hooks.updatePost.useMutation();
 
   return (
@@ -49,7 +49,7 @@ export const PostDetail = () => {
 
 ### Advanced mutations with revalidation
 
-In the real world, it's very common that we would want to resync our local data cache with the server after performing a mutation. RTK Query takes a more centralized approach to this and requires you to configure the invalidation behavior in your API service definition. Before we get started, let's cover some new terms:
+In the real world, it's very common that a developer would want to resync their local data cache with the server after performing a mutation. RTK Query takes a more centralized approach to this and requires you to configure the invalidation behavior in your API service definition. Before getting started, let's cover some new terms:
 
 1. **Entities**
 

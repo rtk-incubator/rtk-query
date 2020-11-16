@@ -7,7 +7,7 @@ hide_title: true
 
 # `Queries`
 
-This is the most basic feature of `RTK Query`. A `query` can be performed with any data fetching library of your choice, but we recommend that you only use queries for requests that retrieve data. For anything that alters data on the server or will possibly invalidate the cache, you should use a [Mutation](./mutations).
+This is the most basic feature of `RTK Query`. A `query` can be performed with any data fetching library of your choice, but the general recommendation is that you only use queries for requests that retrieve data. For anything that alters data on the server or will possibly invalidate the cache, you should use a [Mutation](./mutations).
 
 By default, `RTK Query` ships with [fetchBaseQuery](../api/fetchBaseQuery), which is just a lightweight [fetch](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API) wrapper that automatically handles request headers and response parsing in a manner similar to common libraries like `axios`.
 
@@ -15,7 +15,7 @@ By default, `RTK Query` ships with [fetchBaseQuery](../api/fetchBaseQuery), whic
 
 ### Query Cache Keys
 
-When you perform a query, we automatically serialize the request parameters and create an internal `queryCacheKey` for the request. Any future request that has the same `queryCacheKey` will be de-duped against the original, and will share updates if a `refetch` is trigged on the query from any subscribed component.
+When you perform a query, RTK Query automatically serializes the request parameters and creates an internal `queryCacheKey` for the request. Any future request that produces the same `queryCacheKey` will be de-duped against the original, and will share updates if a `refetch` is trigged on the query from any subscribed component.
 
 ### Avoiding unnecessary requests
 

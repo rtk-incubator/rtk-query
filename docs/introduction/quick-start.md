@@ -7,7 +7,7 @@ hide_title: true
 
 # Quick Start
 
-`RTK Query` is an advanced data fetching and caching tool, designed to simplify common cases for loading data in a web application. `RTK Query` itself is built on top of [Redux-Toolkit](https://redux-toolkit.js.org/) and uses [Redux](https://redux.js.org/) internally for its architecture. Although knowledge of Redux and RTK are not required to use this library, we recommend checking out all of the additional global store management capabilities they provide, as well as installing the [devtools](https://github.com/reduxjs/redux-devtools).
+`RTK Query` is an advanced data fetching and caching tool, designed to simplify common cases for loading data in a web application. `RTK Query` itself is built on top of [Redux-Toolkit](https://redux-toolkit.js.org/) and uses [Redux](https://redux.js.org/) internally for its architecture. Although knowledge of Redux and RTK are not required to use this library, you should explore all of the additional global store management capabilities they provide, as well as installing the [devtools](https://github.com/reduxjs/redux-devtools).
 
 `RTK Query` is currently in an alpha state of development, with the goal of eventually including it directly in the Redux Toolkit library.
 
@@ -112,7 +112,7 @@ export default function App() {
 }
 ```
 
-When making a request, you're able to track the state in several ways. You can always check `data`, `status`, and `error` to determine the right UI to render. In addition, we also provide utility booleans like `isLoading`, `isSuccess`, and `isError` for the latest request.
+When making a request, you're able to track the state in several ways. You can always check `data`, `status`, and `error` to determine the right UI to render. In addition, `useQuery` also provides utility booleans like `isLoading`, `isSuccess`, and `isError` for the latest request.
 
 #### Basic Example
 
@@ -128,7 +128,7 @@ Okay, that's interesting... but what if you wanted to show multiple pokemon at t
 
 #### Advanced example
 
-`RTK Query` ensures that any component that subscribes to the same query will always use the same data. We automatically de-dupe requests so you don't have to worry about checking in-flight requests and performance optimizations on your end. Let's evaluate the sandbox below - make sure to check the Network panel in your browser's dev tools. You will see 3 requests, even though there are 4 subscribed components - `bulbasaur` only makes one request, and the loading state is synchronized between the two components. For fun, try changing the value of the dropdown from `Off` to `1s` to see this behavior continue when a query is re-ran.
+`RTK Query` ensures that any component that subscribes to the same query will always use the same data. RTK Query automatically de-dupes requests so you don't have to worry about checking in-flight requests and performance optimizations on your end. Let's evaluate the sandbox below - make sure to check the Network panel in your browser's dev tools. You will see 3 requests, even though there are 4 subscribed components - `bulbasaur` only makes one request, and the loading state is synchronized between the two components. For fun, try changing the value of the dropdown from `Off` to `1s` to see this behavior continue when a query is re-ran.
 
 <iframe
   src="https://codesandbox.io/embed/getting-started-advanced-8tx2b?file=/src/App.tsx?fontsize=14&hidenavigation=1&theme=dark"

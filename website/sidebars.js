@@ -8,6 +8,7 @@ module.exports = {
       'concepts/error-handling',
       'concepts/mutations',
       'concepts/polling',
+      'concepts/conditional-fetching',
       'concepts/prefetching',
       'concepts/pagination',
       // infinite

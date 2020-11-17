@@ -28,18 +28,15 @@ export const defaultBaseFlagsState = {
 
 export type RequestStatusFlags = typeof defaultBaseFlagsState;
 
-function setBaseFlags<T extends keyof typeof QueryStatus>(status: T) {
+export function getRequestStatusFlags<T extends keyof typeof QueryStatus>(
+  status: T
+): Record<keyof RequestStatusFlags, boolean> {
   return {
     isUninitialized: status === QueryStatus.uninitialized,
     isLoading: status === QueryStatus.pending,
     isSuccess: status === QueryStatus.fulfilled,
     isError: status === QueryStatus.rejected,
   };
-}
-export function getRequestStatusFlags<T extends keyof typeof QueryStatus>(
-  status: T
-): Record<keyof RequestStatusFlags, boolean> {
-  return setBaseFlags(status);
 }
 
 export type SubscriptionOptions = { pollingInterval?: number };
@@ -58,7 +55,7 @@ type BaseQuerySubState<D extends BaseEndpointDefinition<any, any, any>> = {
   data?: ResultTypeFrom<D>;
   error?: unknown;
   endpoint: string;
-} & RequestStatusFlags;
+};
 
 export type QuerySubState<D extends BaseEndpointDefinition<any, any, any>> = Id<
   | ({
@@ -70,7 +67,7 @@ export type QuerySubState<D extends BaseEndpointDefinition<any, any, any>> = Id<
   | ({
       status: QueryStatus.rejected;
     } & WithRequiredProp<BaseQuerySubState<D>, 'error'>)
-  | ({
+  | {
       status: QueryStatus.uninitialized;
       originalArgs?: undefined;
       internalQueryArgs?: undefined;
@@ -78,7 +75,7 @@ export type QuerySubState<D extends BaseEndpointDefinition<any, any, any>> = Id<
       error?: undefined;
       requestId?: undefined;
       endpoint?: string;
-    } & RequestStatusFlags)
+    }
 >;
 
 type BaseMutationSubState<D extends BaseEndpointDefinition<any, any, any>> = {
@@ -87,7 +84,7 @@ type BaseMutationSubState<D extends BaseEndpointDefinition<any, any, any>> = {
   data?: ResultTypeFrom<D>;
   error?: unknown;
   endpoint: string;
-} & RequestStatusFlags;
+};
 
 export type MutationSubState<D extends BaseEndpointDefinition<any, any, any>> =
   | ({
@@ -99,14 +96,14 @@ export type MutationSubState<D extends BaseEndpointDefinition<any, any, any>> =
   | ({
       status: QueryStatus.rejected;
     } & WithRequiredProp<BaseMutationSubState<D>, 'error'>)
-  | ({
+  | {
       status: QueryStatus.uninitialized;
       originalArgs?: undefined;
       internalQueryArgs?: undefined;
       data?: undefined;
       error?: undefined;
       endpoint?: string;
-    } & RequestStatusFlags);
+    };
 
 export type CombinedState<D extends EndpointDefinitions, E extends string> = {
   queries: QueryState<D>;

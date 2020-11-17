@@ -109,18 +109,23 @@ export function buildHooks<Definitions extends EndpointDefinitions>({
       useEffect(() => {
         if (currentState.status === QueryStatus.fulfilled) {
           lastData.current = currentState.data;
-        } else {
-          currentState.data = lastData.current;
         }
       }, [currentState]);
 
       const refetch = useCallback(() => void promiseRef.current?.refetch(), []);
 
-      const isLoading = !lastData.current && currentState.status === QueryStatus.pending;
-      const isFetching = !isLoading && currentState.status === QueryStatus.pending;
+      // isLoading = true only on the initial request or during any subsequent retry/poll attempt until data is returned
+      // isFetching = true any time a request is in flight
+      const isPending = currentState.status === QueryStatus.pending;
+      const isLoading = !lastData.current && isPending;
+      const isFetching = isPending;
 
-      return useMemo(() => ({ ...currentState, isFetching, isLoading, refetch }), [
+      // data is the last known good request result
+      const data = currentState.status === 'fulfilled' ? currentState.data : lastData.current;
+
+      return useMemo(() => ({ ...currentState, data, isFetching, isLoading, refetch }), [
         currentState,
+        data,
         isFetching,
         isLoading,
         refetch,

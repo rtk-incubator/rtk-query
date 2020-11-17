@@ -26,7 +26,8 @@ export type InternalSerializeQueryArgs<InternalQueryArgs> = (
 ) => QueryCacheKey;
 
 function defaultSerializeQueryArgs(args: any, endpoint: string) {
-  return `${endpoint}/${JSON.stringify(args)}`;
+  // Sort the object keys before stringifying, to prevent useQuery({ a: 1, b: 2 }) having a different cache key than  useQuery({ b: 2, a: 1 })
+  return `${endpoint}/${JSON.stringify(args, Object.keys(args).sort())}`;
 }
 
 const IS_DEV = () => typeof process !== 'undefined' && process.env.NODE_ENV === 'development';

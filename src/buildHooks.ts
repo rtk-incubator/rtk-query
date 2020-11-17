@@ -60,7 +60,6 @@ export function buildHooks<Definitions extends EndpointDefinitions>({
 
   function buildQueryHook(name: string): QueryHook<any> {
     const startQuery = queryActions[name];
-    const querySelector = querySelectors[name];
     return (arg: any, { skip = false, pollingInterval = 0 } = {}) => {
       const dispatch = useDispatch<ThunkDispatch<any, any, AnyAction>>();
 
@@ -87,7 +86,11 @@ export function buildHooks<Definitions extends EndpointDefinitions>({
       const refetch = useCallback(() => void promiseRef.current?.refetch(), []);
 
       const buildQuerySelector = querySelectors[name];
-      const querySelector = useMemo(() => buildQuerySelector(skip ? skipSelector : arg), [skip, arg]);
+      const querySelector = useMemo(() => buildQuerySelector(skip ? skipSelector : arg), [
+        skip,
+        arg,
+        buildQuerySelector,
+      ]);
       const currentState = useSelector(querySelector);
 
       return useMemo(() => ({ ...currentState, refetch }), [currentState, refetch]);

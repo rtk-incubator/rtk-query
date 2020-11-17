@@ -1,4 +1,4 @@
-import { CombinedState, createNextState, createSelector } from '@reduxjs/toolkit';
+import { createNextState, createSelector } from '@reduxjs/toolkit';
 import {
   MutationSubState,
   QueryStatus,

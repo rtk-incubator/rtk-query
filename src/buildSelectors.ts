@@ -1,10 +1,12 @@
-import { createNextState } from '@reduxjs/toolkit';
+import { CombinedState, createNextState } from '@reduxjs/toolkit';
 import {
   defaultBaseFlagsState,
   MutationSubState,
   QueryStatus,
   QuerySubState,
   RootState as _RootState,
+  getRequestStatusFlags,
+  RequestStatusFlags,
 } from './apiState';
 import { EndpointDefinitions, QueryDefinition, MutationDefinition, QueryArgFrom } from './endpointDefinitions';
 import type { InternalState } from './buildSlice';
@@ -22,22 +24,26 @@ export type Selectors<Definitions extends EndpointDefinitions, RootState> = {
 
 export type QueryResultSelectors<Definitions extends EndpointDefinitions, RootState> = {
   [K in keyof Definitions]: Definitions[K] extends QueryDefinition<infer QueryArg, any, any, infer ResultType>
-    ? (queryArg: QueryArg | typeof skipSelector) => (state: RootState) => QuerySubState<Definitions[K]>
+    ? (
+        queryArg: QueryArg | typeof skipSelector
+      ) => (state: RootState) => QuerySubState<Definitions[K]> & RequestStatusFlags
     : never;
 };
 
 export type MutationResultSelectors<Definitions extends EndpointDefinitions, RootState> = {
   [K in keyof Definitions]: Definitions[K] extends MutationDefinition<any, any, any, infer ResultType>
-    ? (requestId: string | typeof skipSelector) => (state: RootState) => MutationSubState<Definitions[K]>
+    ? (
+        requestId: string | typeof skipSelector
+      ) => (state: RootState) => MutationSubState<Definitions[K]> & RequestStatusFlags
     : never;
 };
 
 export type QueryResultSelector<Definition extends QueryDefinition<any, any, any, any>, RootState> = (
   queryArg: QueryArgFrom<Definition> | typeof skipSelector
-) => (state: RootState) => QuerySubState<Definition>;
+) => (state: RootState) => QuerySubState<Definition> & RequestStatusFlags;
 export type MutationResultSelector<Definition extends MutationDefinition<any, any, any, any>, RootState> = (
   requestId: string | typeof skipSelector
-) => (state: RootState) => MutationSubState<Definition>;
+) => (state: RootState) => MutationSubState<Definition> & RequestStatusFlags;
 
 const initialSubState = {
   status: QueryStatus.uninitialized as const,
@@ -59,6 +65,15 @@ export function buildSelectors<InternalQueryArgs, Definitions extends EndpointDe
 
   return { buildQuerySelector, buildMutationSelector };
 
+  function withRequestFlags(substate: CombinedState<any>): any {
+    return substate?.status
+      ? {
+          ...substate,
+          ...getRequestStatusFlags(substate.status),
+        }
+      : substate;
+  }
+
   function buildQuerySelector(
     endpoint: string,
     definition: QueryDefinition<any, any, any, any>
@@ -66,8 +81,9 @@ export function buildSelectors<InternalQueryArgs, Definitions extends EndpointDe
     return (arg?) => (rootState: RootState) =>
       (arg === skipSelector
         ? undefined
-        : (rootState[reducerPath] as InternalState).queries[serializeQueryArgs(definition.query(arg), endpoint)]) ??
-      defaultQuerySubState;
+        : withRequestFlags(
+            (rootState[reducerPath] as InternalState).queries[serializeQueryArgs(definition.query(arg), endpoint)]
+          )) ?? defaultQuerySubState;
   }
 
   function buildMutationSelector(
@@ -75,7 +91,7 @@ export function buildSelectors<InternalQueryArgs, Definitions extends EndpointDe
     definition: MutationDefinition<any, any, any, any>
   ): MutationResultSelector<any, RootState> {
     return (mutationId) => (rootState) =>
-      (mutationId === skipSelector ? undefined : rootState[reducerPath].mutations[mutationId]) ??
+      (mutationId === skipSelector ? undefined : withRequestFlags(rootState[reducerPath].mutations[mutationId])) ??
       defaultMutationSubState;
   }
 }

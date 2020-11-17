@@ -29,7 +29,10 @@ function defaultSerializeQueryArgs(args: any, endpoint: string) {
   return `${endpoint}/${JSON.stringify(args)}`;
 }
 
-const IS_DEV = () => process?.env?.NODE_ENV === 'development';
+const IS_DEV = () => {
+  return true;
+  return process?.env?.NODE_ENV === 'development';
+};
 
 export function createApi<
   InternalQueryArgs,

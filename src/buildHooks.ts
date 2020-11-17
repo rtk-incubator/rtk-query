@@ -1,7 +1,7 @@
 import { AnyAction, ThunkDispatch } from '@reduxjs/toolkit';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useDispatch, useSelector, batch } from 'react-redux';
-import { MutationSubState, QueryStatus, QuerySubState, SubscriptionOptions } from './apiState';
+import { MutationSubState, QueryStatus, QuerySubState, RequestStatusFlags, SubscriptionOptions } from './apiState';
 import { EndpointDefinitions, MutationDefinition, QueryDefinition, QueryArgFrom } from './endpointDefinitions';
 import { QueryResultSelectors, MutationResultSelectors, skipSelector } from './buildSelectors';
 import {
@@ -22,6 +22,7 @@ export type QueryHook<D extends QueryDefinition<any, any, any, any>> = (
 ) => QueryHookResult<D>;
 
 export type QueryHookResult<D extends QueryDefinition<any, any, any, any>> = QuerySubState<D> &
+  RequestStatusFlags &
   Pick<QueryActionCreatorResult<D>, 'refetch'>;
 
 export type MutationHook<D extends MutationDefinition<any, any, any, any>> = () => [

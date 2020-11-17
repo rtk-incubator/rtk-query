@@ -76,8 +76,16 @@ export function buildHooks<Definitions extends EndpointDefinitions>({
       const stableArg = useShallowStableValue(arg);
 
       const lastData = useRef<ResultTypeFrom<Definitions[string]> | undefined>();
-
       const promiseRef = useRef<QueryActionCreatorResult<any>>();
+
+      const buildQuerySelector = querySelectors[name];
+      const querySelector = useMemo(() => buildQuerySelector(skip ? skipSelector : stableArg), [
+        skip,
+        stableArg,
+        buildQuerySelector,
+      ]);
+      const currentState = useSelector(querySelector);
+
       useEffect(() => {
         if (skip) {
           return;
@@ -98,24 +106,18 @@ export function buildHooks<Definitions extends EndpointDefinitions>({
         return () => void promiseRef.current?.unsubscribe();
       }, []);
 
+      useEffect(() => {
+        if (currentState.status === QueryStatus.fulfilled) {
+          lastData.current = currentState.data;
+        } else {
+          currentState.data = lastData.current;
+        }
+      }, [currentState]);
+
       const refetch = useCallback(() => void promiseRef.current?.refetch(), []);
 
-      const buildQuerySelector = querySelectors[name];
-      const querySelector = useMemo(() => buildQuerySelector(skip ? skipSelector : stableArg), [
-        skip,
-        stableArg,
-        buildQuerySelector,
-      ]);
-      const currentState = useSelector(querySelector);
-
-      if (currentState.status === 'fulfilled') {
-        lastData.current = currentState.data;
-      } else {
-        currentState.data = lastData.current;
-      }
-
-      const isFetching = (lastData.current && currentState.status === QueryStatus.pending) || false;
-      const isLoading = (!lastData.current && currentState.status === QueryStatus.pending) || false;
+      const isLoading = !lastData.current && currentState.status === QueryStatus.pending;
+      const isFetching = !isLoading && currentState.status === QueryStatus.pending;
 
       return useMemo(() => ({ ...currentState, isFetching, isLoading, refetch }), [
         currentState,

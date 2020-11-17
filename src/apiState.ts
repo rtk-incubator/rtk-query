@@ -28,9 +28,7 @@ export const defaultBaseFlagsState = {
 
 export type RequestStatusFlags = typeof defaultBaseFlagsState;
 
-export function getRequestStatusFlags<T extends keyof typeof QueryStatus>(
-  status: T
-): Record<keyof RequestStatusFlags, boolean> {
+export function getRequestStatusFlags(status: QueryStatus): RequestStatusFlags {
   return {
     isUninitialized: status === QueryStatus.uninitialized,
     isLoading: status === QueryStatus.pending,

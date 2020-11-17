@@ -63,13 +63,11 @@ export function buildSelectors<InternalQueryArgs, Definitions extends EndpointDe
 
   return { buildQuerySelector, buildMutationSelector };
 
-  function withRequestFlags(substate: CombinedState<any>): any {
-    return substate?.status
-      ? {
-          ...substate,
-          ...getRequestStatusFlags(substate.status),
-        }
-      : substate;
+  function withRequestFlags<T extends { status: QueryStatus }>(substate: T): T & RequestStatusFlags {
+    return {
+      ...substate,
+      ...getRequestStatusFlags(substate.status),
+    };
   }
 
   function buildQuerySelector(
@@ -89,7 +87,11 @@ export function buildSelectors<InternalQueryArgs, Definitions extends EndpointDe
     definition: MutationDefinition<any, any, any, any>
   ): MutationResultSelector<any, RootState> {
     return (mutationId) => (rootState) =>
-      (mutationId === skipSelector ? undefined : withRequestFlags(rootState[reducerPath].mutations[mutationId])) ??
-      defaultMutationSubState;
+      withRequestFlags(
+        (arg === skipSelector
+          ? undefined
+          : (rootState[reducerPath] as InternalState).queries[serializeQueryArgs(definition.query(arg), endpoint)]) ??
+          defaultQuerySubState
+      );
   }
 }

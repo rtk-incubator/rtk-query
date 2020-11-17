@@ -12,6 +12,8 @@ import {
   Subscribers,
   QueryCacheKey,
   SubscriptionState,
+  getRequestStatusFlags,
+  defaultBaseFlagsState,
 } from './apiState';
 import type { MutationThunkArg, QueryThunkArg } from './buildThunks';
 import { AssertEntityTypes, calculateProvidedBy, EndpointDefinitions } from './endpointDefinitions';
@@ -38,6 +40,13 @@ function updateMutationSubstateIfExists(
   if (substate) {
     update(substate);
   }
+}
+
+function setRequestStatusFlags(status: keyof typeof QueryStatus, substate: QuerySubState<any> | MutationSubState<any>) {
+  const flags = getRequestStatusFlags(status);
+  Object.keys(flags).forEach((key) => {
+    (substate as any)[key] = (flags as any)[key];
+  });
 }
 
 export function buildSlice({
@@ -69,6 +78,7 @@ export function buildSlice({
             draft[arg.queryCacheKey] ??= {
               status: QueryStatus.uninitialized,
               endpoint: arg.endpoint,
+              ...defaultBaseFlagsState,
             };
           }
 
@@ -77,6 +87,7 @@ export function buildSlice({
             substate.requestId = requestId;
             substate.internalQueryArgs = arg.internalQueryArgs;
             substate.originalArgs = arg.originalArgs;
+            setRequestStatusFlags(QueryStatus.pending, substate);
           });
         })
         .addCase(queryThunk.fulfilled, (draft, { meta, payload }) => {
@@ -84,6 +95,7 @@ export function buildSlice({
             if (substate.requestId !== meta.requestId) return;
             substate.status = QueryStatus.fulfilled;
             substate.data = payload;
+            setRequestStatusFlags(QueryStatus.fulfilled, substate);
           });
         })
         .addCase(queryThunk.rejected, (draft, { meta: { condition, arg, requestId }, error, payload }) => {
@@ -95,6 +107,7 @@ export function buildSlice({
               if (substate.requestId !== requestId) return;
               substate.status = QueryStatus.rejected;
               substate.error = payload ?? error;
+              setRequestStatusFlags(QueryStatus.rejected, substate);
             }
           });
         });
@@ -120,6 +133,7 @@ export function buildSlice({
             internalQueryArgs: arg.internalQueryArgs,
             originalArgs: arg.originalArgs,
             endpoint: arg.endpoint,
+            ...getRequestStatusFlags(QueryStatus.pending),
           };
         })
         .addCase(mutationThunk.fulfilled, (draft, { payload, meta: { requestId, arg } }) => {
@@ -128,6 +142,7 @@ export function buildSlice({
           updateMutationSubstateIfExists(draft, { requestId }, (substate) => {
             substate.status = QueryStatus.fulfilled;
             substate.data = payload;
+            setRequestStatusFlags(QueryStatus.fulfilled, substate);
           });
         })
         .addCase(mutationThunk.rejected, (draft, { payload, error, meta: { requestId, arg } }) => {
@@ -136,6 +151,7 @@ export function buildSlice({
           updateMutationSubstateIfExists(draft, { requestId }, (substate) => {
             substate.status = QueryStatus.rejected;
             substate.error = payload ?? error;
+            setRequestStatusFlags(QueryStatus.rejected, substate);
           });
         });
     },

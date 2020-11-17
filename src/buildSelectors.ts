@@ -1,5 +1,11 @@
 import { createNextState } from '@reduxjs/toolkit';
-import { MutationSubState, QueryStatus, QuerySubState, RootState as _RootState } from './apiState';
+import {
+  defaultBaseFlagsState,
+  MutationSubState,
+  QueryStatus,
+  QuerySubState,
+  RootState as _RootState,
+} from './apiState';
 import { EndpointDefinitions, QueryDefinition, MutationDefinition, QueryArgFrom } from './endpointDefinitions';
 import type { InternalState } from './buildSlice';
 import { InternalSerializeQueryArgs } from '.';
@@ -33,23 +39,14 @@ export type MutationResultSelector<Definition extends MutationDefinition<any, an
   requestId: string | typeof skipSelector
 ) => (state: RootState) => MutationSubState<Definition>;
 
+const initialSubState = {
+  status: QueryStatus.uninitialized as const,
+  ...defaultBaseFlagsState,
+};
+
 // abuse immer to freeze default states
-const defaultQuerySubState = createNextState(
-  {},
-  (): QuerySubState<any> => {
-    return {
-      status: QueryStatus.uninitialized,
-    };
-  }
-);
-const defaultMutationSubState = createNextState(
-  {},
-  (): MutationSubState<any> => {
-    return {
-      status: QueryStatus.uninitialized,
-    };
-  }
-);
+const defaultQuerySubState = createNextState({}, (): QuerySubState<any> => initialSubState);
+const defaultMutationSubState = createNextState({}, (): MutationSubState<any> => initialSubState);
 
 export function buildSelectors<InternalQueryArgs, Definitions extends EndpointDefinitions, ReducerPath extends string>({
   serializeQueryArgs,

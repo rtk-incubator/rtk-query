@@ -3,6 +3,7 @@ import { createApi, fetchBaseQuery } from '@rtk-incubator/rtk-query/dist';
 export interface Post {
   id: number;
   name: string;
+  fetched_at: string;
 }
 
 type PostsResponse = Post[];

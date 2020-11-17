@@ -2,7 +2,13 @@ import { AnyAction, ThunkDispatch } from '@reduxjs/toolkit';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useDispatch, useSelector, batch } from 'react-redux';
 import { MutationSubState, QueryStatus, QuerySubState, RequestStatusFlags, SubscriptionOptions } from './apiState';
-import { EndpointDefinitions, MutationDefinition, QueryDefinition, QueryArgFrom } from './endpointDefinitions';
+import {
+  EndpointDefinitions,
+  MutationDefinition,
+  QueryDefinition,
+  QueryArgFrom,
+  ResultTypeFrom,
+} from './endpointDefinitions';
 import { QueryResultSelectors, MutationResultSelectors, skipSelector } from './buildSelectors';
 import {
   QueryActions,
@@ -22,8 +28,12 @@ export type QueryHook<D extends QueryDefinition<any, any, any, any>> = (
   options?: QueryHookOptions
 ) => QueryHookResult<D>;
 
+type AdditionalQueryStatusFlags = {
+  isFetching: boolean;
+};
 export type QueryHookResult<D extends QueryDefinition<any, any, any, any>> = QuerySubState<D> &
   RequestStatusFlags &
+  AdditionalQueryStatusFlags &
   Pick<QueryActionCreatorResult<D>, 'refetch'>;
 
 export type MutationHook<D extends MutationDefinition<any, any, any, any>> = () => [
@@ -65,6 +75,8 @@ export function buildHooks<Definitions extends EndpointDefinitions>({
 
       const stableArg = useShallowStableValue(arg);
 
+      const lastData = useRef<ResultTypeFrom<Definitions[string]> | undefined>();
+
       const promiseRef = useRef<QueryActionCreatorResult<any>>();
       useEffect(() => {
         if (skip) {
@@ -96,7 +108,21 @@ export function buildHooks<Definitions extends EndpointDefinitions>({
       ]);
       const currentState = useSelector(querySelector);
 
-      return useMemo(() => ({ ...currentState, refetch }), [currentState, refetch]);
+      if (currentState.status === 'fulfilled') {
+        lastData.current = currentState.data;
+      } else {
+        currentState.data = lastData.current;
+      }
+
+      const isFetching = (lastData.current && currentState.status === QueryStatus.pending) || false;
+      const isLoading = (!lastData.current && currentState.status === QueryStatus.pending) || false;
+
+      return useMemo(() => ({ ...currentState, isFetching, isLoading, refetch }), [
+        currentState,
+        isFetching,
+        isLoading,
+        refetch,
+      ]);
     };
   }
 

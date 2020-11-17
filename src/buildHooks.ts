@@ -29,7 +29,7 @@ export type MutationHook<D extends MutationDefinition<any, any, any, any>> = () 
   (
     arg: QueryArgFrom<D>
   ) => Promise<Extract<MutationSubState<D>, { status: QueryStatus.fulfilled | QueryStatus.rejected }>>,
-  MutationSubState<D>
+  MutationSubState<D> & RequestStatusFlags
 ];
 
 export type Hooks<Definitions extends EndpointDefinitions> = {
@@ -84,8 +84,11 @@ export function buildHooks<Definitions extends EndpointDefinitions>({
         return () => void promiseRef.current?.unsubscribe();
       }, []);
 
-      const currentState = useSelector(querySelector(skip ? skipSelector : arg));
       const refetch = useCallback(() => void promiseRef.current?.refetch(), []);
+
+      const buildQuerySelector = querySelectors[name];
+      const querySelector = useMemo(() => buildQuerySelector(skip ? skipSelector : arg), [skip, arg]);
+      const currentState = useSelector(querySelector);
 
       return useMemo(() => ({ ...currentState, refetch }), [currentState, refetch]);
     };

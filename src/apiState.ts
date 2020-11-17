@@ -28,18 +28,13 @@ export const defaultBaseFlagsState = {
 
 export type RequestStatusFlags = typeof defaultBaseFlagsState;
 
-function setBaseFlags<T extends keyof typeof QueryStatus>(status: T) {
+export function getRequestStatusFlags(status: QueryStatus): RequestStatusFlags {
   return {
     isUninitialized: status === QueryStatus.uninitialized,
     isLoading: status === QueryStatus.pending,
     isSuccess: status === QueryStatus.fulfilled,
     isError: status === QueryStatus.rejected,
   };
-}
-export function getRequestStatusFlags<T extends keyof typeof QueryStatus>(
-  status: T
-): Record<keyof RequestStatusFlags, boolean> {
-  return setBaseFlags(status);
 }
 
 export type SubscriptionOptions = { pollingInterval?: number };

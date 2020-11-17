@@ -1,6 +1,5 @@
-import { CombinedState, createNextState } from '@reduxjs/toolkit';
+import { CombinedState, createNextState, createSelector } from '@reduxjs/toolkit';
 import {
-  defaultBaseFlagsState,
   MutationSubState,
   QueryStatus,
   QuerySubState,
@@ -47,7 +46,6 @@ export type MutationResultSelector<Definition extends MutationDefinition<any, an
 
 const initialSubState = {
   status: QueryStatus.uninitialized as const,
-  ...defaultBaseFlagsState,
 };
 
 // abuse immer to freeze default states
@@ -65,33 +63,44 @@ export function buildSelectors<InternalQueryArgs, Definitions extends EndpointDe
 
   return { buildQuerySelector, buildMutationSelector };
 
-  function withRequestFlags(substate: CombinedState<any>): any {
-    return substate?.status
-      ? {
-          ...substate,
-          ...getRequestStatusFlags(substate.status),
-        }
-      : substate;
+  function withRequestFlags<T extends { status: QueryStatus }>(substate: T): T & RequestStatusFlags {
+    return {
+      ...substate,
+      ...getRequestStatusFlags(substate.status),
+    };
+  }
+
+  function selectInternalState(rootState: RootState) {
+    return rootState[reducerPath] as InternalState;
   }
 
   function buildQuerySelector(
     endpoint: string,
     definition: QueryDefinition<any, any, any, any>
   ): QueryResultSelector<any, RootState> {
-    return (arg?) => (rootState: RootState) =>
-      (arg === skipSelector
-        ? undefined
-        : withRequestFlags(
-            (rootState[reducerPath] as InternalState).queries[serializeQueryArgs(definition.query(arg), endpoint)]
-          )) ?? defaultQuerySubState;
+    return (arg?) => {
+      const selectQuerySubState = createSelector(
+        selectInternalState,
+        (internalState) =>
+          (arg === skipSelector
+            ? undefined
+            : internalState.queries[serializeQueryArgs(definition.query(arg), endpoint)]) ?? defaultQuerySubState
+      );
+      return createSelector(selectQuerySubState, withRequestFlags);
+    };
   }
 
   function buildMutationSelector(
     endpoint: string,
     definition: MutationDefinition<any, any, any, any>
   ): MutationResultSelector<any, RootState> {
-    return (mutationId) => (rootState) =>
-      (mutationId === skipSelector ? undefined : withRequestFlags(rootState[reducerPath].mutations[mutationId])) ??
-      defaultMutationSubState;
+    return (mutationId) => {
+      const selectMutationSubstate = createSelector(
+        selectInternalState,
+        (internalState) =>
+          (mutationId === skipSelector ? undefined : internalState.mutations[mutationId]) ?? defaultMutationSubState
+      );
+      return createSelector(selectMutationSubstate, withRequestFlags);
+    };
   }
 }

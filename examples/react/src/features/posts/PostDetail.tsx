@@ -53,8 +53,8 @@ export const PostDetail = () => {
   const { data: post, status } = postApi.hooks.getPost.useQuery(id);
 
   const [updatePost, { status: updateStatus }] = postApi.hooks.updatePost.useMutation();
-
   const [deletePost, { status: deleteStatus }] = postApi.hooks.deletePost.useMutation();
+
   const isUpdating = QueryStatus.pending === updateStatus;
   const isDeleting = QueryStatus.pending === deleteStatus;
 
@@ -98,7 +98,7 @@ export const PostDetail = () => {
           </div>
         </React.Fragment>
       )}
-      <PostJsonDetail id={post.id} />
+      <PostJsonDetail id={id} />
     </div>
   );
 };

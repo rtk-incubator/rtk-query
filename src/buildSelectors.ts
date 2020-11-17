@@ -90,10 +90,7 @@ export function buildSelectors<InternalQueryArgs, Definitions extends EndpointDe
     };
   }
 
-  function buildMutationSelector(
-    endpoint: string,
-    definition: MutationDefinition<any, any, any, any>
-  ): MutationResultSelector<any, RootState> {
+  function buildMutationSelector(): MutationResultSelector<any, RootState> {
     return (mutationId) => {
       const selectMutationSubstate = createSelector(
         selectInternalState,

@@ -14,7 +14,10 @@ export const postApi = createApi({
   endpoints: (build) => ({
     getPosts: build.query<PostsResponse, void>({
       query: () => 'posts',
-      provides: (result) => result.map(({ id }) => ({ type: 'Posts', id })),
+      provides: (result) => [
+        ...result.map(({ id }) => ({ type: 'Posts', id } as const)),
+        { type: 'Posts', id: 'LIST' },
+      ],
     }),
     addPost: build.mutation<Post, Partial<Post>>({
       query(body) {
@@ -24,7 +27,7 @@ export const postApi = createApi({
           body,
         };
       },
-      invalidates: ['Posts'],
+      invalidates: [{ type: 'Posts', id: 'LIST' }],
     }),
     getPost: build.query<Post, number>({
       query: (id) => `posts/${id}`,

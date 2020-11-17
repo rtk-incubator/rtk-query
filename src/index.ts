@@ -144,7 +144,7 @@ export function createApi<
         api.hooks[endpoint] = { useQuery };
         (api.hooks as any)[`use${capitalize(endpoint)}Query`] = useQuery;
       } else if (isMutationDefinition(definition)) {
-        api.selectors[endpoint] = buildMutationSelector(endpoint, definition);
+        api.selectors[endpoint] = buildMutationSelector();
         api.actions[endpoint] = buildMutationAction(endpoint, definition);
         const useMutation = buildMutationHook(endpoint);
         api.hooks[endpoint] = { useMutation };

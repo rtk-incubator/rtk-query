@@ -68,7 +68,7 @@ $: ({ data, status } = selectors.getPosts()($store));
 
 #### hooks
 
-Hooks are specifically for React Hooks users. If you are not using React Hooks, you shouldn't `export` them – this way they're not included in the bundle or pull in the React dependency.
+Hooks are specifically for React Hooks users. If you are not using React Hooks, you shouldn't `export` them – this way they don't pull in the React dependency.
 
 ### `baseQuery`
 

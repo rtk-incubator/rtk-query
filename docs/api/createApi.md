@@ -22,9 +22,16 @@ The main point where you will define a service to use in your application.
   keepUnusedDataFor?: number;
 ```
 
-It returns: `reducerPath`, `reducer`, `middleware`, `actions`, `selectors`, `hooks`
+**It returns:**
 
-```ts
+- [`reducerPath`](#reducerpath)
+- [`reducer`](#reducer)
+- [`middleware`](#middleware)
+- [`actions`](#actions)
+- [`selectors`](#selectors)
+- [`hooks`](#hooks)
+
+```ts title="All returned properties"
 const api = createApi({
   baseQuery: fetchBaseQuery('/'),
   endpoints: (builder) => ({
@@ -38,6 +45,10 @@ export const { reducerPath, reducer, middleware, hooks, actions, selectors } = a
 #### middleware
 
 This is a standard redux middleware and is responsible for things like [polling](../concepts/polling), [garbage collection](#keepunuseddatafor) and a handful of other things. Make sure it's [included in your store](../introduction/quick-start#add-the-service-to-your-store).
+
+#### reducer
+
+A standard redux reducer that enables core functionality. Make sure it's [included in your store](../introduction/quick-start#add-the-service-to-your-store).
 
 #### actions
 
@@ -112,7 +123,37 @@ function defaultSerializeQueryArgs(args: any, endpoint: string) {
 
 ### `endpoints`
 
-Endpoints are just a set of operations that you want to perform against your server. You define them as an object using the builder syntax. There are two basic endpoint types: `query` and `mutation`.
+Endpoints are just a set of operations that you want to perform against your server. You define them as an object using the builder syntax. There are two basic endpoint types: [`query`](../concepts/queries) and [`mutation`](../concepts/mutations).
+
+#### Anatomy of an endpoint
+
+- `query` _(required)_
+  - `query` is the only required property, and can be either a `string` or an `object` that is passed to your `baseQuery`. If you are using [fetchBaseQuery](./fetchBaseQuery), this can be a `string` or an object of properties in `FetchArgs`. If you use your own custom `baseQuery`, you can customize this behavior to your liking
+- `transformResponse` _(optional)_
+
+  - A function to manipulate the data returned by a query or mutation
+  - ```js title="Unpack a deeply nested collection"
+    transformResponse: (response) => response.some.nested.collection;
+    ```
+    ```js title="Normalize the response data"
+    transformResponse: (response) =>
+      response.reduce((acc, curr) => {
+        acc[curr.id] = curr;
+        return acc;
+      }, {});
+    ```
+
+- `provides` _(optional)_
+  - Used by `queries` to provide entities to the cache
+  - Expects an array of entity type strings, or an array of objects of entity types with ids.
+    1.  `['Post']` - equivalent to 2
+    2.  `[{ type: 'Post' }]` - equivalent to 1
+    3.  `[{ type: 'Post', id: 1 }]`
+- `invalidates` _(optional)_
+  - Used by `mutations` for [cache invalidation](../concepts/mutations#advanced-mutations-with-revalidation) purposes.
+  - Expects the same shapes as `provides`
+
+#### How endpoints get used
 
 When defining a key like `getPosts` as shown below, it's important to know that this name will become exportable from `api` and be able to referenced under `api.hooks.getPosts`, `api.selectors.getPosts`, and `api.actions.getPosts`. The same thing applies to `mutation`s.
 
@@ -135,17 +176,59 @@ const api = createApi({
   }),
 });
 
+// React users that use hooks are able to take advantage of this special feature
+// The syntax is `use(MethodName)(Query|Mutation)`
+// TS 4.1+ users will get type safety doing this as well
+export { useGetPostsQuery, useAddPostMutation } = api.hooks;
+
 // Possible exports
 
 export const { selectors, actions, reducerPath, reducer, middleware } = api;
 // reducerPath, reducer, middleware are only used in store configuration
 // selectors/actions will have: selectors.getPosts, selectors.addPost, actions.getPosts, actions.getPost
+```
 
+#### Transforming the data returned by an endpoint before caching
 
-// React users that use hooks are able to take advantage of this special feature
-// The syntax is `use(MethodName)(Query|Mutation)`
-// TS 4.1+ users will get type safety doing this as well
-export { useGetPostsQuery, useAddPostMutation } = api.hooks;
+In some cases, you may want to manipulate the data returned from a query before you put it in the cache. In this instance, you can take advantage of `transformResponse`.
+
+By default, the payload from the server is returned directly.
+
+```ts
+function defaultTransformResponse(baseQueryReturnValue: unknown) {
+  return baseQueryReturnValue;
+}
+```
+
+To change it, simply provide a function that looks like:
+
+```ts
+transformResponse: (response) => response.some.deeply.nested.property;
+```
+
+```ts title="GraphQL transformation example"
+export const api = createApi({
+  baseQuery: graphqlBaseQuery({
+    baseUrl: '/graphql',
+  }),
+  endpoints: (builder) => ({
+    getPosts: builder.query({
+      query: () => ({
+        body: gql`
+          query {
+            posts {
+              data {
+                id
+                title
+              }
+            }
+          }
+        `,
+      }),
+      transformResponse: (response) => response.posts.data,
+    }),
+  }),
+});
 ```
 
 ### `keepUnusedDataFor`

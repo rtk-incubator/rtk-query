@@ -48,7 +48,7 @@ export const pokemonApi = createApi({
 export const { hooks } = pokemonApi;
 ```
 
-With `rtk-query`, you define your entire API definition in one place _in most cases_. This is most likely different from what you see with other libraries such as `swr` or `react-query`, and there are several reasons for that. Our perspective is that it's _much_ easier to keep track of how requests, cache invalidation, and general app configuration behave in one central location in comparison to having X number of custom hooks in different files throughout your application.
+With `rtk-query`, you define your entire API definition in one place _in most cases_. This is most likely different from what you see with other libraries such as `swr` or `react-query`, and there are several reasons for that. Our perspective is that it's _much_ easier to keep track of how requests, cache invalidation, and general app configuration behave when they're all in one central location in comparison to having X number of custom hooks in different files throughout your application.
 
 ### Add the service to your store
 

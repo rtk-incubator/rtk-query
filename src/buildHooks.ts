@@ -1,7 +1,14 @@
 import { AnyAction, ThunkDispatch } from '@reduxjs/toolkit';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useDispatch, useSelector, batch } from 'react-redux';
-import { MutationSubState, QueryStatus, QuerySubState, RequestStatusFlags, SubscriptionOptions } from './apiState';
+import {
+  MutationSubState,
+  QueryStatus,
+  QuerySubState,
+  RequestStatusFlags,
+  SubscriptionOptions,
+  QueryKeys,
+} from './apiState';
 import {
   EndpointDefinitions,
   MutationDefinition,
@@ -56,6 +63,12 @@ export type Hooks<Definitions extends EndpointDefinitions> = {
 } &
   TS41Hooks<Definitions>;
 
+export type PrefetchOptions =
+  | { force: boolean }
+  | {
+      ifOlderThan: false | number;
+    };
+
 export function buildHooks<Definitions extends EndpointDefinitions>({
   querySelectors,
   queryActions,
@@ -67,7 +80,12 @@ export function buildHooks<Definitions extends EndpointDefinitions>({
   mutationSelectors: MutationResultSelectors<Definitions, any>;
   mutationActions: MutationActions<Definitions>;
 }) {
-  return { buildQueryHook, buildMutationHook };
+  return { buildQueryHook, buildMutationHook, usePrefetch };
+
+  function usePrefetch<EndpointName extends QueryKeys<Definitions>>(
+    endpointName: EndpointName,
+    options: PrefetchOptions
+  ) {}
 
   function buildQueryHook(name: string): QueryHook<any> {
     return (arg: any, { skip = false, pollingInterval = 0 } = {}) => {

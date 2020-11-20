@@ -3,7 +3,7 @@ import { buildThunks, QueryApi } from './buildThunks';
 import { buildSlice, SliceActions } from './buildSlice';
 import { buildActionMaps, EndpointActions } from './buildActionMaps';
 import { buildSelectors, Selectors } from './buildSelectors';
-import { buildHooks, Hooks } from './buildHooks';
+import { buildHooks, Hooks, PrefetchOptions } from './buildHooks';
 import { buildMiddleware } from './buildMiddleware';
 import {
   EndpointDefinitions,
@@ -12,8 +12,9 @@ import {
   isQueryDefinition,
   isMutationDefinition,
   AssertEntityTypes,
+  QueryArgFrom,
 } from './endpointDefinitions';
-import type { CombinedState, QueryCacheKey, QueryStatePhantomType, RootState } from './apiState';
+import type { CombinedState, QueryCacheKey, QueryKeys, QueryStatePhantomType, RootState } from './apiState';
 import { assertCast, UnionToIntersection } from './tsHelpers';
 
 export { fetchBaseQuery } from './fetchBaseQuery';
@@ -94,6 +95,7 @@ export function createApi<
     actions: {},
     internalActions: sliceActions,
     hooks: {},
+    usePrefetch: () => {},
     reducer,
     middleware,
     injectEndpoints,
@@ -113,12 +115,14 @@ export function createApi<
     sliceActions,
   });
 
-  const { buildQueryHook, buildMutationHook } = buildHooks({
+  const { buildQueryHook, buildMutationHook, usePrefetch } = buildHooks({
     querySelectors: api.selectors as any,
     queryActions: api.actions as any,
     mutationSelectors: api.selectors as any,
     mutationActions: api.actions as any,
   });
+
+  api.usePrefetch = usePrefetch;
 
   function injectEndpoints(inject: Parameters<typeof api.injectEndpoints>[0]) {
     const evaluatedEndpoints = inject.endpoints({
@@ -171,6 +175,11 @@ export interface Api<
   selectors: Selectors<Definitions, RootState<Definitions, EntityTypes, ReducerPath>>;
   middleware: Middleware<{}, RootState<Definitions, string, ReducerPath>, ThunkDispatch<any, any, AnyAction>>;
   hooks: Hooks<Definitions>;
+  // If you actually care about the return value, use useQuery
+  usePrefetch<EndpointName extends QueryKeys<Definitions>>(
+    endpointName: EndpointName,
+    options?: PrefetchOptions
+  ): (arg: QueryArgFrom<Definitions[EndpointName]>, options?: PrefetchOptions) => void;
   injectEndpoints<NewDefinitions extends EndpointDefinitions>(_: {
     endpoints: (build: EndpointBuilder<InternalQueryArgs, EntityTypes>) => NewDefinitions;
     overrideExisting?: boolean;

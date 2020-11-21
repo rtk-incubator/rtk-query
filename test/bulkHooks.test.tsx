@@ -1,11 +1,12 @@
 import * as React from 'react';
 import { configureStore } from '@reduxjs/toolkit';
-import { createApi } from '../src';
+import { createApi } from '@rtk-incubator/rtk-query';
 import { act, fireEvent, render, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { waitMs, withProvider } from './helpers';
 
 describe('hooks tests', () => {
+  // TODO: replace with store helper
   const api = createApi({
     baseQuery: () => waitMs(),
     endpoints: (build) => ({
@@ -74,6 +75,56 @@ describe('hooks tests', () => {
     act(() => refetchMe());
     await waitFor(() => expect(getByTestId('isLoading').textContent).toBe('true'));
     await waitFor(() => expect(getByTestId('isLoading').textContent).toBe('false'));
+  });
+
+  test('useQuery hook sets isLoading and isFetching to the correct states', async () => {
+    let refetchMe: () => void = () => {};
+    function User() {
+      const [value, setValue] = React.useState(0);
+
+      const { isLoading, isFetching, refetch } = api.hooks.getUser.useQuery(22, { skip: value < 1 });
+      refetchMe = refetch;
+      return (
+        <div>
+          <div data-testid="isFetching">{String(isFetching)}</div>
+          <div data-testid="isLoading">{String(isLoading)}</div>
+          <button onClick={() => setValue((val) => val + 1)}>Increment value</button>
+        </div>
+      );
+    }
+
+    const { getByText, getByTestId } = render(<User />, { wrapper: withProvider(store) });
+
+    await waitFor(() => {
+      expect(getByTestId('isLoading').textContent).toBe('false');
+      expect(getByTestId('isFetching').textContent).toBe('false');
+    });
+    fireEvent.click(getByText('Increment value'));
+    // Condition is met, should load
+    await waitFor(() => {
+      expect(getByTestId('isLoading').textContent).toBe('true');
+      expect(getByTestId('isFetching').textContent).toBe('true');
+    });
+    // Make sure the request is done for sure.
+    await waitFor(() => {
+      expect(getByTestId('isLoading').textContent).toBe('false');
+      expect(getByTestId('isFetching').textContent).toBe('false');
+    });
+    fireEvent.click(getByText('Increment value'));
+    // Being that we already have data, isLoading should be false
+    await waitFor(() => {
+      expect(getByTestId('isLoading').textContent).toBe('false');
+      expect(getByTestId('isFetching').textContent).toBe('false');
+    });
+    // Make sure the request is done for sure.
+    await waitFor(() => {
+      expect(getByTestId('isLoading').textContent).toBe('false');
+      expect(getByTestId('isFetching').textContent).toBe('false');
+    });
+    // We call a refetch, should set bothto true
+    act(() => refetchMe());
+    await waitFor(() => expect(getByTestId('isLoading').textContent).toBe('true'));
+    await waitFor(() => expect(getByTestId('isFetching').textContent).toBe('true'));
   });
 
   test('usePrefetch respects `force` arg', async () => {

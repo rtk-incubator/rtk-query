@@ -76,7 +76,6 @@ describe('hooks tests', () => {
     await waitFor(() => expect(getByTestId('isLoading').textContent).toBe('false'));
   });
 
-  // TODO: store helpers - use a fresh store on each test.
   test('usePrefetch respects `force` arg', async () => {
     const { usePrefetch } = api;
     function User() {
@@ -97,6 +96,7 @@ describe('hooks tests', () => {
     const { getByTestId } = render(<User />, { wrapper: withProvider(store) });
 
     userEvent.hover(getByTestId('highPriority'));
+
     expect(api.selectors.getUser(4)(store.getState())).toEqual({
       endpoint: 'getUser',
       internalQueryArgs: 4,
@@ -109,7 +109,63 @@ describe('hooks tests', () => {
       startedTimeStamp: expect.any(Number),
       status: 'pending',
     });
+
     await waitMs();
+
+    expect(api.selectors.getUser(4)(store.getState())).toEqual({
+      data: undefined,
+      endpoint: 'getUser',
+      fulfilledTimeStamp: expect.any(Number),
+      internalQueryArgs: 4,
+      isError: false,
+      isLoading: false,
+      isSuccess: true,
+      isUninitialized: false,
+      originalArgs: 4,
+      requestId: expect.any(String),
+      startedTimeStamp: expect.any(Number),
+      status: 'fulfilled',
+    });
+  });
+
+  test('usePrefetch does not make an additional request if already in the cache and force=false', async () => {
+    const { usePrefetch } = api;
+    function User() {
+      // Load the initial query
+      api.hooks.getUser.useQuery(2);
+      const prefetchUser = usePrefetch('getUser', { force: false });
+
+      return (
+        <div>
+          <button onMouseEnter={() => prefetchUser(2)} data-testid="lowPriority">
+            Low priority user action intent
+          </button>
+        </div>
+      );
+    }
+
+    const { getByTestId } = render(<User />, { wrapper: withProvider(store) });
+
+    // Try to prefetch what we just loaded
+    userEvent.hover(getByTestId('lowPriority'));
+
+    expect(api.selectors.getUser(4)(store.getState())).toEqual({
+      data: undefined,
+      endpoint: 'getUser',
+      fulfilledTimeStamp: expect.any(Number),
+      internalQueryArgs: 4,
+      isError: false,
+      isLoading: false,
+      isSuccess: true,
+      isUninitialized: false,
+      originalArgs: 4,
+      requestId: expect.any(String),
+      startedTimeStamp: expect.any(Number),
+      status: 'fulfilled',
+    });
+
+    await waitMs();
+
     expect(api.selectors.getUser(4)(store.getState())).toEqual({
       data: undefined,
       endpoint: 'getUser',

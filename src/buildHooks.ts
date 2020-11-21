@@ -69,6 +69,8 @@ export type PrefetchOptions =
       ifOlderThan: false | number;
     };
 
+const hasTheForce = (options: any): options is { force: boolean } => options?.force;
+
 export function buildHooks<Definitions extends EndpointDefinitions>({
   querySelectors,
   queryActions,
@@ -84,8 +86,19 @@ export function buildHooks<Definitions extends EndpointDefinitions>({
 
   function usePrefetch<EndpointName extends QueryKeys<Definitions>>(
     endpointName: EndpointName,
-    options: PrefetchOptions
-  ) {}
+    options?: PrefetchOptions
+  ) {
+    const dispatch = useDispatch<ThunkDispatch<any, any, AnyAction>>();
+
+    return useCallback(
+      (arg: any, opts?: PrefetchOptions) => {
+        const force = (hasTheForce(options) && options.force) || (hasTheForce(opts) && opts.force);
+        // need to handle ifOlderThan once merged
+        dispatch(queryActions[endpointName](arg, { forceRefetch: force }));
+      },
+      [endpointName, dispatch, options]
+    );
+  }
 
   function buildQueryHook(name: string): QueryHook<any> {
     return (arg: any, { skip = false, pollingInterval = 0 } = {}) => {

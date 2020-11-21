@@ -1,11 +1,11 @@
 import * as React from 'react';
 import { configureStore } from '@reduxjs/toolkit';
 import { createApi } from '../src';
-import { fireEvent, render, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { waitMs, withProvider } from './helpers';
 
-describe('loading and fetching boolean calculations', () => {
+describe('hooks tests', () => {
   const api = createApi({
     baseQuery: () => waitMs(),
     endpoints: (build) => ({
@@ -19,69 +19,110 @@ describe('loading and fetching boolean calculations', () => {
     middleware: (gDM) => gDM().concat(api.middleware),
   });
 
-  const { usePrefetch } = api;
-
-  test('useQuery hook sets isLoading and isFetching flags', async () => {
+  test('useQuery hook sets isFetching=true whenever a request is in flight', async () => {
     function User() {
       const [value, setValue] = React.useState(0);
 
-      const { isLoading, isFetching } = api.hooks.getUser.useQuery(1, { skip: value < 1 });
-
-      // if older than > a number of ms
-      // user intent can supercede the default config
-      // ifOlderThan = number|false (default: false) - if false, we don't fetch if it is already in the cache
-      // by default, it prefetches nothing if it exists in the cache?
-      // if another component is already mounted with a query with this,
-
-      // if you specify force: true, it will override `ifOlderThan`
-      const prefetchUser = usePrefetch('getUser', { force: false, ifOlderThan: false });
+      const { isFetching } = api.hooks.getUser.useQuery(1, { skip: value < 1 });
 
       return (
         <div>
           <div data-testid="isFetching">{String(isFetching)}</div>
+          <button onClick={() => setValue((val) => val + 1)}>Increment value</button>
+        </div>
+      );
+    }
+
+    const { getByText, getByTestId } = render(<User />, { wrapper: withProvider(store) });
+
+    await waitFor(() => expect(getByTestId('isFetching').textContent).toBe('false'));
+    fireEvent.click(getByText('Increment value'));
+    await waitFor(() => expect(getByTestId('isFetching').textContent).toBe('true'));
+    await waitFor(() => expect(getByTestId('isFetching').textContent).toBe('false'));
+    fireEvent.click(getByText('Increment value'));
+    // Being that nothing has changed in the args, this should never fire.
+    expect(getByTestId('isFetching').textContent).toBe('false');
+  });
+
+  test('useQuery hook sets isLoading=true only on initial request', async () => {
+    let refetchMe: () => void = () => {};
+    function User() {
+      const [value, setValue] = React.useState(0);
+
+      const { isLoading, refetch } = api.hooks.getUser.useQuery(2, { skip: value < 1 });
+      refetchMe = refetch;
+      return (
+        <div>
           <div data-testid="isLoading">{String(isLoading)}</div>
           <button onClick={() => setValue((val) => val + 1)}>Increment value</button>
-          {/* force defaults to false */}
-          <button onMouseEnter={() => prefetchUser(2, { ifOlderThan: 35 })}>Low priority user action intent</button>
-          <button onMouseEnter={() => prefetchUser(2, { force: true })} data-testid="hover">
+        </div>
+      );
+    }
+
+    const { getByText, getByTestId } = render(<User />, { wrapper: withProvider(store) });
+
+    // Being that we skipped the initial request on mount, this should be false
+    await waitFor(() => expect(getByTestId('isLoading').textContent).toBe('false'));
+    fireEvent.click(getByText('Increment value'));
+    // Condition is met, should load
+    await waitFor(() => expect(getByTestId('isLoading').textContent).toBe('true'));
+    await waitFor(() => expect(getByTestId('isLoading').textContent).toBe('false')); // Make sure the original loading has completed.
+    fireEvent.click(getByText('Increment value'));
+    // Being that we already have data, isLoading should be false
+    await waitFor(() => expect(getByTestId('isLoading').textContent).toBe('false'));
+    // We call a refetch, should set to true
+    act(() => refetchMe());
+    await waitFor(() => expect(getByTestId('isLoading').textContent).toBe('true'));
+    await waitFor(() => expect(getByTestId('isLoading').textContent).toBe('false'));
+  });
+
+  // TODO: store helpers - use a fresh store on each test.
+  test('usePrefetch respects `force` arg', async () => {
+    const { usePrefetch } = api;
+    function User() {
+      const prefetchUser = usePrefetch('getUser', { force: true });
+
+      return (
+        <div>
+          <button onMouseEnter={() => prefetchUser(4, { ifOlderThan: 35 })} data-testid="lowPriority">
+            Low priority user action intent
+          </button>
+          <button onMouseEnter={() => prefetchUser(4, { force: true })} data-testid="highPriority">
             High priority action intent - Prefetch User 2
           </button>
         </div>
       );
     }
 
-    // The intention of prefetch is to make data 'fresh' before the user navigates to the new content
-    /**
-     * Prefetch in these scenarios:
-     * 1. Hovering over a navigation element
-     * 2. Hovering over a list element that is a link
-     * 3. During pagination
-     * 4. Could possibly handled automatically due to presence, after the page has rendered -
-     *
-     * Scenario:
-     * We prefetch something that changes rapidly
-     * When the user mounts the next component with the intent of having fresh data, it could be stale
-     * We would need a `refetchOnMount` for this to be fully fleshed out
-     *
-     */
+    const { getByTestId } = render(<User />, { wrapper: withProvider(store) });
 
-    const { getByText, getByTestId, debug } = render(<User />, { wrapper: withProvider(store) });
-
-    debug();
-
-    userEvent.hover(getByTestId('hover'));
-
-    // Being that we skipped the initial request on mount, both values should be false
-    await waitFor(() => expect(getByTestId('isFetching').textContent).toBe('false'));
-    await waitFor(() => expect(getByTestId('isLoading').textContent).toBe('false'));
-    fireEvent.click(getByText('Increment value'));
-    // Condition is met, both should be loading
-    await waitFor(() => expect(getByTestId('isLoading').textContent).toBe('true'));
-    await waitFor(() => expect(getByTestId('isFetching').textContent).toBe('true'));
-    fireEvent.click(getByText('Increment value'));
-    // Being that we already have data, isLoading should be false
-    await waitFor(() => expect(getByTestId('isFetching').textContent).toBe('true'));
-    await waitFor(() => expect(getByTestId('isLoading').textContent).toBe('false'));
-    await waitFor(() => expect(getByTestId('isFetching').textContent).toBe('false'));
+    userEvent.hover(getByTestId('highPriority'));
+    expect(api.selectors.getUser(4)(store.getState())).toEqual({
+      endpoint: 'getUser',
+      internalQueryArgs: 4,
+      isError: false,
+      isLoading: true,
+      isSuccess: false,
+      isUninitialized: false,
+      originalArgs: 4,
+      requestId: expect.any(String),
+      startedTimeStamp: expect.any(Number),
+      status: 'pending',
+    });
+    await waitMs();
+    expect(api.selectors.getUser(4)(store.getState())).toEqual({
+      data: undefined,
+      endpoint: 'getUser',
+      fulfilledTimeStamp: expect.any(Number),
+      internalQueryArgs: 4,
+      isError: false,
+      isLoading: false,
+      isSuccess: true,
+      isUninitialized: false,
+      originalArgs: 4,
+      requestId: expect.any(String),
+      startedTimeStamp: expect.any(Number),
+      status: 'fulfilled',
+    });
   });
 });

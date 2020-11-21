@@ -147,7 +147,6 @@ export function createApi<
         api.selectors[endpoint] = buildQuerySelector(endpoint, definition);
         api.actions[endpoint] = buildQueryAction(endpoint, definition);
         const useQuery = buildQueryHook(endpoint);
-        api.usePrefetch = usePrefetch;
         api.hooks[endpoint] = { useQuery };
         (api.hooks as any)[`use${capitalize(endpoint)}Query`] = useQuery;
       } else if (isMutationDefinition(definition)) {

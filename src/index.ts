@@ -15,7 +15,7 @@ import {
   QueryArgFrom,
 } from './endpointDefinitions';
 import type { CombinedState, QueryCacheKey, QueryKeys, QueryStatePhantomType, RootState } from './apiState';
-import { assertCast, UnionToIntersection } from './tsHelpers';
+import { assertCast, BaseQueryArg, UnionToIntersection } from './tsHelpers';
 
 export { fetchBaseQuery } from './fetchBaseQuery';
 export { QueryStatus } from './apiState';
@@ -34,7 +34,7 @@ function defaultSerializeQueryArgs(args: any, endpoint: string) {
 const IS_DEV = () => typeof process !== 'undefined' && process.env.NODE_ENV === 'development';
 
 export function createApi<
-  InternalQueryArgs,
+  BaseQuery extends (args: any, api: QueryApi) => any,
   Definitions extends EndpointDefinitions,
   ReducerPath extends string = 'api',
   EntityTypes extends string = never
@@ -46,14 +46,16 @@ export function createApi<
   endpoints,
   keepUnusedDataFor = 60,
 }: {
-  baseQuery(args: InternalQueryArgs, api: QueryApi): any;
+  baseQuery: BaseQuery;
   entityTypes?: readonly EntityTypes[];
   reducerPath?: ReducerPath;
-  serializeQueryArgs?: SerializeQueryArgs<InternalQueryArgs>;
-  endpoints(build: EndpointBuilder<InternalQueryArgs, EntityTypes>): Definitions;
+  serializeQueryArgs?: SerializeQueryArgs<BaseQueryArg<BaseQuery>>;
+  endpoints(build: EndpointBuilder<BaseQuery, EntityTypes>): Definitions;
   keepUnusedDataFor?: number;
-}): Api<InternalQueryArgs, Definitions, ReducerPath, EntityTypes> {
+}): Api<BaseQuery, Definitions, ReducerPath, EntityTypes> {
   type State = CombinedState<Definitions, EntityTypes>;
+
+  type InternalQueryArgs = BaseQueryArg<BaseQuery>;
 
   assertCast<InternalSerializeQueryArgs<InternalQueryArgs>>(serializeQueryArgs);
 
@@ -89,7 +91,7 @@ export function createApi<
     assertEntityType,
   });
 
-  const api: Api<InternalQueryArgs, {}, ReducerPath, EntityTypes> = {
+  const api: Api<BaseQuery, {}, ReducerPath, EntityTypes> = {
     reducerPath,
     selectors: {},
     actions: {},
@@ -164,7 +166,7 @@ export function createApi<
 }
 
 export interface Api<
-  InternalQueryArgs,
+  BaseQuery extends (arg: any, ...args: any[]) => any,
   Definitions extends EndpointDefinitions,
   ReducerPath extends string,
   EntityTypes extends string
@@ -182,15 +184,15 @@ export interface Api<
     options?: PrefetchOptions
   ): (arg: QueryArgFrom<Definitions[EndpointName]>, options?: PrefetchOptions) => void;
   injectEndpoints<NewDefinitions extends EndpointDefinitions>(_: {
-    endpoints: (build: EndpointBuilder<InternalQueryArgs, EntityTypes>) => NewDefinitions;
+    endpoints: (build: EndpointBuilder<BaseQuery, EntityTypes>) => NewDefinitions;
     overrideExisting?: boolean;
-  }): Api<InternalQueryArgs, Definitions & NewDefinitions, ReducerPath, EntityTypes>;
+  }): Api<BaseQuery, Definitions & NewDefinitions, ReducerPath, EntityTypes>;
 }
 
 export type ApiWithInjectedEndpoints<
   ApiDefinition extends Api<any, any, any, any>,
-  Injections extends ApiDefinition extends Api<infer I, any, infer R, infer E>
-    ? [Api<I, any, R, E>, ...Api<I, any, R, E>[]]
+  Injections extends ApiDefinition extends Api<infer B, any, infer R, infer E>
+    ? [Api<B, any, R, E>, ...Api<B, any, R, E>[]]
     : never
 > = ApiDefinition & {
   actions: Partial<UnionToIntersection<Injections[number]['actions']>>;

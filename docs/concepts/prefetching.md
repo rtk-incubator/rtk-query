@@ -79,24 +79,24 @@ function User() {
 
 If you're not using the `usePrefetch` hook, you can recreate the same behavior easily on your own in any framework.
 
+When dispatching the `prefetchThunk` as shown below you will see the same exact behavior as [described here](#what-to-expect-when-you-call-the-callback).
+
 ```js title="Non-hook prefetching example"
-store.dispatch(api.internalActions.prefetchThunk(endpointName, arg, { force: false }));
+store.dispatch(api.internalActions.prefetchThunk(endpointName, arg, { force: false, ifOlderThan: 10 }));
 ```
 
-When dispatching the `prefetchThunk` you will see the same exact behavior as [described here](#what-to-expect-when-you-call-the-callback).
+You can also dispatch the query action, but you would be responsible for implementing any additional logic.
 
 ```js title="Alternate method of manual prefetching"
 dispatch(api.queryActions[endpointName](arg, { forceRefetch: true }));
 ```
-
-If you use this method, you would be responsible for implementing any additional logic.
 
 ### Example
 
 This is a very basic example that shows how you can prefetch when a user hovers over the next arrow. This is probably not the optimal solution, because if they hover, click, then change pages without moving their mouse, we wouldn't know to prefetch the next page because we wouldn't see the next `onMouseEnter` event. In this case, you would need to handle this on your own. You could also consider automatically prefetching the next page...
 
 <iframe
-  src="https://codesandbox.io/embed/concepts-prefetching-h594j?fontsize=14&hidenavigation=1&theme=dark"
+  src="https://codesandbox.io/embed/concepts-prefetching-h594j?fontsize=12&hidenavigation=1&theme=dark"
   style={{ width: '100%', height: '600px', border: 0, borderRadius: '4px', overflow: 'hidden' }}
   title="rtk-query-react-hooks-usePrefetch-example"
   allow="geolocation; microphone; camera; midi; vr; accelerometer; gyroscope; payment; ambient-light-sensor; encrypted-media; usb"
@@ -108,7 +108,7 @@ This is a very basic example that shows how you can prefetch when a user hovers 
 Picking up on our last example, we automatically `prefetch` the next page, giving the appearance of no network delay.
 
 <iframe
-  src="https://codesandbox.io/embed/concepts-prefetching-automatic-2id61?fontsize=14&hidenavigation=1&theme=dark"
+  src="https://codesandbox.io/embed/concepts-prefetching-automatic-2id61?fontsize=12&hidenavigation=1&theme=dark"
   style={{ width: '100%', height: '600px', border: 0, borderRadius: '4px', overflow: 'hidden' }}
   title="rtk-query-react-hooks-usePrefetch-example"
   allow="geolocation; microphone; camera; midi; vr; accelerometer; gyroscope; payment; ambient-light-sensor; encrypted-media; usb"
@@ -120,9 +120,9 @@ Picking up on our last example, we automatically `prefetch` the next page, givin
 After the first query initialized by `useQuery` runs, we automatically fetch all remaining pages.
 
 <iframe
-  src="https://codesandbox.io/embed/concepts-prefetching-automatic-waterfall-ihe5e?fontsize=14&hidenavigation=1&theme=dark"
+  src="https://codesandbox.io/embed/concepts-prefetching-automatic-waterfall-ihe5e?fontsize=12&hidenavigation=1&theme=dark&module=%2Fsrc%2Ffeatures%2Fposts%2FPostsManager.tsx"
   style={{ width: '100%', height: '600px', border: 0, borderRadius: '4px', overflow: 'hidden' }}
-  title="rtk-query-react-hooks-usePrefetch-example"
+     title="Concepts Prefetching Automatic Waterfall"
   allow="geolocation; microphone; camera; midi; vr; accelerometer; gyroscope; payment; ambient-light-sensor; encrypted-media; usb"
   sandbox="allow-modals allow-forms allow-popups allow-scripts allow-same-origin"
 ></iframe>

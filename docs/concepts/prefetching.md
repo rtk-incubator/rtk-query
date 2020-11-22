@@ -21,7 +21,7 @@ The `usePrefetch` hook accepts two parameters: the first is the key of a query a
 
 1. `ifOlderThan` - (default: `false` | `number`) - _number is value in seconds_
 
-   - If specified, will only fetch if the last `fulfilledTimeStamp` is before the given value
+   - If specified, will only fetch if the last `fulfilledTimeStamp` is greater than the given value
 
 2. `force`
 

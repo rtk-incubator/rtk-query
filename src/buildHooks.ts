@@ -111,8 +111,11 @@ export function buildHooks<Definitions extends EndpointDefinitions>({
         } else if (maxAge) {
           const selectedVal = querySelectors[endpointName](arg)(latestStateRef.current);
           const lastFulfilled = selectedVal?.fulfilledTimeStamp;
-          if (!lastFulfilled) return;
-          const shouldRetrigger = (Number(new Date()) - Number(new Date(lastFulfilled))) / 1000 > maxAge;
+          if (!lastFulfilled) {
+            dispatch(queryAction);
+            return;
+          }
+          const shouldRetrigger = (Number(new Date()) - Number(new Date(lastFulfilled))) / 1000 >= maxAge;
           if (shouldRetrigger) {
             dispatch(queryAction);
           }

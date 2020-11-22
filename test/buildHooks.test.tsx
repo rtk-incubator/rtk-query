@@ -2,7 +2,7 @@ import * as React from 'react';
 import { createApi, QueryStatus } from '@rtk-incubator/rtk-query';
 import { act, fireEvent, render, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { setupApiStore, waitMs } from './helpers';
+import { DEFAULT_DELAY_MS, setupApiStore, waitMs } from './helpers';
 
 const api = createApi({
   baseQuery: () => waitMs(),
@@ -167,7 +167,7 @@ describe('hooks tests', () => {
       status: QueryStatus.pending,
     });
 
-    await waitMs(400);
+    await waitMs(DEFAULT_DELAY_MS + 10);
 
     expect(api.selectors.getUser(4)(storeRef.store.getState())).toEqual({
       data: undefined,
@@ -299,6 +299,72 @@ describe('hooks tests', () => {
       requestId: expect.any(String),
       startedTimeStamp: expect.any(Number),
       status: QueryStatus.fulfilled,
+    });
+  });
+
+  test('usePrefetch returns the last success result when `ifOlderThan` evalutes to `false`', async () => {
+    const { usePrefetch } = api;
+    const USER_ID = 2;
+
+    function User() {
+      // Load the initial query
+      const { isFetching } = api.hooks.getUser.useQuery(USER_ID);
+      const prefetchUser = usePrefetch('getUser', { ifOlderThan: 10 });
+
+      return (
+        <div>
+          <div data-testid="isFetching">{String(isFetching)}</div>
+          <button onMouseEnter={() => prefetchUser(USER_ID)} data-testid="lowPriority">
+            Low priority user action intent
+          </button>
+        </div>
+      );
+    }
+
+    const { getByTestId } = render(<User />, { wrapper: storeRef.wrapper });
+
+    await waitFor(() => expect(getByTestId('isFetching').textContent).toBe('false'));
+    await waitMs();
+
+    // Get a snapshot of the last result
+    const latestQueryData = api.selectors.getUser(USER_ID)(storeRef.store.getState());
+
+    userEvent.hover(getByTestId('lowPriority'));
+    //  Serve up the result from the cache being that the condition wasn't met
+    expect(api.selectors.getUser(USER_ID)(storeRef.store.getState())).toEqual(latestQueryData);
+  });
+
+  test('usePrefetch executes a query even if conditions fail when the cache is empty', async () => {
+    const { usePrefetch } = api;
+    const USER_ID = 2;
+
+    function User() {
+      const prefetchUser = usePrefetch('getUser', { ifOlderThan: 10 });
+
+      return (
+        <div>
+          <button onMouseEnter={() => prefetchUser(USER_ID)} data-testid="lowPriority">
+            Low priority user action intent
+          </button>
+        </div>
+      );
+    }
+
+    const { getByTestId } = render(<User />, { wrapper: storeRef.wrapper });
+
+    userEvent.hover(getByTestId('lowPriority'));
+
+    expect(api.selectors.getUser(USER_ID)(storeRef.store.getState())).toEqual({
+      endpoint: 'getUser',
+      internalQueryArgs: USER_ID,
+      isError: false,
+      isLoading: true,
+      isSuccess: false,
+      isUninitialized: false,
+      originalArgs: USER_ID,
+      requestId: expect.any(String),
+      startedTimeStamp: expect.any(Number),
+      status: 'pending',
     });
   });
 });

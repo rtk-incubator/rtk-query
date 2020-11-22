@@ -85,3 +85,13 @@ Picking up on our last example, we automatically `prefetch` the next page, givin
   allow="geolocation; microphone; camera; midi; vr; accelerometer; gyroscope; payment; ambient-light-sensor; encrypted-media; usb"
   sandbox="allow-modals allow-forms allow-popups allow-scripts allow-same-origin"
 ></iframe>
+
+#### Prefetching all known pages
+
+<iframe
+  src="https://codesandbox.io/embed/concepts-prefetching-automatic-waterfall-ihe5e?fontsize=14&hidenavigation=1&theme=dark"
+  style={{ width: '100%', height: '600px', border: 0, borderRadius: '4px', overflow: 'hidden' }}
+  title="rtk-query-react-hooks-usePrefetch-example"
+  allow="geolocation; microphone; camera; midi; vr; accelerometer; gyroscope; payment; ambient-light-sensor; encrypted-media; usb"
+  sandbox="allow-modals allow-forms allow-popups allow-scripts allow-same-origin"
+></iframe>

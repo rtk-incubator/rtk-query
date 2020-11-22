@@ -104,21 +104,25 @@ export function buildHooks<Definitions extends EndpointDefinitions>({
         const force = hasTheForce(opts) ? opts.force : hasTheForce(options) ? options.force : false;
         const maxAge = hasMaxAge(opts) ? opts.ifOlderThan : hasMaxAge(options) ? options.ifOlderThan : false;
 
-        let queryAction = queryActions[endpointName](arg, { forceRefetch: true });
+        const queryAction = (force: boolean = true) => queryActions[endpointName](arg, { forceRefetch: force });
+
+        const latestStateValue = querySelectors[endpointName](arg)(latestStateRef.current);
 
         if (force) {
-          dispatch(queryAction);
+          dispatch(queryAction());
         } else if (maxAge) {
-          const selectedVal = querySelectors[endpointName](arg)(latestStateRef.current);
-          const lastFulfilled = selectedVal?.fulfilledTimeStamp;
-          if (!lastFulfilled) {
-            dispatch(queryAction);
+          const lastFulfilledTs = latestStateValue?.fulfilledTimeStamp;
+          if (!lastFulfilledTs) {
+            dispatch(queryAction());
             return;
           }
-          const shouldRetrigger = (Number(new Date()) - Number(new Date(lastFulfilled))) / 1000 >= maxAge;
+          const shouldRetrigger = (Number(new Date()) - Number(new Date(lastFulfilledTs))) / 1000 >= maxAge;
           if (shouldRetrigger) {
-            dispatch(queryAction);
+            dispatch(queryAction());
           }
+        } else {
+          // If prefetching with no options, just let it try
+          dispatch(queryAction(false));
         }
       },
       [endpointName, dispatch, options]

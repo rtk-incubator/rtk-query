@@ -169,7 +169,7 @@ describe('hooks tests', () => {
 
     await waitMs(DEFAULT_DELAY_MS + 10);
 
-    expect(api.selectors.getUser(4)(storeRef.store.getState())).toEqual({
+    expect(api.selectors.getUser(USER_ID)(storeRef.store.getState())).toEqual({
       data: undefined,
       endpoint: 'getUser',
       fulfilledTimeStamp: expect.any(Number),

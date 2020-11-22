@@ -269,7 +269,6 @@ describe('hooks tests', () => {
     await waitMs(1100);
 
     userEvent.hover(getByTestId('lowPriority'));
-    await waitMs(20);
     expect(api.selectors.getUser(USER_ID)(storeRef.store.getState())).toEqual({
       data: undefined,
       endpoint: 'getUser',
@@ -285,7 +284,7 @@ describe('hooks tests', () => {
       status: QueryStatus.pending,
     });
 
-    await waitMs();
+    await waitFor(() => expect(getByTestId('isFetching').textContent).toBe('false'));
 
     expect(api.selectors.getUser(USER_ID)(storeRef.store.getState())).toEqual({
       data: undefined,

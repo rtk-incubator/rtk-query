@@ -1,6 +1,6 @@
 import { AnyAction, ThunkDispatch } from '@reduxjs/toolkit';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useDispatch, useSelector, batch } from 'react-redux';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useDispatch, useSelector, batch, useStore } from 'react-redux';
 import {
   MutationSubState,
   QueryStatus,
@@ -90,7 +90,14 @@ export function buildHooks<Definitions extends EndpointDefinitions>({
     options?: PrefetchOptions
   ) {
     const dispatch = useDispatch<ThunkDispatch<any, any, AnyAction>>();
-    const currentState = useSelector((state) => state);
+    const store = useStore();
+    const latestStateRef = useRef(store.getState());
+
+    useLayoutEffect(() => {
+      return store.subscribe(() => {
+        latestStateRef.current = store.getState();
+      });
+    }, [store]);
 
     return useCallback(
       (arg: any, opts: PrefetchOptions = { force: false, ifOlderThan: false }) => {
@@ -102,7 +109,7 @@ export function buildHooks<Definitions extends EndpointDefinitions>({
         if (force) {
           dispatch(queryAction);
         } else if (maxAge) {
-          const selectedVal = querySelectors[endpointName](arg)(currentState);
+          const selectedVal = querySelectors[endpointName](arg)(latestStateRef.current);
           const lastFulfilled = selectedVal?.fulfilledTimeStamp;
           if (!lastFulfilled) return;
           const shouldRetrigger = (Number(new Date()) - Number(new Date(lastFulfilled))) / 1000 > maxAge;
@@ -111,7 +118,7 @@ export function buildHooks<Definitions extends EndpointDefinitions>({
           }
         }
       },
-      [endpointName, dispatch, options, currentState]
+      [endpointName, dispatch, options]
     );
   }
 

@@ -18,7 +18,26 @@ There are a handful of situations that you may want to do this, but some very co
 
 ### Prefetching with React Hooks
 
-The `usePrefetch` hook accepts two parameters: the first is the key of a query action, and the second is an object of two optional parameters:
+Similar to the [`useMutation`](./mutations) hook, the `usePrefetch` hook will not run automatically — it returns a `callback function`.
+
+It accepts two arguments: the first is the key of a query action that you [defined in your API service](../api/createApi#endpoints), and the second is an object of two optional parameters:
+
+```ts title="usePrefetch Signature"
+export type PrefetchOptions =
+  | { force?: boolean }
+  | {
+      ifOlderThan?: false | number;
+    };
+
+usePrefetch<EndpointName extends QueryKeys<Definitions>>(
+    endpointName: EndpointName,
+    options?: PrefetchOptions
+  ): (arg: QueryArgFrom<Definitions[EndpointName]>, options?: PrefetchOptions) => void;
+```
+
+#### Customizing the hook behavior
+
+You can specify these prefetch options when declaring the hook or at the call site. The call site will take priority over the defaults.
 
 1. `ifOlderThan` - (default: `false` | `number`) - _number is value in seconds_
 
@@ -28,15 +47,18 @@ The `usePrefetch` hook accepts two parameters: the first is the key of a query a
 
    - If `force: true`, it will ignore the `ifOlderThan` value if it is set and the query will be run even if it exists in the cache.
 
-#### Behavior of the hook
+#### What to expect when you call the `callback`
 
-1. If `force: true` is set during the declaration or at the call site, the query will be run no matter what. The one exception to that is if the same query is already in-flight.
-2. If no options are specified and the query exists in the cache, the query will not be performed.
-3. If no options are specified and the query _does not exist_ in the cache, the query will be performed.
-   - `isLoading` will be true, `isFetching` will be true
-4. If `ifOlderThan` is specified but evaluates to false and the query is in the cache, the query will not be performed.
-5. If `ifOlderThan` is specified and evaluates to true, the query will be performed even if there is an existing cache entry.
-   - `isLoading` will be false, `isFetching` will be true
+1. The `callback` _always_ returns void.
+2. If `force: true` is set during the declaration or at the call site, the query will be run no matter what. The one exception to that is if the same query is already in-flight.
+3. If no options are specified and the query exists in the cache, the query will not be performed.
+4. If no options are specified and the query _does not exist_ in the cache, the query will be performed.
+   - **Assuming** you have a `useQuery` hook in the tree that is subscribed to the same query that you are prefetching:
+     - `useQuery` will return `{isLoading: true, isFetching: true, ...rest`}
+5. If `ifOlderThan` is specified but evaluates to false and the query is in the cache, the query will not be performed.
+6. If `ifOlderThan` is specified and evaluates to true, the query will be performed even if there is an existing cache entry.
+   - **Assuming** you have a `useQuery` hook in the tree that is subscribed to the same query that you are prefetching:
+     - `useQuery` will return `{isLoading: false, isFetching: true, ...rest`}
 
 ```ts title="usePrefetch Example"
 function User() {
@@ -57,11 +79,17 @@ function User() {
 
 If you're not using the `usePrefetch` hook, you can recreate the same behavior easily on your own in any framework.
 
-```js title="Manual prefetch example"
+```js title="Non-hook prefetching example"
+store.dispatch(api.internalActions.prefetchThunk(endpointName, arg, { force: false }));
+```
+
+When dispatching the `prefetchThunk` you will see the same exact behavior as [described here](#what-to-expect-when-you-call-the-callback).
+
+```js title="Alternate method of manual prefetching"
 dispatch(api.queryActions[endpointName](arg, { forceRefetch: true }));
 ```
 
-The main difference is that the `usePrefetch` hook executes a bit of logic that evaluates the last fulfilled timestamp, presence in the cache, and observance of the `force` parameter. There is no magic here, and you can most likely recreate this same behavior in any framework.
+If you use this method, you would be responsible for implementing any additional logic.
 
 ### Example
 
@@ -87,7 +115,9 @@ Picking up on our last example, we automatically `prefetch` the next page, givin
   sandbox="allow-modals allow-forms allow-popups allow-scripts allow-same-origin"
 ></iframe>
 
-#### Prefetching all known pages
+#### Prefetching All Known Pages
+
+After the first query initialized by `useQuery` runs, we automatically fetch all remaining pages.
 
 <iframe
   src="https://codesandbox.io/embed/concepts-prefetching-automatic-waterfall-ihe5e?fontsize=14&hidenavigation=1&theme=dark"

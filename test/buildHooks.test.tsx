@@ -10,6 +10,9 @@ const api = createApi({
     getUser: build.query<any, number>({
       query: (obj) => obj,
     }),
+    updateUser: build.mutation<any, { name: string }>({
+      query: (update) => ({ url: '', method: 'PUT', body: update }),
+    }),
   }),
 });
 const storeRef = setupApiStore(api);
@@ -128,6 +131,26 @@ describe('hooks tests', () => {
     });
   });
 
+  test('useMutation hook sets and unsets the `isLoading` flag when running', async () => {
+    function User() {
+      const [updateUser, { isLoading }] = api.hooks.updateUser.useMutation();
+
+      return (
+        <div>
+          <div data-testid="isLoading">{String(isLoading)}</div>
+          <button onClick={() => updateUser({ name: 'Banana' })}>Update User</button>
+        </div>
+      );
+    }
+
+    const { getByText, getByTestId } = render(<User />, { wrapper: storeRef.wrapper });
+
+    await waitFor(() => expect(getByTestId('isLoading').textContent).toBe('false'));
+    fireEvent.click(getByText('Update User'));
+    await waitFor(() => expect(getByTestId('isLoading').textContent).toBe('true'));
+    await waitFor(() => expect(getByTestId('isLoading').textContent).toBe('false'));
+  });
+
   test('usePrefetch respects `force` arg', async () => {
     const { usePrefetch } = api;
     const USER_ID = 4;
@@ -167,7 +190,7 @@ describe('hooks tests', () => {
       status: QueryStatus.pending,
     });
 
-    await waitMs(DEFAULT_DELAY_MS + 10);
+    await waitMs(DEFAULT_DELAY_MS + 100);
 
     expect(api.selectors.getUser(USER_ID)(storeRef.store.getState())).toEqual({
       data: undefined,

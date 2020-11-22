@@ -14,6 +14,7 @@ There are a handful of situations that you may want to do this, but some very co
 1. User hovers over a navigation element
 2. User hovers over a list element that is a link
 3. User hovers over a next pagination button
+4. User navigates to a page and you know that some components down the tree will require said data. This way, you can prevent fetching waterfalls.
 
 ### Prefetching with React Hooks
 
@@ -30,7 +31,7 @@ The `usePrefetch` hook accepts two parameters: the first is the key of a query a
 #### Behavior of the hook
 
 1. If `force: true` is set during the declaration or at the call site, the query will be run no matter what. The one exception to that is if the same query is already in-flight.
-2. If no options are specified and the query exists in the cache, the query will be performed.
+2. If no options are specified and the query exists in the cache, the query will not be performed.
 3. If no options are specified and the query _does not exist_ in the cache, the query will be performed.
    - `isLoading` will be true, `isFetching` will be true
 4. If `ifOlderThan` is specified but evaluates to false and the query is in the cache, the query will not be performed.

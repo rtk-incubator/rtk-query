@@ -246,12 +246,12 @@ describe('hooks tests', () => {
 
   test('usePrefetch respects `ifOlderThan` when it evaluates to `true`', async () => {
     const { usePrefetch } = api;
-    const USER_ID = 2;
+    const USER_ID = 47;
 
     function User() {
       // Load the initial query
       const { isFetching } = api.hooks.getUser.useQuery(USER_ID);
-      const prefetchUser = usePrefetch('getUser', { ifOlderThan: 1 });
+      const prefetchUser = usePrefetch('getUser', { ifOlderThan: 0.2 });
 
       return (
         <div>
@@ -266,8 +266,11 @@ describe('hooks tests', () => {
     const { getByTestId } = render(<User />, { wrapper: storeRef.wrapper });
 
     await waitFor(() => expect(getByTestId('isFetching').textContent).toBe('false'));
-    await waitMs(1100);
 
+    // Wait 400ms, making it respect ifOlderThan
+    await waitMs(400);
+
+    // This should run the query being that we're past the threshold
     userEvent.hover(getByTestId('lowPriority'));
     expect(api.selectors.getUser(USER_ID)(storeRef.store.getState())).toEqual({
       data: undefined,

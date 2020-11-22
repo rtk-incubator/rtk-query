@@ -70,7 +70,36 @@ export function createApi<
     return entity;
   };
 
-  const { queryThunk, mutationThunk } = buildThunks({ baseQuery, reducerPath, endpointDefinitions });
+  const uninitialized: any = () => {
+    throw Error('called before initialization');
+  };
+
+  const api: Api<BaseQuery, {}, ReducerPath, EntityTypes> = {
+    reducerPath,
+    selectors: {},
+    actions: {},
+    thunks: {
+      prefetchThunk: uninitialized,
+    },
+    hooks: {},
+    internalActions: {
+      removeQueryResult: uninitialized,
+      unsubscribeMutationResult: uninitialized,
+      unsubscribeQueryResult: uninitialized,
+      updateSubscriptionOptions: uninitialized,
+    },
+    usePrefetch: () => () => {},
+    reducer: uninitialized,
+    middleware: uninitialized,
+    injectEndpoints,
+  };
+
+  const { queryThunk, mutationThunk, prefetchThunk } = buildThunks({
+    baseQuery,
+    reducerPath,
+    endpointDefinitions,
+    api,
+  });
 
   const { reducer, actions: sliceActions } = buildSlice({
     endpointDefinitions,
@@ -80,6 +109,9 @@ export function createApi<
     assertEntityType,
   });
   assertCast<Reducer<State & QueryStatePhantomType<ReducerPath>, AnyAction>>(reducer);
+
+  Object.assign(api.internalActions, sliceActions);
+  api.reducer = reducer;
 
   const { middleware } = buildMiddleware({
     reducerPath,
@@ -91,17 +123,7 @@ export function createApi<
     assertEntityType,
   });
 
-  const api: Api<BaseQuery, {}, ReducerPath, EntityTypes> = {
-    reducerPath,
-    selectors: {},
-    actions: {},
-    internalActions: sliceActions,
-    hooks: {},
-    usePrefetch: () => () => {},
-    reducer,
-    middleware,
-    injectEndpoints,
-  };
+  api.middleware = middleware;
 
   const { buildQuerySelector, buildMutationSelector } = buildSelectors({
     serializeQueryArgs,
@@ -122,9 +144,11 @@ export function createApi<
     queryActions: api.actions as any,
     mutationSelectors: api.selectors as any,
     mutationActions: api.actions as any,
+    thunks: api.thunks as any,
   });
 
   api.usePrefetch = usePrefetch;
+  api.thunks.prefetchThunk = prefetchThunk;
 
   function injectEndpoints(inject: Parameters<typeof api.injectEndpoints>[0]) {
     const evaluatedEndpoints = inject.endpoints({
@@ -164,6 +188,9 @@ export function createApi<
   return api.injectEndpoints({ endpoints });
 }
 
+type BuiltinThunks = {
+  prefetchThunk: any;
+};
 export interface Api<
   BaseQuery extends (arg: any, ...args: any[]) => any,
   Definitions extends EndpointDefinitions,
@@ -172,6 +199,7 @@ export interface Api<
 > {
   reducerPath: ReducerPath;
   actions: EndpointActions<Definitions>;
+  thunks: BuiltinThunks;
   internalActions: SliceActions;
   reducer: Reducer<CombinedState<Definitions, EntityTypes> & QueryStatePhantomType<ReducerPath>, AnyAction>;
   selectors: Selectors<Definitions, RootState<Definitions, EntityTypes, ReducerPath>>;

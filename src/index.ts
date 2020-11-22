@@ -69,7 +69,27 @@ export function createApi<
     return entity;
   };
 
-  const { queryThunk, mutationThunk } = buildThunks({ baseQuery, reducerPath, endpointDefinitions });
+  const uninitialized: any = () => {
+    throw Error('called before initialization');
+  };
+
+  const api: Api<BaseQuery, {}, ReducerPath, EntityTypes> = {
+    reducerPath,
+    selectors: {},
+    actions: {},
+    hooks: {},
+    internalActions: {
+      removeQueryResult: uninitialized,
+      unsubscribeMutationResult: uninitialized,
+      unsubscribeQueryResult: uninitialized,
+      updateSubscriptionOptions: uninitialized,
+    },
+    reducer: uninitialized,
+    middleware: uninitialized,
+    injectEndpoints,
+  };
+
+  const { queryThunk, mutationThunk } = buildThunks({ baseQuery, reducerPath, endpointDefinitions, api });
 
   const { reducer, actions: sliceActions } = buildSlice({
     endpointDefinitions,
@@ -79,6 +99,8 @@ export function createApi<
     assertEntityType,
   });
   assertCast<Reducer<State & QueryStatePhantomType<ReducerPath>, AnyAction>>(reducer);
+  Object.assign(api.internalActions, sliceActions);
+  api.reducer = reducer;
 
   const { middleware } = buildMiddleware({
     reducerPath,
@@ -89,17 +111,7 @@ export function createApi<
     sliceActions,
     assertEntityType,
   });
-
-  const api: Api<BaseQuery, {}, ReducerPath, EntityTypes> = {
-    reducerPath,
-    selectors: {},
-    actions: {},
-    internalActions: sliceActions,
-    hooks: {},
-    reducer,
-    middleware,
-    injectEndpoints,
-  };
+  api.middleware = middleware;
 
   const { buildQuerySelector, buildMutationSelector } = buildSelectors({
     serializeQueryArgs,

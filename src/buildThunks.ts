@@ -1,5 +1,5 @@
-import { createAsyncThunk } from '@reduxjs/toolkit';
-import { InternalRootState, QuerySubstateIdentifier } from './apiState';
+import { Api } from '.';
+import { InternalRootState, QueryKeys, QueryStatus, QuerySubstateIdentifier } from './apiState';
 import { StartQueryActionCreatorOptions } from './buildActionMaps';
 import { EndpointDefinitions } from './endpointDefinitions';
 
@@ -32,15 +32,20 @@ function defaultTransformResponse(baseQueryReturnValue: unknown) {
   return baseQueryReturnValue;
 }
 
-export function buildThunks<InternalQueryArgs, ReducerPath extends string>({
+
+export function buildThunks<BaseQuery extends (args: any, api: QueryApi) => any, ReducerPath extends string>({
   reducerPath,
   baseQuery,
   endpointDefinitions,
+  api,
 }: {
-  baseQuery(args: InternalQueryArgs, api: QueryApi): any;
+  baseQuery: BaseQuery;
   reducerPath: ReducerPath;
   endpointDefinitions: EndpointDefinitions;
+  api: Api<BaseQuery, EndpointDefinitions, ReducerPath, string>;
 }) {
+  type InternalQueryArgs = BaseQueryArg<BaseQuery>;
+
   const queryThunk = createAsyncThunk<
     ThunkResult,
     QueryThunkArg<InternalQueryArgs>,

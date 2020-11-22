@@ -2,6 +2,7 @@ import { AnyAction } from '@reduxjs/toolkit';
 import { createApi } from '@rtk-incubator/rtk-query';
 import { renderHook, act } from '@testing-library/react-hooks';
 import { setupApiStore, waitMs } from './helpers';
+import { Patch } from 'immer';
 
 interface Post {
   id: string;
@@ -16,7 +17,7 @@ const api = createApi({
   baseQuery,
   endpoints: (build) => ({
     post: build.query<Post, string>({ query: (id) => `post/${id}` }),
-    updatePost: build.mutation<void, Post>({
+    updatePost: build.mutation<void, Post, { undoPost: Patch[] }>({
       query: ({ id, ...patch }) => ({ url: `post/${id}`, method: 'PATCH', body: patch }),
       onStart({ id, ...patch }, { dispatch, context }) {
         context.undoPost = dispatch(

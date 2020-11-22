@@ -39,12 +39,12 @@ export interface QueryDefinition<
   invalidates?: never;
 }
 
-export interface MutationApi<ReducerPath extends string> {
+export interface MutationApi<ReducerPath extends string, Context extends {}> {
   dispatch: ThunkDispatch<RootState<any, any, ReducerPath>, unknown, AnyAction>;
   getState(): RootState<any, any, ReducerPath>;
   extra: unknown;
   requestId: string;
-  context: Record<string, any>;
+  context: Context;
 }
 
 export interface MutationDefinition<
@@ -52,14 +52,15 @@ export interface MutationDefinition<
   BaseQuery extends (arg: any, ...args: any[]) => any,
   EntityTypes extends string,
   ResultType,
-  ReducerPath extends string = string
+  ReducerPath extends string = string,
+  Context = Record<string, any>
 > extends BaseEndpointDefinition<QueryArg, BaseQuery, ResultType> {
   type: DefinitionType.mutation;
   invalidates?: ResultDescription<EntityTypes, ResultType, QueryArg>;
   provides?: never;
-  onStart?(arg: QueryArg, mutationApi: MutationApi<ReducerPath>): void;
-  onError?(arg: QueryArg, mutationApi: MutationApi<ReducerPath>, error: unknown): void;
-  onSuccess?(arg: QueryArg, mutationApi: MutationApi<ReducerPath>, result: ResultType): void;
+  onStart?(arg: QueryArg, mutationApi: MutationApi<ReducerPath, Context>): void;
+  onError?(arg: QueryArg, mutationApi: MutationApi<ReducerPath, Context>, error: unknown): void;
+  onSuccess?(arg: QueryArg, mutationApi: MutationApi<ReducerPath, Context>, result: ResultType): void;
 }
 
 export type EndpointDefinition<
@@ -91,9 +92,9 @@ export type EndpointBuilder<
   query<ResultType, QueryArg>(
     definition: Omit<QueryDefinition<QueryArg, BaseQuery, EntityTypes, ResultType>, 'type'>
   ): QueryDefinition<QueryArg, BaseQuery, EntityTypes, ResultType>;
-  mutation<ResultType, QueryArg>(
-    definition: Omit<MutationDefinition<QueryArg, BaseQuery, EntityTypes, ResultType, ReducerPath>, 'type'>
-  ): MutationDefinition<QueryArg, BaseQuery, EntityTypes, ResultType, ReducerPath>;
+  mutation<ResultType, QueryArg, Context = Record<string, any>>(
+    definition: Omit<MutationDefinition<QueryArg, BaseQuery, EntityTypes, ResultType, ReducerPath, Context>, 'type'>
+  ): MutationDefinition<QueryArg, BaseQuery, EntityTypes, ResultType, ReducerPath, Context>;
 };
 
 export type AssertEntityTypes = <T extends FullEntityDescription<string>>(t: T) => T;

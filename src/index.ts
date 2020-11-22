@@ -49,7 +49,7 @@ export function createApi<
   entityTypes?: readonly EntityTypes[];
   reducerPath?: ReducerPath;
   serializeQueryArgs?: SerializeQueryArgs<BaseQueryArg<BaseQuery>>;
-  endpoints(build: EndpointBuilder<BaseQuery, EntityTypes>): Definitions;
+  endpoints(build: EndpointBuilder<BaseQuery, EntityTypes, ReducerPath>): Definitions;
   keepUnusedDataFor?: number;
 }): Api<BaseQuery, Definitions, ReducerPath, EntityTypes> {
   type State = CombinedState<Definitions, EntityTypes>;
@@ -202,7 +202,7 @@ export interface Api<
     patchQueryResult: PatchQueryResultThunk<Definitions, RootState<Definitions, string, ReducerPath>>;
   };
   injectEndpoints<NewDefinitions extends EndpointDefinitions>(_: {
-    endpoints: (build: EndpointBuilder<BaseQuery, EntityTypes>) => NewDefinitions;
+    endpoints: (build: EndpointBuilder<BaseQuery, EntityTypes, ReducerPath>) => NewDefinitions;
     overrideExisting?: boolean;
   }): Api<BaseQuery, Definitions & NewDefinitions, ReducerPath, EntityTypes>;
 }

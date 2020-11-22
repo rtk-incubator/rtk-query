@@ -2,7 +2,13 @@ import { AnyAction, createAsyncThunk, ThunkAction } from '@reduxjs/toolkit';
 import { Api, InternalSerializeQueryArgs } from '.';
 import { InternalRootState, QueryKeys, QueryStatus, QuerySubstateIdentifier } from './apiState';
 import { StartQueryActionCreatorOptions } from './buildActionMaps';
-import { EndpointDefinitions, QueryArgFrom, ResultTypeFrom } from './endpointDefinitions';
+import {
+  EndpointDefinitions,
+  MutationApi,
+  MutationDefinition,
+  QueryArgFrom,
+  ResultTypeFrom,
+} from './endpointDefinitions';
 import { BaseQueryArg } from './tsHelpers';
 import { Draft } from '@reduxjs/toolkit';
 import { Patch, isDraftable, produceWithPatches } from 'immer';
@@ -38,24 +44,24 @@ function defaultTransformResponse(baseQueryReturnValue: unknown) {
 }
 
 type MaybeDrafted<T> = T | Draft<T>;
-type Recipe<T> = (data: MaybeDrafted<T>) => undefined | MaybeDrafted<T>;
+type Recipe<T> = (data: MaybeDrafted<T>) => void | MaybeDrafted<T>;
 
-export type PatchQueryResultThunk<Definitions extends EndpointDefinitions, State> = <
+export type PatchQueryResultThunk<Definitions extends EndpointDefinitions, PartialState> = <
   EndpointName extends QueryKeys<Definitions>
 >(
   endpointName: EndpointName,
   args: QueryArgFrom<Definitions[EndpointName]>,
   patches: Patch[]
-) => ThunkAction<void, State, unknown, AnyAction>;
+) => ThunkAction<void, PartialState, any, AnyAction>;
 
-export type UpdateQueryResultThunk<Definitions extends EndpointDefinitions, State> = <
+export type UpdateQueryResultThunk<Definitions extends EndpointDefinitions, PartialState> = <
   EndpointName extends QueryKeys<Definitions>
 >(
   endpointName: EndpointName,
   args: QueryArgFrom<Definitions[EndpointName]>,
   updateRecicpe: Recipe<ResultTypeFrom<Definitions[EndpointName]>>,
   insertRecipe?: () => ResultTypeFrom<Definitions[EndpointName]>
-) => ThunkAction<PatchCollection, State, unknown, AnyAction>;
+) => ThunkAction<PatchCollection, PartialState, any, AnyAction>;
 
 type PatchCollection = { patches: Patch[]; inversePatches: Patch[] };
 
@@ -143,12 +149,27 @@ export function buildThunks<BaseQuery extends (args: any, api: QueryApi) => any,
     ThunkResult,
     MutationThunkArg<InternalQueryArgs>,
     { state: InternalRootState<ReducerPath> }
-  >(`${reducerPath}/executeMutation`, async (arg, { signal, rejectWithValue }) => {
-    const result = await baseQuery(arg.internalQueryArgs, { signal, rejectWithValue });
-    return {
-      fulfilledTimeStamp: Date.now(),
-      result: (endpointDefinitions[arg.endpoint].transformResponse ?? defaultTransformResponse)(result),
-    };
+  >(`${reducerPath}/executeMutation`, async (arg, { signal, rejectWithValue, ...api }) => {
+    const endpoint = endpointDefinitions[arg.endpoint] as MutationDefinition<any, any, any, any>;
+
+    const context: Record<string, any> = {};
+    const mutationApi = {
+      ...api,
+      context,
+    } as MutationApi<ReducerPath>;
+
+    if (endpoint.onStart) endpoint.onStart(arg.originalArgs, mutationApi);
+    try {
+      const result = await baseQuery(arg.internalQueryArgs, { signal, rejectWithValue });
+      if (endpoint.onSuccess) endpoint.onSuccess(arg.originalArgs, mutationApi, result);
+      return {
+        fulfilledTimeStamp: Date.now(),
+        result: (endpointDefinitions[arg.endpoint].transformResponse ?? defaultTransformResponse)(result),
+      };
+    } catch (error) {
+      if (endpoint.onError) endpoint.onError(arg.originalArgs, mutationApi, error);
+      throw error;
+    }
   });
 
   return { queryThunk, mutationThunk, updateQueryResult, patchQueryResult };

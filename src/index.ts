@@ -1,5 +1,5 @@
 import type { AnyAction, Middleware, Reducer, ThunkDispatch } from '@reduxjs/toolkit';
-import { buildThunks, QueryApi } from './buildThunks';
+import { buildThunks, PatchQueryResultThunk, QueryApi, UpdateQueryResultThunk } from './buildThunks';
 import { buildSlice, SliceActions } from './buildSlice';
 import { buildActionMaps, EndpointActions } from './buildActionMaps';
 import { buildSelectors, Selectors } from './buildSelectors';
@@ -83,13 +83,25 @@ export function createApi<
       unsubscribeMutationResult: uninitialized,
       unsubscribeQueryResult: uninitialized,
       updateSubscriptionOptions: uninitialized,
+      queryResultPatched: uninitialized,
+    },
+    util: {
+      patchQueryResult: uninitialized,
+      updateQueryResult: uninitialized,
     },
     reducer: uninitialized,
     middleware: uninitialized,
     injectEndpoints,
   };
 
-  const { queryThunk, mutationThunk } = buildThunks({ baseQuery, reducerPath, endpointDefinitions, api });
+  const { queryThunk, mutationThunk, patchQueryResult, updateQueryResult } = buildThunks({
+    baseQuery,
+    reducerPath,
+    endpointDefinitions,
+    api,
+    serializeQueryArgs,
+  });
+  Object.assign(api.util, { patchQueryResult, updateQueryResult });
 
   const { reducer, actions: sliceActions } = buildSlice({
     endpointDefinitions,
@@ -185,6 +197,10 @@ export interface Api<
   selectors: Selectors<Definitions, RootState<Definitions, EntityTypes, ReducerPath>>;
   middleware: Middleware<{}, RootState<Definitions, string, ReducerPath>, ThunkDispatch<any, any, AnyAction>>;
   hooks: Hooks<Definitions>;
+  util: {
+    updateQueryResult: UpdateQueryResultThunk<Definitions, RootState<Definitions, string, ReducerPath>>;
+    patchQueryResult: PatchQueryResultThunk<Definitions, RootState<Definitions, string, ReducerPath>>;
+  };
   injectEndpoints<NewDefinitions extends EndpointDefinitions>(_: {
     endpoints: (build: EndpointBuilder<BaseQuery, EntityTypes>) => NewDefinitions;
     overrideExisting?: boolean;

@@ -1,4 +1,4 @@
-import type { AnyAction, Middleware, Reducer, ThunkDispatch } from '@reduxjs/toolkit';
+import type { AnyAction, Middleware, Reducer, ThunkAction, ThunkDispatch } from '@reduxjs/toolkit';
 import { buildThunks, QueryApi } from './buildThunks';
 import { buildSlice, SliceActions } from './buildSlice';
 import { buildActionMaps, EndpointActions } from './buildActionMaps';
@@ -78,15 +78,13 @@ export function createApi<
     reducerPath,
     selectors: {},
     actions: {},
-    thunks: {
-      prefetchThunk: uninitialized,
-    },
     hooks: {},
     internalActions: {
       removeQueryResult: uninitialized,
       unsubscribeMutationResult: uninitialized,
       unsubscribeQueryResult: uninitialized,
       updateSubscriptionOptions: uninitialized,
+      prefetchThunk: uninitialized,
     },
     usePrefetch: () => () => {},
     reducer: uninitialized,
@@ -110,7 +108,7 @@ export function createApi<
   });
   assertCast<Reducer<State & QueryStatePhantomType<ReducerPath>, AnyAction>>(reducer);
 
-  Object.assign(api.internalActions, sliceActions);
+  Object.assign(api.internalActions, sliceActions, { prefetchThunk });
   api.reducer = reducer;
 
   const { middleware } = buildMiddleware({
@@ -144,11 +142,10 @@ export function createApi<
     queryActions: api.actions as any,
     mutationSelectors: api.selectors as any,
     mutationActions: api.actions as any,
-    thunks: api.thunks as any,
+    internalActions: api.internalActions as any,
   });
 
   api.usePrefetch = usePrefetch;
-  api.thunks.prefetchThunk = prefetchThunk;
 
   function injectEndpoints(inject: Parameters<typeof api.injectEndpoints>[0]) {
     const evaluatedEndpoints = inject.endpoints({
@@ -188,8 +185,8 @@ export function createApi<
   return api.injectEndpoints({ endpoints });
 }
 
-type BuiltinThunks = {
-  prefetchThunk: any;
+export type InternalActions = SliceActions & {
+  prefetchThunk: (endpointName: any, arg: any, options: PrefetchOptions) => ThunkAction<void, any, any, AnyAction>;
 };
 export interface Api<
   BaseQuery extends (arg: any, ...args: any[]) => any,
@@ -199,8 +196,7 @@ export interface Api<
 > {
   reducerPath: ReducerPath;
   actions: EndpointActions<Definitions>;
-  thunks: BuiltinThunks;
-  internalActions: SliceActions;
+  internalActions: InternalActions;
   reducer: Reducer<CombinedState<Definitions, EntityTypes> & QueryStatePhantomType<ReducerPath>, AnyAction>;
   selectors: Selectors<Definitions, RootState<Definitions, EntityTypes, ReducerPath>>;
   middleware: Middleware<{}, RootState<Definitions, string, ReducerPath>, ThunkDispatch<any, any, AnyAction>>;

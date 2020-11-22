@@ -25,6 +25,7 @@ import {
 } from './buildActionMaps';
 import { TS41Hooks } from './ts41Types';
 import { useShallowStableValue } from './utils';
+import { InternalActions } from '.';
 
 export interface QueryHookOptions extends SubscriptionOptions {
   skip?: boolean;
@@ -64,9 +65,9 @@ export type Hooks<Definitions extends EndpointDefinitions> = {
   TS41Hooks<Definitions>;
 
 export type PrefetchOptions =
-  | { force: boolean }
+  | { force?: boolean }
   | {
-      ifOlderThan: false | number;
+      ifOlderThan?: false | number;
     };
 
 export function buildHooks<Definitions extends EndpointDefinitions>({
@@ -74,13 +75,13 @@ export function buildHooks<Definitions extends EndpointDefinitions>({
   queryActions,
   mutationSelectors,
   mutationActions,
-  thunks,
+  internalActions,
 }: {
   querySelectors: QueryResultSelectors<Definitions, any>;
   queryActions: QueryActions<Definitions>;
   mutationSelectors: MutationResultSelectors<Definitions, any>;
   mutationActions: MutationActions<Definitions>;
-  thunks: { prefetchThunk: any };
+  internalActions: InternalActions;
 }) {
   return { buildQueryHook, buildMutationHook, usePrefetch };
 
@@ -93,7 +94,7 @@ export function buildHooks<Definitions extends EndpointDefinitions>({
 
     return useCallback(
       (arg: any, options?: PrefetchOptions) =>
-        dispatch(thunks.prefetchThunk(endpointName, arg, { ...stableDefaultOptions, ...options })),
+        dispatch(internalActions.prefetchThunk(endpointName, arg, { ...stableDefaultOptions, ...options })),
       [endpointName, dispatch, stableDefaultOptions]
     );
   }

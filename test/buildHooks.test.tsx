@@ -243,4 +243,63 @@ describe('hooks tests', () => {
       status: QueryStatus.fulfilled,
     });
   });
+
+  test('usePrefetch respects `ifOlderThan` when it evaluates to `true`', async () => {
+    const { usePrefetch } = api;
+    const USER_ID = 2;
+
+    function User() {
+      // Load the initial query
+      const { isFetching } = api.hooks.getUser.useQuery(USER_ID);
+      const prefetchUser = usePrefetch('getUser', { ifOlderThan: 1 });
+
+      return (
+        <div>
+          <div data-testid="isFetching">{String(isFetching)}</div>
+          <button onMouseEnter={() => prefetchUser(USER_ID)} data-testid="lowPriority">
+            Low priority user action intent
+          </button>
+        </div>
+      );
+    }
+
+    const { getByTestId } = render(<User />, { wrapper: storeRef.wrapper });
+
+    await waitFor(() => expect(getByTestId('isFetching').textContent).toBe('false'));
+    await waitMs(1100);
+
+    userEvent.hover(getByTestId('lowPriority'));
+    await waitMs(20);
+    expect(api.selectors.getUser(USER_ID)(storeRef.store.getState())).toEqual({
+      data: undefined,
+      endpoint: 'getUser',
+      fulfilledTimeStamp: expect.any(Number),
+      internalQueryArgs: USER_ID,
+      isError: false,
+      isLoading: true,
+      isSuccess: false,
+      isUninitialized: false,
+      originalArgs: USER_ID,
+      requestId: expect.any(String),
+      startedTimeStamp: expect.any(Number),
+      status: QueryStatus.pending,
+    });
+
+    await waitMs();
+
+    expect(api.selectors.getUser(USER_ID)(storeRef.store.getState())).toEqual({
+      data: undefined,
+      endpoint: 'getUser',
+      fulfilledTimeStamp: expect.any(Number),
+      internalQueryArgs: USER_ID,
+      isError: false,
+      isLoading: false,
+      isSuccess: true,
+      isUninitialized: false,
+      originalArgs: USER_ID,
+      requestId: expect.any(String),
+      startedTimeStamp: expect.any(Number),
+      status: QueryStatus.fulfilled,
+    });
+  });
 });

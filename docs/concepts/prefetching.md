@@ -9,29 +9,34 @@ hide_title: true
 
 The goal of prefetching is to make data fetch _before_ the user navigates to or attempts to load the expected content.
 
-There are a handful of situations that you may want to do this, but some very common cases are:
+There are a handful of situations that you may want to do this, but some very common use cases are:
 
 1. User hovers over a navigation element
 2. User hovers over a list element that is a link
-3. User hovers over a pagination buttonvvvvv
+3. User hovers over a next pagination button
 
-#### Prefetching with React Hooks
+### Prefetching with React Hooks
 
-```ts title="Prefetching Example"
+The `usePrefetch` hook accepts two parameters: the first is the key of a query action, and the second is an object of two optional parameters:
+
+1. `ifOlderThan` - (default: `false` | `number`) - _number is value in seconds_
+
+   - If specified, will only fetch if the last `fulfilledTimeStamp` is before the given value
+
+2. `force`
+
+   - If `force: true`, it will ignore the `ifOlderThan` value if it is set and the query will be triggered even if it exists in the cache.
+
+```ts title="usePrefetch Example"
 function User() {
-  // We set the default to force
   const prefetchUser = usePrefetch('getUser');
 
-  // Low priority will not fire, unless the last request was older than 35s.
+  // Low priority hover will not fire unless the last request happened more than 35s ago
   // High priority hover will _always_ fire
   return (
     <div>
-      <button onMouseEnter={() => prefetchUser(4, { ifOlderThan: 35 })} data-testid="lowPriority">
-        Low priority user action intent
-      </button>
-      <button onMouseEnter={() => prefetchUser(4, { force: true })} data-testid="highPriority">
-        High priority action intent - Prefetch User 2
-      </button>
+      <button onMouseEnter={() => prefetchUser(4, { ifOlderThan: 35 })}>Low priority</button>
+      <button onMouseEnter={() => prefetchUser(4, { force: true })}>High priority</button>
     </div>
   );
 }

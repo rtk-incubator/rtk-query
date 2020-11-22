@@ -70,6 +70,7 @@ export type PrefetchOptions =
     };
 
 const hasTheForce = (options: any): options is { force: boolean } => options?.force;
+const hasMaxAge = (options: any): options is { ifOlderThan: false | number } => options?.ifOlderThan;
 
 export function buildHooks<Definitions extends EndpointDefinitions>({
   querySelectors,
@@ -89,14 +90,28 @@ export function buildHooks<Definitions extends EndpointDefinitions>({
     options?: PrefetchOptions
   ) {
     const dispatch = useDispatch<ThunkDispatch<any, any, AnyAction>>();
+    const currentState = useSelector((state) => state);
 
     return useCallback(
-      (arg: any, opts?: PrefetchOptions) => {
-        const force = (hasTheForce(options) && options.force) || (hasTheForce(opts) && opts.force);
-        // need to handle ifOlderThan once merged
-        dispatch(queryActions[endpointName](arg, { forceRefetch: force }));
+      (arg: any, opts: PrefetchOptions = { force: false, ifOlderThan: false }) => {
+        const force = hasTheForce(opts) ? opts.force : hasTheForce(options) ? options.force : false;
+        const maxAge = hasMaxAge(opts) ? opts.ifOlderThan : hasMaxAge(options) ? options.ifOlderThan : false;
+
+        let queryAction = queryActions[endpointName](arg, { forceRefetch: true });
+
+        if (force) {
+          dispatch(queryAction);
+        } else if (maxAge) {
+          const selectedVal = querySelectors[endpointName](arg)(currentState);
+          const lastFulfilled = selectedVal?.fulfilledTimeStamp;
+          if (!lastFulfilled) return;
+          const shouldRetrigger = (Number(new Date()) - Number(new Date(lastFulfilled))) / 1000 > maxAge;
+          if (shouldRetrigger) {
+            dispatch(queryAction);
+          }
+        }
       },
-      [endpointName, dispatch, options]
+      [endpointName, dispatch, options, currentState]
     );
   }
 

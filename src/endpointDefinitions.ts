@@ -17,14 +17,14 @@ export enum DefinitionType {
   mutation = 'mutation',
 }
 
-export type GetResultDescriptionFn<EntityTypes extends string, ResultType, QueryArg> = (
+type GetResultDescriptionFn<EntityTypes extends string, ResultType, QueryArg> = (
   result: ResultType,
   arg: QueryArg
 ) => ReadonlyArray<EntityDescription<EntityTypes>>;
 
 export type FullEntityDescription<EntityType> = { type: EntityType; id?: number | string };
-export type EntityDescription<EntityType> = EntityType | FullEntityDescription<EntityType>;
-export type ResultDescription<EntityTypes extends string, ResultType, QueryArg> =
+type EntityDescription<EntityType> = EntityType | FullEntityDescription<EntityType>;
+type ResultDescription<EntityTypes extends string, ResultType, QueryArg> =
   | ReadonlyArray<EntityDescription<EntityTypes>>
   | GetResultDescriptionFn<EntityTypes, ResultType, QueryArg>;
 

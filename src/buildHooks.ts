@@ -18,11 +18,10 @@ import {
 } from './endpointDefinitions';
 import { skipSelector } from './buildSelectors';
 import { QueryActionCreatorResult, MutationActionCreatorResult } from './buildActionMaps';
-import { TS41Hooks } from './ts41Types';
 import { useShallowStableValue } from './utils';
 import { Api, ApiEndpointMutation, ApiEndpointQuery } from './apiTypes';
 
-export interface QueryHookOptions extends SubscriptionOptions {
+interface QueryHookOptions extends SubscriptionOptions {
   skip?: boolean;
 }
 
@@ -50,7 +49,7 @@ export type QueryHook<D extends QueryDefinition<any, any, any, any>> = (
 type AdditionalQueryStatusFlags = {
   isFetching: boolean;
 };
-export type QueryHookResult<D extends QueryDefinition<any, any, any, any>> = QuerySubState<D> &
+type QueryHookResult<D extends QueryDefinition<any, any, any, any>> = QuerySubState<D> &
   RequestStatusFlags &
   AdditionalQueryStatusFlags &
   Pick<QueryActionCreatorResult<D>, 'refetch'>;
@@ -61,19 +60,6 @@ export type MutationHook<D extends MutationDefinition<any, any, any, any>> = () 
   ) => Promise<Extract<MutationSubState<D>, { status: QueryStatus.fulfilled | QueryStatus.rejected }>>,
   MutationSubState<D> & RequestStatusFlags
 ];
-
-export type Hooks<Definitions extends EndpointDefinitions> = {
-  [K in keyof Definitions]: Definitions[K] extends QueryDefinition<any, any, any, any>
-    ? {
-        useQuery: QueryHook<Definitions[K]>;
-      }
-    : Definitions[K] extends MutationDefinition<any, any, any, any>
-    ? {
-        useMutation: MutationHook<Definitions[K]>;
-      }
-    : never;
-} &
-  TS41Hooks<Definitions>;
 
 export type PrefetchOptions =
   | { force?: boolean }

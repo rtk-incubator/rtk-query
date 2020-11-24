@@ -27,7 +27,7 @@ export interface StartQueryActionCreatorOptions {
   subscriptionOptions?: SubscriptionOptions;
 }
 
-export type StartQueryActionCreator<D extends QueryDefinition<any, any, any, any, any>> = (
+type StartQueryActionCreator<D extends QueryDefinition<any, any, any, any, any>> = (
   arg: QueryArgFrom<D>,
   options?: StartQueryActionCreatorOptions
 ) => ThunkAction<QueryActionCreatorResult<D>, any, any, AnyAction>;
@@ -41,27 +41,7 @@ export type QueryActionCreatorResult<D extends QueryDefinition<any, any, any, an
   updateSubscriptionOptions(options: SubscriptionOptions): void;
 };
 
-export type EndpointActions<Definitions extends EndpointDefinitions> = {
-  [K in keyof Definitions]: Definitions[K] extends QueryDefinition<any, any, any, any>
-    ? StartQueryActionCreator<Definitions[K]>
-    : Definitions[K] extends MutationDefinition<any, any, any, any>
-    ? StartMutationActionCreator<Definitions[K]>
-    : never;
-};
-
-export type QueryActions<Definitions extends EndpointDefinitions> = {
-  [K in keyof Definitions]: Definitions[K] extends QueryDefinition<any, any, any, any>
-    ? StartQueryActionCreator<Definitions[K]>
-    : never;
-};
-
-export type MutationActions<Definitions extends EndpointDefinitions> = {
-  [K in keyof Definitions]: Definitions[K] extends MutationDefinition<any, any, any, any>
-    ? StartMutationActionCreator<Definitions[K]>
-    : never;
-};
-
-export type StartMutationActionCreator<D extends MutationDefinition<any, any, any, any>> = (
+type StartMutationActionCreator<D extends MutationDefinition<any, any, any, any>> = (
   arg: QueryArgFrom<D>,
   options?: {
     /**

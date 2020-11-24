@@ -11,7 +11,7 @@ import {
 } from './endpointDefinitions';
 import { BaseQueryArg } from './tsHelpers';
 import { Draft } from '@reduxjs/toolkit';
-import { Patch, isDraftable, produceWithPatches } from 'immer';
+import { Patch, isDraftable, produceWithPatches, enablePatches } from 'immer';
 import { QueryResultSelector } from './buildSelectors';
 
 export interface QueryThunkArg<InternalQueryArgs> extends QuerySubstateIdentifier, StartQueryActionCreatorOptions {
@@ -59,8 +59,7 @@ export type UpdateQueryResultThunk<Definitions extends EndpointDefinitions, Part
 >(
   endpointName: EndpointName,
   args: QueryArgFrom<Definitions[EndpointName]>,
-  updateRecicpe: Recipe<ResultTypeFrom<Definitions[EndpointName]>>,
-  insertRecipe?: () => ResultTypeFrom<Definitions[EndpointName]>
+  updateRecicpe: Recipe<ResultTypeFrom<Definitions[EndpointName]>>
 ) => ThunkAction<PatchCollection, PartialState, any, AnyAction>;
 
 type PatchCollection = { patches: Patch[]; inversePatches: Patch[] };
@@ -84,35 +83,33 @@ export function buildThunks<BaseQuery extends (args: any, api: QueryApi) => any,
   const patchQueryResult: PatchQueryResultThunk<EndpointDefinitions, State> = (endpointName, args, patches) => (
     dispatch
   ) => {
+    const endpoint = endpointDefinitions[endpointName];
     dispatch(
-      api.internalActions.queryResultPatched({ queryCacheKey: serializeQueryArgs(args, endpointName), patches })
+      api.internalActions.queryResultPatched({
+        queryCacheKey: serializeQueryArgs(endpoint.query(args), endpointName),
+        patches,
+      })
     );
   };
 
-  const updateQueryResult: UpdateQueryResultThunk<EndpointDefinitions, State> = (
-    endpointName,
-    args,
-    updateRecicpe,
-    insertRecipe
-  ) => (dispatch, getState) => {
+  const updateQueryResult: UpdateQueryResultThunk<EndpointDefinitions, State> = (endpointName, args, updateRecipe) => (
+    dispatch,
+    getState
+  ) => {
     const currentState = (api.selectors[endpointName] as QueryResultSelector<any, any>)(args)(getState());
     let ret: PatchCollection = { patches: [], inversePatches: [] };
     if (currentState.status === QueryStatus.uninitialized) {
       return ret;
     }
-    if (currentState.data) {
+    if ('data' in currentState) {
       if (isDraftable(currentState.data)) {
-        const [, patches, inversePatches] = produceWithPatches(currentState.data, updateRecicpe);
+        // call "enablePatches" as late as possible
+        enablePatches();
+        const [, patches, inversePatches] = produceWithPatches(currentState.data, updateRecipe);
         ret.patches.push(...patches);
         ret.inversePatches.push(...inversePatches);
       } else {
-        const value = updateRecicpe(currentState.data);
-        ret.patches.push({ op: 'replace', path: [], value });
-        ret.inversePatches.push({ op: 'replace', path: [], value: currentState.data });
-      }
-    } else {
-      if (insertRecipe) {
-        const value = insertRecipe();
+        const value = updateRecipe(currentState.data);
         ret.patches.push({ op: 'replace', path: [], value });
         ret.inversePatches.push({ op: 'replace', path: [], value: currentState.data });
       }
@@ -156,7 +153,7 @@ export function buildThunks<BaseQuery extends (args: any, api: QueryApi) => any,
     const mutationApi = {
       ...api,
       context,
-    } as MutationApi<ReducerPath>;
+    } as MutationApi<ReducerPath, any>;
 
     if (endpoint.onStart) endpoint.onStart(arg.originalArgs, mutationApi);
     try {

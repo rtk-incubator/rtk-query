@@ -32,7 +32,8 @@ export interface QueryDefinition<
   QueryArg,
   BaseQuery extends (arg: any, ...args: any[]) => any,
   EntityTypes extends string,
-  ResultType
+  ResultType,
+  _ReducerPath extends string = string
 > extends BaseEndpointDefinition<QueryArg, BaseQuery, ResultType> {
   type: DefinitionType.query;
   provides?: ResultDescription<EntityTypes, ResultType, QueryArg>;
@@ -67,10 +68,11 @@ export type EndpointDefinition<
   QueryArg,
   BaseQuery extends (arg: any, ...args: any[]) => any,
   EntityTypes extends string,
-  ResultType
+  ResultType,
+  ReducerPath extends string = string
 > =
-  | QueryDefinition<QueryArg, BaseQuery, EntityTypes, ResultType>
-  | MutationDefinition<QueryArg, BaseQuery, EntityTypes, ResultType>;
+  | QueryDefinition<QueryArg, BaseQuery, EntityTypes, ResultType, ReducerPath>
+  | MutationDefinition<QueryArg, BaseQuery, EntityTypes, ResultType, ReducerPath>;
 
 export type EndpointDefinitions = Record<string, EndpointDefinition<any, any, any, any>>;
 
@@ -135,4 +137,22 @@ export type ResultTypeFrom<D extends BaseEndpointDefinition<any, any, any>> = D 
   infer RT
 >
   ? RT
+  : unknown;
+
+export type ReducerPathFrom<D extends EndpointDefinition<any, any, any, any>> = D extends EndpointDefinition<
+  any,
+  any,
+  any,
+  infer RP
+>
+  ? RP
+  : unknown;
+
+export type EntityTypesFrom<D extends EndpointDefinition<any, any, any, any>> = D extends EndpointDefinition<
+  any,
+  any,
+  infer RP,
+  any
+>
+  ? RP
   : unknown;

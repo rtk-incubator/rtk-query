@@ -7,7 +7,14 @@ import {
   getRequestStatusFlags,
   RequestStatusFlags,
 } from './apiState';
-import { EndpointDefinitions, QueryDefinition, MutationDefinition, QueryArgFrom } from './endpointDefinitions';
+import {
+  EndpointDefinitions,
+  QueryDefinition,
+  MutationDefinition,
+  QueryArgFrom,
+  EntityTypesFrom,
+  ReducerPathFrom,
+} from './endpointDefinitions';
 import type { InternalState } from './buildSlice';
 import { InternalSerializeQueryArgs } from '.';
 
@@ -20,6 +27,28 @@ export type Selectors<Definitions extends EndpointDefinitions, RootState> = {
     ? MutationResultSelector<Definitions[K], RootState>
     : never;
 };
+
+declare module './apiTypes' {
+  export interface ApiEndpointQuery<
+    Definition extends QueryDefinition<any, any, any, any, any>,
+    Definitions extends EndpointDefinitions
+  > {
+    select: QueryResultSelector<
+      Definition,
+      _RootState<Definitions, EntityTypesFrom<Definition>, ReducerPathFrom<Definition>>
+    >;
+  }
+
+  export interface ApiEndpointMutation<
+    Definition extends MutationDefinition<any, any, any, any, any>,
+    Definitions extends EndpointDefinitions
+  > {
+    select: MutationResultSelector<
+      Definition,
+      _RootState<Definitions, EntityTypesFrom<Definition>, ReducerPathFrom<Definition>>
+    >;
+  }
+}
 
 export type QueryResultSelectors<Definitions extends EndpointDefinitions, RootState> = {
   [K in keyof Definitions]: Definitions[K] extends QueryDefinition<infer QueryArg, any, any, infer ResultType>

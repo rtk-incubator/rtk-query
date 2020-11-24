@@ -91,8 +91,8 @@ const store = configureStore({
 
 // usage in a component
 function DisplayUser({ id }: { id: number }) {
-  const { status, data } = api.hooks.getUser.useQuery(id);
-  const [updateUser, updateResult] = api.hooks.updateUser.useMutation();
+  const { status, data } = api.endpoints.getUser.useQuery(id);
+  const [updateUser, updateResult] = api.endpoints.updateUser.useMutation();
 
   if (status === QueryStatus.pending) {
     return <p>loading...</p>;

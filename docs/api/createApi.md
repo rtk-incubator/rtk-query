@@ -155,7 +155,7 @@ Endpoints are just a set of operations that you want to perform against your ser
 
 #### How endpoints get used
 
-When defining a key like `getPosts` as shown below, it's important to know that this name will become exportable from `api` and be able to referenced under `api.hooks.getPosts`, `api.selectors.getPosts`, and `api.actions.getPosts`. The same thing applies to `mutation`s.
+When defining a key like `getPosts` as shown below, it's important to know that this name will become exportable from `api` and be able to referenced under `api.endpoints.getPosts`, `api.selectors.getPosts`, and `api.actions.getPosts`. The same thing applies to `mutation`s.
 
 ```ts
 const api = createApi({

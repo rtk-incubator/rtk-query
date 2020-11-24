@@ -8,7 +8,7 @@ import './PostsManager.css';
 const AddPost = () => {
   const initialValue = { name: '' };
   const [post, setPost] = useState<Partial<Post>>(initialValue);
-  const [addPost, { status }] = postApi.hooks.addPost.useMutation();
+  const [addPost, { status }] = postApi.endpoints.addPost.useMutation();
   const loading = status === QueryStatus.pending;
 
   const handleChange = ({ target }: React.ChangeEvent<HTMLInputElement>) => {
@@ -45,7 +45,7 @@ const PostListItem = ({ data: { name, id }, onSelect }: { data: Post; onSelect: 
 };
 
 const PostList = () => {
-  const { data: posts, status } = postApi.hooks.getPosts.useQuery();
+  const { data: posts, status } = postApi.endpoints.getPosts.useQuery();
   const { push } = useHistory();
 
   if (status === QueryStatus.pending) {

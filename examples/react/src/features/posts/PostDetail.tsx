@@ -35,7 +35,7 @@ const EditablePostName = ({
 };
 
 const PostJsonDetail = ({ id }: { id: number }) => {
-  const { data: post } = postApi.hooks.getPost.useQuery(id);
+  const { data: post } = postApi.endpoints.getPost.useQuery(id);
 
   return (
     <div className="row" style={{ background: '#eee' }}>
@@ -50,10 +50,10 @@ export const PostDetail = () => {
 
   const [isEditing, setIsEditing] = useState(false);
 
-  const { data: post, isFetching, isLoading } = postApi.hooks.getPost.useQuery(id, { pollingInterval: 3000 });
+  const { data: post, isFetching, isLoading } = postApi.endpoints.getPost.useQuery(id, { pollingInterval: 3000 });
 
-  const [updatePost, { isLoading: isUpdating }] = postApi.hooks.updatePost.useMutation();
-  const [deletePost, { isLoading: isDeleting }] = postApi.hooks.deletePost.useMutation();
+  const [updatePost, { isLoading: isUpdating }] = postApi.endpoints.updatePost.useMutation();
+  const [deletePost, { isLoading: isDeleting }] = postApi.endpoints.deletePost.useMutation();
 
   if (isLoading) {
     return <div>Loading...</div>;

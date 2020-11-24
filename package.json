@@ -55,11 +55,11 @@
   "size-limit": [
     {
       "path": "dist/rtk-query.cjs.production.min.js",
-      "limit": "20 KB"
+      "limit": "25 KB"
     },
     {
       "path": "dist/rtk-query.esm.js",
-      "limit": "20 KB"
+      "limit": "25 KB"
     }
   ],
   "peerDependencies": {

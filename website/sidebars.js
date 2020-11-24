@@ -20,6 +20,7 @@ module.exports = {
       'examples/react-hooks',
       'examples/react-class-components',
       'examples/react-with-graphql',
+      'examples/react-optimistic-updates',
       'examples/svelte',
     ],
   },

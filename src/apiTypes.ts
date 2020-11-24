@@ -67,5 +67,5 @@ export type ApiWithInjectedEndpoints<
     : never
 > = Omit<ApiDefinition, 'endpoints'> &
   Omit<Injections, 'endpoints'> & {
-    endpoints: ApiDefinition['endpoints'] & UnionToIntersection<Injections[number]['endpoints']>;
+    endpoints: ApiDefinition['endpoints'] & Partial<UnionToIntersection<Injections[number]['endpoints']>>;
   };

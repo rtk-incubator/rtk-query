@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { useHistory, useParams } from 'react-router-dom';
-import { QueryStatus } from '@rtk-incubator/rtk-query/dist';
 import { postApi } from '../../app/services/posts';
 
 const EditablePostName = ({

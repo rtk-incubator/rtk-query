@@ -1,3 +1,6 @@
+/**
+ * Note: this file should import all other files for type discovery and declaration merging
+ */
 import { PatchQueryResultThunk, UpdateQueryResultThunk } from './buildThunks';
 import { AnyAction, Middleware, Reducer, ThunkDispatch } from '@reduxjs/toolkit';
 import { PrefetchOptions } from './buildHooks';
@@ -12,6 +15,7 @@ import { CombinedState, QueryKeys, QueryStatePhantomType, RootState } from './ap
 import { InternalActions } from './index';
 import { UnionToIntersection } from './tsHelpers';
 import { TS41Hooks } from './ts41Types';
+import './buildSelectors';
 
 export type Api<
   BaseQuery extends (arg: any, ...args: any[]) => any,

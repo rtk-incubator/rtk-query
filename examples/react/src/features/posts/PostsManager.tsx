@@ -17,7 +17,7 @@ const AddPost = () => {
     }));
   };
 
-  const handleAddPost = () => addPost(post).then(() => setPost(initialValue));
+  const handleAddPost = () => addPost(post).then(() => setPost(initialValue)).catch(console.error);
 
   return (
     <div className="row">
@@ -44,13 +44,17 @@ const PostListItem = ({ data: { name, id }, onSelect }: { data: Post; onSelect: 
 };
 
 const PostList = () => {
-  const { data: posts, isLoading } = postApi.endpoints.getPosts.useQuery();
+  const { data: posts, error, isLoading } = postApi.endpoints.getPosts.useQuery();
   const { push } = useHistory();
 
   if (isLoading) {
     return <div>Loading</div>;
   }
-
+  
+  if (error) {
+    return <div>Oh no an error {JSON.stringify(error)}</div>
+  }
+  
   if (!posts) {
     return <div>No posts :(</div>;
   }

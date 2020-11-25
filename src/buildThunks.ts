@@ -133,11 +133,15 @@ export function buildThunks<
   >(
     `${reducerPath}/executeQuery`,
     async (arg, { signal, rejectWithValue }) => {
-      const result = await baseQuery(arg.internalQueryArgs, { signal, rejectWithValue });
-      return {
-        fulfilledTimeStamp: Date.now(),
-        result: (endpointDefinitions[arg.endpoint].transformResponse ?? defaultTransformResponse)(result),
-      };
+      try {
+        const result = await baseQuery(arg.internalQueryArgs, { signal, rejectWithValue });
+        return {
+          fulfilledTimeStamp: Date.now(),
+          result: (endpointDefinitions[arg.endpoint].transformResponse ?? defaultTransformResponse)(result),
+        };
+      } catch (error) {
+        return rejectWithValue(error);
+      }
     },
     {
       condition(arg, { getState }) {
@@ -171,7 +175,7 @@ export function buildThunks<
       };
     } catch (error) {
       if (endpoint.onError) endpoint.onError(arg.originalArgs, mutationApi, error);
-      throw error;
+      return rejectWithValue(error);
     }
   });
 

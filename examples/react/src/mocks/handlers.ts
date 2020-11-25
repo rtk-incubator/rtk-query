@@ -48,10 +48,16 @@ export const handlers = [
   }),
 
   rest.get('/posts', (req, res, ctx) => {
+    if (Math.random() < 0.35) {
+      return res(ctx.json({ message: 'A random error has a appeared!' }), ctx.status(400));
+    }
     return res(ctx.json(Object.values(state.entities)));
   }),
 
   rest.post('/posts', (req, res, ctx) => {
+    if (Math.random() < 0.35) {
+      return res(ctx.json({ message: 'A random error has a appeared!' }), ctx.status(400));
+    }
     let post = req.body as Partial<Post>;
     startingId += 1;
     state = adapter.addOne(state, { ...post, id: startingId } as Post);

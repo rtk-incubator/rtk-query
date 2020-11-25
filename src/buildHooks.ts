@@ -1,4 +1,4 @@
-import { AnyAction, ThunkDispatch } from '@reduxjs/toolkit';
+import { AnyAction, ThunkDispatch, unwrapResult } from '@reduxjs/toolkit';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useDispatch, useSelector, batch } from 'react-redux';
 import {
@@ -173,7 +173,7 @@ export function buildHooks<Definitions extends EndpointDefinitions>({
             promiseRef.current = promise;
             setRequestId(promise.requestId);
           });
-          return promise!;
+          return promise!.then(unwrapResult);
         },
         [dispatch, initiate]
       );

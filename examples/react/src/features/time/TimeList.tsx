@@ -78,11 +78,11 @@ const TimeDisplay = ({ offset, label }: { offset: string; label: string }) => {
   const canPoll = globalPolling && timesPolling;
 
   const [pollingInterval, setPollingInterval] = useState(0);
-  const { data, refetch, isLoading } = timeApi.endpoints.getTime.useQuery(offset, {
+  const { data, refetch, isFetching } = timeApi.endpoints.getTime.useQuery(offset, {
     pollingInterval: canPoll ? pollingInterval : 0,
   });
   return (
-    <div style={{ ...(isLoading ? { background: '#e6ffe8' } : {}) }}>
+    <div style={{ ...(isFetching ? { background: '#e6ffe8' } : {}) }}>
       <p>
         {data?.time && new Date(data.time).toLocaleTimeString()} - {label}
       </p>

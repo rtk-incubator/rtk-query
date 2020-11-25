@@ -37,4 +37,4 @@ const api = createApi({
 
 ### Example
 
-Coming soon...
+[View Example](../examples/react-optimistic-updates)

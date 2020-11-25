@@ -58,8 +58,12 @@ export function fetchBaseQuery({ baseUrl }: { baseUrl?: string } = {}) {
         ? await responseHandler(response)
         : await response[responseHandler || 'text']();
 
-    return validateStatus(response, resultData)
-      ? resultData
-      : rejectWithValue({ status: response.status, data: resultData });
+    const isValid = validateStatus(response, resultData);
+
+    if (!isValid) {
+      throw rejectWithValue({ status: response.status, data: resultData });
+    }
+
+    return resultData;
   };
 }

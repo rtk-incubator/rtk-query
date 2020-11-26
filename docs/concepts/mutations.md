@@ -12,6 +12,56 @@ and `endpoint` available for inspection.
 
 Also unlike the `useQuery` hook, the `useMutation` hook doesn't execute automatically. To run a mutation you have to call the `trigger` function.
 
+```js title="Example of all mutation endpoint options"
+const api = createApi({
+  baseQuery,
+  endpoints: (build) => ({
+    updatePost: build.mutation({
+      query: ({ id, ...patch }) => ({ url: `post/${id}`, method: 'PATCH', body: patch }),
+      // onStart, onSuccess, onError are useful for optimistic updates
+      onStart({ id, ...patch }, mutationApi) {},
+      onSuccess({ id }, { dispatch, getState, extra, requestId, context }, result) {}, // result is the server response, the 2nd parameter is the destructured `mutationApi`
+      onError({ id }, { dispatch, getState, extra, requestId, context }) {},
+      invalidates: ['Post'],
+    }),
+  }),
+});
+```
+
+:::info
+Notice the `onStart`, `onSuccess`, `onError` methods? Make sure to check out how they can be used for [optimistic updates](./optimistic-updates)
+:::
+
+### Type interfaces
+
+```ts title="Mutation endpoint definition"
+export interface MutationDefinition<
+  QueryArg,
+  BaseQuery extends (arg: any, ...args: any[]) => any,
+  EntityTypes extends string,
+  ResultType,
+  ReducerPath extends string = string,
+  Context = Record<string, any>
+> extends BaseEndpointDefinition<QueryArg, BaseQuery, ResultType> {
+  type: DefinitionType.mutation;
+  invalidates?: ResultDescription<EntityTypes, ResultType, QueryArg>;
+  provides?: never;
+  onStart?(arg: QueryArg, mutationApi: MutationApi<ReducerPath, Context>): void;
+  onError?(arg: QueryArg, mutationApi: MutationApi<ReducerPath, Context>, error: unknown): void;
+  onSuccess?(arg: QueryArg, mutationApi: MutationApi<ReducerPath, Context>, result: ResultType): void;
+}
+```
+
+```ts title="MutationApi"
+export interface MutationApi<ReducerPath extends string, Context extends {}> {
+  dispatch: ThunkDispatch<RootState<any, any, ReducerPath>, unknown, AnyAction>;
+  getState(): RootState<any, any, ReducerPath>;
+  extra: unknown;
+  requestId: string;
+  context: Context;
+}
+```
+
 ### Basic mutation
 
 This is a modified version of the complete example you can see at the bottom of the page to highlight the `updatePost` mutation. In this scenario, a post is fetched with `useQuery`, and then a `EditablePostName` component is rendered that allows us to edit the name of the post.
@@ -20,11 +70,11 @@ This is a modified version of the complete example you can see at the bottom of 
 export const PostDetail = () => {
   const { id } = useParams<{ id: any }>();
 
-  const { data: post, status } = postApi.hooks.getPost.useQuery(id);
+  const { data: post } = postApi.hooks.getPost.useQuery(id);
 
   const [
     updatePost, // This is the mutation trigger
-    { status: updateStatus }, // You can inspect the status of the mutation
+    { isLoading: isUpdating }, // You can use the `isLoading` flag, or do custom logic with `status`
   ] = postApi.hooks.updatePost.useMutation();
 
   return (
@@ -35,12 +85,12 @@ export const PostDetail = () => {
           // Execute the trigger with the `id` and updated `name`
           return updatePost({ id, name })
             .then((result) => {
-              // Handle the success!
+              // Do something with the result
               console.log('Update Result', result);
             })
             .catch((error) => console.error('Update Error', error));
         }}
-        isLoading={updateStatus === QueryStatus.pending}
+        isLoading={isUpdating}
       />
     </Box>
   );
@@ -63,13 +113,13 @@ In the real world, it's very common that a developer would want to resync their 
 3. **Invalidates**
 
 - A `mutation` can _invalidate_ specific entities in the cache.
-  - Can both be an array of `{type: string, id?: string|number}` or a callback that returns such an array. That function will be passed the result as the first argument and the argument originally passed into the `query` method as the second argument.
+  - Can both be an array of `string` (such as `['Posts']`), `{type: string, id?: string|number}` or a callback that returns such an array. That function will be passed the result as the first argument and the argument originally passed into the `query` method as the second argument.
 
 ### Scenarios and Behaviors
 
 RTK Query provides _a lot_ of flexibility for how you can manage the invalidation behavior of your service. Let's look at a few different scenarios:
 
-#### Invalidating everything
+#### Invalidating everything of a type
 
 ```ts title="API Definition"
 export const api = createApi({
@@ -197,9 +247,9 @@ export const postApi = createApi({
   endpoints: (build) => ({
     getPosts: build.query<PostsResponse, void>({
       query: () => 'posts',
-      // Provides a list of `Posts` by `id`. If another component calls `getPost(id)`
-      // with an `id` that was provided here, it will use the cache instead of making another request.
-      // Additionally, it provides a second entity `id` of LIST, which we may want to use in certain scenarios.
+      // Provides a list of `Posts` by `id`.
+      // If any mutation is executed that `invalidate`s any of these entities, this query will re-run to be always up-to-date.
+      // The `LIST` id is a "virtual id" we just made up to be able to invalidate this query specifically if a new `Posts` element was added.
       provides: (result) => [...result.map(({ id }) => ({ type: 'Posts', id })), { type: 'Posts', id: 'LIST' }],
     }),
     addPost: build.mutation<Post, Partial<Post>>({
@@ -210,7 +260,7 @@ export const postApi = createApi({
           body,
         };
       },
-      // Invalidates all list-type queries - after all, depending of the sort order,
+      // Invalidates all Post-type queries providing the `LIST` id - after all, depending of the sort order,
       // that newly created post could show up in any lists.
       invalidates: [{ type: 'Posts', id: 'LIST'],
     }),
@@ -228,7 +278,7 @@ export const postApi = createApi({
         };
       },
       // Invalidates all queries that subscribe to this Post `id` only.
-      // In this case, `getPost` will be re-run.
+      // In this case, `getPost` will be re-run. `getPosts` *might*  rerun, if this id was under it's results.
       invalidates: (_, { id }) => [{ type: 'Posts', id }],
     }),
     deletePost: build.mutation<{ success: boolean; id: number }, number>({
@@ -249,7 +299,7 @@ export const postApi = createApi({
 
 <iframe src="https://codesandbox.io/embed/concepts-mutations-4d98s?fontsize=12&hidenavigation=1&theme=dark&view=preview"
      style={{ width: '100%', height: '600px', border: 0, borderRadius: '4px', overflow: 'hidden' }}
-     title="rtk-query-react-hooks-example"
+     title="RTK Query - Mutations Concept"
      allow="geolocation; microphone; camera; midi; vr; accelerometer; gyroscope; payment; ambient-light-sensor; encrypted-media; usb" 
      sandbox="allow-modals allow-forms allow-popups allow-scripts allow-same-origin"
 ></iframe>

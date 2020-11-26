@@ -103,7 +103,8 @@
     "ts-node": "^9.0.0",
     "ts-unused-exports": "^7.0.0",
     "tsdx": "^0.14.1",
-    "tslib": "^2.0.3"
+    "tslib": "^2.0.3",
+    "whatwg-fetch": "^3.5.0"
   },
   "resolutions": {
     "typescript": "4.1.2",

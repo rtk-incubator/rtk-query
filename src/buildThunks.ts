@@ -1,5 +1,5 @@
 import { InternalSerializeQueryArgs } from '.';
-import { Api, ApiEndpointQuery } from './apiTypes';
+import { Api, ApiEndpointQuery, BaseQueryFn } from './apiTypes';
 import { InternalRootState, QueryKeys, QueryStatus, QuerySubstateIdentifier } from './apiState';
 import { StartQueryActionCreatorOptions } from './buildActionMaps';
 import {
@@ -97,8 +97,7 @@ export type QueryThunk = AsyncThunk<ThunkResult, QueryThunkArg<any>, {}>;
 export type MutationThunk = AsyncThunk<ThunkResult, MutationThunkArg<any>, {}>;
 
 export interface QueryApi {
-  signal: AbortSignal;
-  rejectWithValue(value: any): unknown;
+  signal?: AbortSignal;
 }
 
 function defaultTransformResponse(baseQueryReturnValue: unknown) {
@@ -126,8 +125,12 @@ export type UpdateQueryResultThunk<Definitions extends EndpointDefinitions, Part
 
 type PatchCollection = { patches: Patch[]; inversePatches: Patch[] };
 
+class HandledError {
+  constructor(public readonly value: any) {}
+}
+
 export function buildThunks<
-  BaseQuery extends (args: any, api: QueryApi) => any,
+  BaseQuery extends BaseQueryFn,
   ReducerPath extends string,
   Definitions extends EndpointDefinitions
 >({
@@ -193,10 +196,12 @@ export function buildThunks<
   >(
     `${reducerPath}/executeQuery`,
     async (arg, { signal, rejectWithValue }) => {
-      const result = await baseQuery(arg.internalQueryArgs, { signal, rejectWithValue });
+      const result = await baseQuery(arg.internalQueryArgs, { signal });
+      if (result.error) return rejectWithValue(result.error);
+
       return {
         fulfilledTimeStamp: Date.now(),
-        result: (endpointDefinitions[arg.endpoint].transformResponse ?? defaultTransformResponse)(result),
+        result: (endpointDefinitions[arg.endpoint].transformResponse ?? defaultTransformResponse)(result.data),
       };
     },
     {
@@ -223,14 +228,19 @@ export function buildThunks<
 
     if (endpoint.onStart) endpoint.onStart(arg.originalArgs, mutationApi);
     try {
-      const result = await baseQuery(arg.internalQueryArgs, { signal, rejectWithValue });
-      if (endpoint.onSuccess) endpoint.onSuccess(arg.originalArgs, mutationApi, result);
+      const result = await baseQuery(arg.internalQueryArgs, { signal });
+      if (result.error) throw new HandledError(result.error);
+      if (endpoint.onSuccess) endpoint.onSuccess(arg.originalArgs, mutationApi, result.data);
       return {
         fulfilledTimeStamp: Date.now(),
-        result: (endpointDefinitions[arg.endpoint].transformResponse ?? defaultTransformResponse)(result),
+        result: (endpointDefinitions[arg.endpoint].transformResponse ?? defaultTransformResponse)(result.data),
       };
     } catch (error) {
-      if (endpoint.onError) endpoint.onError(arg.originalArgs, mutationApi, error);
+      if (endpoint.onError)
+        endpoint.onError(arg.originalArgs, mutationApi, error instanceof HandledError ? error.value : error);
+      if (error instanceof HandledError) {
+        return rejectWithValue(error.value);
+      }
       throw error;
     }
   });

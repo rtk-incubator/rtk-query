@@ -7,7 +7,7 @@ hide_title: true
 
 # Pagination
 
-RTK Query makes it straighforward to integrate with a standard index-based pagination API. This is the most common form of pagination that you'll need to implement.
+RTK Query makes it straightforward to integrate with a standard index-based pagination API. This is the most common form of pagination that you'll need to implement.
 
 ## Setup an endpoint to accept a page `arg`
 

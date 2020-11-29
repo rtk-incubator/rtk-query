@@ -112,7 +112,7 @@ For RTK Query, _entities_ are just a name that you can give to a specific collec
 
 #### Provides
 
-A _query_ can _provide_ entities to the cache. The `provides` argument accepts either an array of `{type: string, id?: string|number}` or a callback that returns such an array. That function will be passed the result as the first argument and the argument originally passed into the `query` method as the second argument.
+A _query_ can _provide_ entities to the cache. The `provides` argument can both be an array of `string` (such as `['Posts']`), `{type: string, id?: string|number}` or a callback that returns such an array. That function will be passed the result as the first argument and the argument originally passed into the `query` method as the second argument.
 
 #### Invalidates
 

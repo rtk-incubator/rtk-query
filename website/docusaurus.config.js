@@ -20,8 +20,8 @@ module.exports = {
       },
       items: [
         {
-          to: 'introduction/quick-start',
-          label: 'Quick Start',
+          to: 'introduction/getting-started',
+          label: 'Getting Started',
           position: 'right',
         },
         {
@@ -44,8 +44,8 @@ module.exports = {
           title: 'Resources',
           items: [
             {
-              label: 'Quick Start',
-              to: '/introduction/quick-start',
+              label: 'Getting Started',
+              to: '/introduction/getting-started',
             },
             { label: 'API Reference', to: '/api/createApi' },
             { label: 'Examples', to: '/examples/examples-overview' },

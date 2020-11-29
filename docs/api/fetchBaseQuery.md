@@ -38,7 +38,7 @@ Promise<{
 
 ### Using `fetchBaseQuery`
 
-To use it, simply import it when you are [creating an API service definition](../introduction/quick-start#create-an-api-service).
+To use it, simply import it when you are [creating an API service definition](../introduction/getting-started#create-an-api-service).
 
 ```ts title="src/services/pokemon.ts"
 import { createApi, fetchBaseQuery } from '@rtk-incubator/rtk-query';

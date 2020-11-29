@@ -1,11 +1,11 @@
 ---
-id: quick-start
-title: Quick Start
-sidebar_label: Quick Start
+id: getting-started
+title: Getting Started
+sidebar_label: Getting Started
 hide_title: true
 ---
 
-# Quick Start
+# Getting Started
 
 `RTK Query` is an advanced data fetching and caching tool, designed to simplify common cases for loading data in a web application. `RTK Query` itself is built on top of [Redux-Toolkit](https://redux-toolkit.js.org/) and uses [Redux](https://redux.js.org/) internally for its architecture. Although knowledge of Redux and RTK are not required to use this library, you should explore all of the additional global store management capabilities they provide, as well as installing the [devtools](https://github.com/reduxjs/redux-devtools).
 

@@ -37,6 +37,9 @@ module.exports = {
         },
       ],
     },
+    prism: {
+      theme: require('./src/js/monokaiTheme.js')
+    },
     footer: {
       style: 'dark',
       links: [

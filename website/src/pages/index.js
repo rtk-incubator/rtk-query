@@ -18,6 +18,25 @@ const features = [
     ),
   },
   {
+    title: 'Built on Redux',
+    imageUrl: 'img/redux.svg',
+    description: (
+      <>
+        RTK Query is <b>built on top of Redux Toolkit</b>, so it integrates with the Redux ecosystem and DevTools
+      </>
+    ),
+  },
+  {
+    title: 'Framework Agnostic',
+    imageUrl: 'img/checklist.svg',
+    description: (
+      <>
+        RTK Query <b>runs anywhere Redux runs</b> and isn't limited to React. RTK Query <b>provides React Hooks</b> for
+        convenience, and it's a breeze to <b>integrate with Svelte, Vue, or any other framework of your choice</b>.
+      </>
+    ),
+  },
+  {
     title: 'Developer Experience',
     imageUrl: 'img/brain.svg',
     description: (
@@ -27,22 +46,12 @@ const features = [
       </>
     ),
   },
-  {
-    title: 'Framework Agnostic',
-    imageUrl: 'img/checklist.svg',
-    description: (
-      <>
-        RTK Query <b>runs anywhere Redux runs and isn't limited to React</b>. RTK Query <b>provides React Hooks</b> for
-        convenience, and it's a breeze to <b>integrate with Svelte, Vue, or any other framework of your choice</b>.
-      </>
-    ),
-  },
 ];
 
 function Feature({ imageUrl, title, description }) {
   const imgUrl = useBaseUrl(imageUrl);
   return (
-    <div className={clsx('col col--4 text--center', styles.feature)}>
+    <div className={clsx('col col--3 text--center', styles.feature)}>
       {imgUrl && (
         <div className="text--center">
           <img className={styles.featureImage} src={imgUrl} alt={title} />

@@ -10,7 +10,7 @@ const defaultHeaders: Record<string, string> = {
 
 let fetchSpy: jest.SpyInstance<Promise<Response>, any>;
 
-beforeAll(() => {
+beforeEach(() => {
   fetchSpy = jest.spyOn(global, 'fetch');
 });
 
@@ -193,6 +193,28 @@ describe('fetchBaseQuery', () => {
         }
       );
       expect(fetchSpy).toHaveBeenCalledWith(`${baseUrl}/success?apple=fruit`, expect.any(Object));
+    });
+  });
+
+  describe('validateStatus', () => {
+    test('validateStatus can return an error even on normal 200 responses', async () => {
+      // This is a scenario where an API may always return a 200, but indicates there is an error when success = false
+      const res = await baseQuery(
+        {
+          url: '/nonstandard-error',
+          validateStatus: (response, body) => (response.status === 200 && body.success === false ? false : true),
+        },
+        {
+          signal: undefined,
+          dispatch: storeRef.store.dispatch,
+          getState: storeRef.store.getState,
+        }
+      );
+
+      expect(res.error).toEqual({
+        status: 200,
+        data: { success: false, message: 'This returns a 200 but is really an error' },
+      });
     });
   });
 

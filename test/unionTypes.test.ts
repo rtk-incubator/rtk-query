@@ -1,6 +1,6 @@
 import { SerializedError } from '@reduxjs/toolkit';
 import { createApi, fetchBaseQuery, FetchBaseQueryError } from '@rtk-incubator/rtk-query';
-import { expectExactType } from './helpers';
+import { expectExactType, expectType } from './helpers';
 
 const api = createApi({
   baseQuery: fetchBaseQuery(),
@@ -44,6 +44,13 @@ describe.skip('TS only tests', () => {
       expectExactType(false as false)(result.isUninitialized);
       expectExactType(false as false)(result.isLoading);
       expectExactType(false as false)(result.isError);
+    }
+
+    // @ts-expect-error
+    expectType<never>(result);
+    // is always one of those four
+    if (!result.isUninitialized && !result.isLoading && !result.isError && !result.isSuccess) {
+      expectType<never>(result);
     }
   });
   test('queryHookResult union', () => {
@@ -93,6 +100,13 @@ describe.skip('TS only tests', () => {
       expectExactType(false as boolean)(result.isLoading);
       expectExactType(false as boolean)(result.isSuccess);
       expectExactType(false as false)(result.isError);
+    }
+
+    // @ts-expect-error
+    expectType<never>(result);
+    // is always one of those four
+    if (!result.isUninitialized && !result.isLoading && !result.isError && !result.isSuccess) {
+      expectType<never>(result);
     }
   });
 });

@@ -248,7 +248,7 @@ function defaultTransformResponse(baseQueryReturnValue: unknown) {
 }
 ```
 
-To change it, simply provide a function that looks like:
+To change it, provide a function that looks like:
 
 ```ts
 transformResponse: (response) => response.some.deeply.nested.property;

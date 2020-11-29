@@ -9,28 +9,31 @@ import styles from './styles.module.css';
 const features = [
   {
     title: 'Simple and Effective',
-    imageUrl: 'img/undraw_docusaurus_mountain.svg',
+    imageUrl: 'img/hand.svg',
     description: (
       <>
-        RTK Query was designed as an advanced, yet simple to use data fetching and caching library that solves the
-        majority of use cases.
+        RTK Query is a <b>simple to use data fetching and caching library</b> that solves the majority of use cases,
+        with advanced configuration options to fit your needs
       </>
     ),
   },
   {
     title: 'Developer Experience',
-    imageUrl: 'img/undraw_docusaurus_tree.svg',
+    imageUrl: 'img/brain.svg',
     description: (
-      <>RTK Query was built entirely with TypeScript, giving TS and JS users a first-class experience out of the box.</>
+      <>
+        RTK Query is <b>built entirely with TypeScript</b>, giving TS and JS users a first-class experience out of the
+        box, and comes with opinionated defaults for common patterns.
+      </>
     ),
   },
   {
     title: 'Framework Agnostic',
-    imageUrl: 'img/undraw_docusaurus_react.svg',
+    imageUrl: 'img/checklist.svg',
     description: (
       <>
-        RTK Query runs anywhere Redux runs and isn't limited to React. Although RTK Query provides React Hooks for
-        convenience, it's a breeze to integrate with Svelte, Vue, or any other framework of your choice.
+        RTK Query <b>runs anywhere Redux runs and isn't limited to React</b>. RTK Query <b>provides React Hooks</b> for
+        convenience, and it's a breeze to <b>integrate with Svelte, Vue, or any other framework of your choice</b>.
       </>
     ),
   },
@@ -45,7 +48,7 @@ function Feature({ imageUrl, title, description }) {
           <img className={styles.featureImage} src={imgUrl} alt={title} />
         </div>
       )}
-      <h3>{title}</h3>
+      <h2>{title}</h2>
       <p>{description}</p>
     </div>
   );
@@ -94,13 +97,17 @@ function Home() {
   const { siteConfig = {} } = context;
   return (
     <Layout
-      title={`${siteConfig.title}`}
+      title={`${siteConfig.title} - ${siteConfig.tagline}`}
       description="RTK Query is an advanced data fetching and caching tool, designed to simplify common cases for loading data in a web application."
     >
       <header className={clsx('hero hero--primary', styles.heroBanner)}>
         <div className="container">
           <h1 className="hero__title">{siteConfig.title}</h1>
-          <p className="hero__subtitle">{siteConfig.tagline}</p>
+          <h2 className="hero__subtitle">{siteConfig.tagline}</h2>
+          <p className="hero__subtitle">
+            Caching and network request management can be hard. RTK Query simplifies data fetching so you can focus on
+            building your product.
+          </p>
           <div className={styles.buttons}>
             <Link
               className={clsx('button button--secondary button--lg', styles.getStarted)}

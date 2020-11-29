@@ -1,6 +1,6 @@
-import { QueryApi } from './buildThunks';
 import { joinUrls } from './utils';
 import { isPlainObject } from '@reduxjs/toolkit';
+import { BaseQueryFn } from './apiTypes';
 
 interface FetchArgs extends RequestInit {
   url: string;
@@ -26,8 +26,8 @@ export function fetchBaseQuery({
 }: {
   baseUrl?: string;
   prepareHeaders?: (headers: Headers, api: { getState: () => unknown }) => Headers;
-} & RequestInit = {}) {
-  return async (arg: string | FetchArgs, { signal, getState }: QueryApi) => {
+} & RequestInit = {}): BaseQueryFn<string | FetchArgs, {}> {
+  return async (arg, { signal, getState }) => {
     let {
       url,
       method = 'GET' as const,

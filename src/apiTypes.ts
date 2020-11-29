@@ -20,11 +20,11 @@ import './buildSelectors';
 type UnwrapPromise<T> = T extends PromiseLike<infer V> ? V : T;
 type MaybePromise<T> = T | PromiseLike<T>;
 
-export type BaseQueryFn<Args = any, DefinitionExtraOptions = {}> = (
+export type BaseQueryFn<Args = any, Result = unknown, Error = unknown, DefinitionExtraOptions = {}> = (
   args: Args,
   api: QueryApi,
   extraOptions: DefinitionExtraOptions
-) => MaybePromise<{ error: any; data?: undefined } | { error?: undefined; data?: any }>;
+) => MaybePromise<{ error: Error; data?: undefined } | { error?: undefined; data?: Result }>;
 
 export type BaseQueryEnhancer<AdditionalArgs = unknown, AdditionalDefinitionExtraOptions = unknown, Config = void> = <
   BaseQuery extends BaseQueryFn
@@ -33,6 +33,8 @@ export type BaseQueryEnhancer<AdditionalArgs = unknown, AdditionalDefinitionExtr
   config: Config
 ) => BaseQueryFn<
   BaseQueryArg<BaseQuery> & AdditionalArgs,
+  BaseQueryResult<BaseQuery>,
+  BaseQueryError<BaseQuery>,
   BaseQueryExtraOptions<BaseQuery> & AdditionalDefinitionExtraOptions
 >;
 

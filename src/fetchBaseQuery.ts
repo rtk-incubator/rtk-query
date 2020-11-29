@@ -26,7 +26,7 @@ export function fetchBaseQuery({
 }: {
   baseUrl?: string;
   prepareHeaders?: (headers: Headers, api: { getState: () => unknown }) => Headers;
-} & RequestInit = {}): BaseQueryFn<string | FetchArgs, {}> {
+} & RequestInit = {}): BaseQueryFn<string | FetchArgs, unknown, FetchBaseQueryError, {}> {
   return async (arg, { signal, getState }) => {
     let {
       url,
@@ -73,6 +73,6 @@ export function fetchBaseQuery({
 
     return validateStatus(response, resultData)
       ? { data: resultData }
-      : { error: { status: response.status, data: resultData } as FetchBaseQueryError };
+      : { error: { status: response.status, data: resultData } };
   };
 }

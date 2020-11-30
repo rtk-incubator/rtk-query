@@ -50,6 +50,7 @@ module.exports = {
               label: 'Getting Started',
               to: '/introduction/getting-started',
             },
+            { label: 'Video Overview', to: '/introduction/video' },
             { label: 'API Reference', to: '/api/createApi' },
             { label: 'Examples', to: '/examples/examples-overview' },
           ],

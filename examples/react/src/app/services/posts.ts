@@ -1,6 +1,5 @@
-import { createApi, fetchBaseQuery, retryStaggered } from '@rtk-incubator/rtk-query';
+import { createApi, fetchBaseQuery, retry } from '@rtk-incubator/rtk-query';
 import { setCredentials } from 'src/features/auth/authSlice';
-
 import { RootState } from '../store';
 
 export interface Post {
@@ -31,7 +30,7 @@ const baseQuery = fetchBaseQuery({
   },
 });
 
-const staggeredBaseQuery = retryStaggered(baseQuery, { maxRetries: 6 });
+const staggeredBaseQuery = retry(baseQuery, { maxRetries: 6 });
 
 export const postApi = createApi({
   reducerPath: 'postsApi', // We only specify this because there are many services. This would not be common in most applications

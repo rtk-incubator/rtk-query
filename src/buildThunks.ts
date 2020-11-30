@@ -127,7 +127,7 @@ export type UpdateQueryResultThunk<Definitions extends EndpointDefinitions, Part
 
 type PatchCollection = { patches: Patch[]; inversePatches: Patch[] };
 
-class HandledError {
+export class HandledError {
   constructor(public readonly value: any) {}
 }
 

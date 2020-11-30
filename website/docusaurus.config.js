@@ -48,6 +48,7 @@ module.exports = {
               label: 'Quick Start',
               to: '/introduction/quick-start',
             },
+            { label: 'Video Overview', to: '/introduction/video' },
             { label: 'API Reference', to: '/api/createApi' },
             { label: 'Examples', to: '/examples/examples-overview' },
           ],

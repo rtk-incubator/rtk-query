@@ -1,4 +1,4 @@
-import { BaseQueryFn, createApi, retryStaggered, withoutStaggering } from '@rtk-incubator/rtk-query';
+import { BaseQueryFn, createApi, retry } from '@rtk-incubator/rtk-query';
 import { setupApiStore, waitMs } from './helpers';
 
 beforeEach(() => {
@@ -19,7 +19,7 @@ describe('configuration', () => {
     const baseBaseQuery = jest.fn<ReturnType<BaseQueryFn>, Parameters<BaseQueryFn>>();
     baseBaseQuery.mockRejectedValue(new Error('rejected'));
 
-    const baseQuery = retryStaggered(baseBaseQuery);
+    const baseQuery = retry(baseBaseQuery);
     const api = createApi({
       baseQuery,
       endpoints: (build) => ({
@@ -41,7 +41,7 @@ describe('configuration', () => {
     const baseBaseQuery = jest.fn<ReturnType<BaseQueryFn>, Parameters<BaseQueryFn>>();
     baseBaseQuery.mockRejectedValue(new Error('rejected'));
 
-    const baseQuery = retryStaggered(baseBaseQuery, { maxRetries: 3 });
+    const baseQuery = retry(baseBaseQuery, { maxRetries: 3 });
     const api = createApi({
       baseQuery,
       endpoints: (build) => ({
@@ -63,7 +63,7 @@ describe('configuration', () => {
     const baseBaseQuery = jest.fn<ReturnType<BaseQueryFn>, Parameters<BaseQueryFn>>();
     baseBaseQuery.mockRejectedValue(new Error('rejected'));
 
-    const baseQuery = retryStaggered(baseBaseQuery, { maxRetries: 3 });
+    const baseQuery = retry(baseBaseQuery, { maxRetries: 3 });
     const api = createApi({
       baseQuery,
       endpoints: (build) => ({
@@ -97,7 +97,7 @@ describe('configuration', () => {
     const baseBaseQuery = jest.fn<ReturnType<BaseQueryFn>, Parameters<BaseQueryFn>>();
     baseBaseQuery.mockRejectedValue(new Error('rejected'));
 
-    const baseQuery = retryStaggered(baseBaseQuery, { maxRetries: 3 });
+    const baseQuery = retry(baseBaseQuery, { maxRetries: 3 });
     const api = createApi({
       baseQuery,
       endpoints: (build) => ({
@@ -119,7 +119,7 @@ describe('configuration', () => {
     const baseBaseQuery = jest.fn<ReturnType<BaseQueryFn>, Parameters<BaseQueryFn>>();
     baseBaseQuery.mockResolvedValue({ data: { success: true } });
 
-    const baseQuery = retryStaggered(baseBaseQuery, { maxRetries: 3 });
+    const baseQuery = retry(baseBaseQuery, { maxRetries: 3 });
     const api = createApi({
       baseQuery,
       endpoints: (build) => ({
@@ -137,13 +137,16 @@ describe('configuration', () => {
 
     expect(baseBaseQuery).toHaveBeenCalledTimes(1);
   });
-  test('throwing withoutStaggering(error) will skip staggering and expose the error directly', async () => {
+  test('calling retry.fail(error) will skip retrying and expose the error directly', async () => {
     const error = { message: 'banana' };
 
     const baseBaseQuery = jest.fn<ReturnType<BaseQueryFn>, Parameters<BaseQueryFn>>();
-    baseBaseQuery.mockRejectedValue(error);
+    baseBaseQuery.mockImplementation((input) => {
+      retry.fail(error);
+      return { data: `this won't happen` };
+    });
 
-    const baseQuery = withoutStaggering(baseBaseQuery);
+    const baseQuery = retry(baseBaseQuery);
     const api = createApi({
       baseQuery,
       endpoints: (build) => ({
@@ -176,7 +179,7 @@ describe('configuration', () => {
     });
   });
 
-  test('wrapping retryStaggered(retryStaggered(..., { maxRetries: 3 }), { maxRetries: 3 }) should retry 16 times', async () => {
+  test('wrapping retry(retry(..., { maxRetries: 3 }), { maxRetries: 3 }) should retry 16 times', async () => {
     /**
      * Note:
      * This will retry 16 total times because we try the initial + 3 retries (sum: 4), then retry that process 3 times (starting at 0 for a total of 4)... 4x4=16 (allegedly)
@@ -184,7 +187,7 @@ describe('configuration', () => {
     const baseBaseQuery = jest.fn<ReturnType<BaseQueryFn>, Parameters<BaseQueryFn>>();
     baseBaseQuery.mockRejectedValue(new Error('rejected'));
 
-    const baseQuery = retryStaggered(retryStaggered(baseBaseQuery, { maxRetries: 3 }), { maxRetries: 3 });
+    const baseQuery = retry(retry(baseBaseQuery, { maxRetries: 3 }), { maxRetries: 3 });
     const api = createApi({
       baseQuery,
       endpoints: (build) => ({
@@ -210,7 +213,7 @@ describe('configuration', () => {
       .mockRejectedValueOnce(new Error('rejected'))
       .mockResolvedValue({ data: { success: true } });
 
-    const baseQuery = retryStaggered(baseBaseQuery, { maxRetries: 10 });
+    const baseQuery = retry(baseBaseQuery, { maxRetries: 10 });
     const api = createApi({
       baseQuery,
       endpoints: (build) => ({
@@ -227,4 +230,6 @@ describe('configuration', () => {
 
     expect(baseBaseQuery).toHaveBeenCalledTimes(3);
   });
+
+  test.todo('allows a custom backoff fn');
 });

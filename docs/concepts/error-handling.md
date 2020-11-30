@@ -56,18 +56,24 @@ By default, RTK Query expects you to `return` two possible objects:
     return { error: { status: 500, data: { message: 'Failed because of reasons' } };
     ```
 
+:::note
+This format is required so that RTK Query can infer the return types for your responses.
+:::
+
 As an example, this what a very basic axios-based `baseQuery` utility could look like:
 
 ```ts title="Basic axios baseQuery"
-const axiosBaseQuery = ({ baseUrl }: { baseUrl: string } = { baseUrl: '' }) => async ({
-  url,
-  method,
-  data,
-}: {
-  url: string;
-  method?: AxiosRequestConfig['method'];
-  data?: AxiosRequestConfig['data'];
-}) => {
+const axiosBaseQuery = (
+  { baseUrl }: { baseUrl: string } = { baseUrl: '' }
+): BaseQueryFn<
+  {
+    url: string;
+    method: AxiosRequestConfig['method'];
+    data?: AxiosRequestConfig['data'];
+  },
+  unknown,
+  unknown
+> => async ({ url, method, data }) => {
   try {
     const result = await axios({ url: baseUrl + url, method, data });
     return { data: result.data };
@@ -94,7 +100,7 @@ Ultimately, you can choose whatever library you prefer to use with your `baseQue
 
 ## Retrying on Error
 
-RTK Query exports a utility called `retryStaggered` that you can wrap the `baseQuery` in your API definition with. It defaults to 5 attempts with a basic exponential backoff.
+RTK Query exports a utility called `retry` that you can wrap the `baseQuery` in your API definition with. It defaults to 5 attempts with a basic exponential backoff.
 
 The default behavior would retry at these intervals:
 
@@ -106,7 +112,7 @@ The default behavior would retry at these intervals:
 
 ```ts title="Retry every request 5 times by default"
 // maxRetries: 5 is the default, and can be omitted. Shown for documentation purposes.
-const staggeredBaseQuery = retryStaggered(fetchBaseQuery({ baseUrl: '/' }), { maxRetries: 5 });
+const staggeredBaseQuery = retry(fetchBaseQuery({ baseUrl: '/' }), { maxRetries: 5 });
 
 export const api = createApi({
   baseQuery: staggeredBaseQuery,
@@ -129,6 +135,27 @@ In the event that you didn't want to retry on a specific endpoint, you can just 
 :::info
 It is possible for a hook to return `data` and `error` at the same time. By default, RTK Query will keep whatever the last 'good' result was in `data` until it can be updated or garbage collected.
 :::
+
+## Bailing out of errors
+
+`retry.fail`
+
+```ts title="TODO"
+baseBaseQuery.mockImplementation((input) => {
+  retry.fail(error);
+  return { data: `this won't happen` };
+});
+
+const baseQuery = retry(baseBaseQuery);
+const api = createApi({
+  baseQuery,
+  endpoints: (build) => ({
+    q1: build.query({
+      query: () => {},
+    }),
+  }),
+});
+```
 
 ## Handling errors at a macro level
 

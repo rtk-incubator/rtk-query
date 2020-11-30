@@ -1,4 +1,4 @@
-import { createApi, fetchBaseQuery } from '@rtk-incubator/rtk-query';
+import { BaseQueryFn, createApi, fetchBaseQuery } from '@rtk-incubator/rtk-query';
 import { renderHook, act } from '@testing-library/react-hooks';
 import { rest } from 'msw';
 import axios, { AxiosError, AxiosRequestConfig } from 'axios';
@@ -278,15 +278,17 @@ describe('mutation error handling', () => {
 });
 
 describe('custom axios baseQuery', () => {
-  const axiosBaseQuery = ({ baseUrl }: { baseUrl: string } = { baseUrl: '' }) => async ({
-    url,
-    method,
-    data,
-  }: {
-    url: string;
-    method: AxiosRequestConfig['method'];
-    data?: AxiosRequestConfig['data'];
-  }) => {
+  const axiosBaseQuery = (
+    { baseUrl }: { baseUrl: string } = { baseUrl: '' }
+  ): BaseQueryFn<
+    {
+      url: string;
+      method: AxiosRequestConfig['method'];
+      data?: AxiosRequestConfig['data'];
+    },
+    unknown,
+    unknown
+  > => async ({ url, method, data }) => {
     try {
       const result = await axios({ url: baseUrl + url, method, data });
       return { data: result.data };
@@ -308,13 +310,13 @@ describe('custom axios baseQuery', () => {
     },
   });
 
-  const storeRef2 = setupApiStore(api);
+  const storeRef = setupApiStore(api);
   test('axios errors behave as expected', async () => {
     server.use(
       rest.get('http://example.com/query', (_, res, ctx) => res(ctx.status(500), ctx.json({ value: 'error' })))
     );
 
-    const { result } = renderHook(() => api.useQueryQuery({}), { wrapper: storeRef2.wrapper });
+    const { result } = renderHook(() => api.useQueryQuery({}), { wrapper: storeRef.wrapper });
 
     await hookWaitFor(() => expect(result.current.isFetching).toBeFalsy());
     expect(result.current).toEqual(

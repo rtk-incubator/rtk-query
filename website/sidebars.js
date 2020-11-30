@@ -1,6 +1,6 @@
 module.exports = {
   docs: {
-    Introduction: ['introduction/quick-start', 'introduction/comparison', 'introduction/video-overview'],
+    Introduction: ['introduction/getting-started', 'introduction/comparison', 'introduction/video-overview'],
     Concepts: [
       'concepts/queries',
       'concepts/mutations',

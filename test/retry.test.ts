@@ -15,7 +15,7 @@ const loopTimers = async (max: number = 12) => {
 };
 
 describe('configuration', () => {
-  test('staggering without any config', async () => {
+  test('retrying without any config options', async () => {
     const baseBaseQuery = jest.fn<ReturnType<BaseQueryFn>, Parameters<BaseQueryFn>>();
     baseBaseQuery.mockRejectedValue(new Error('rejected'));
 
@@ -37,7 +37,7 @@ describe('configuration', () => {
     expect(baseBaseQuery).toHaveBeenCalledTimes(6);
   });
 
-  test('staggering with global config overrides defaults', async () => {
+  test('retrying with baseQuery config that overrides default behavior (maxRetries: 5)', async () => {
     const baseBaseQuery = jest.fn<ReturnType<BaseQueryFn>, Parameters<BaseQueryFn>>();
     baseBaseQuery.mockRejectedValue(new Error('rejected'));
 
@@ -59,7 +59,7 @@ describe('configuration', () => {
     expect(baseBaseQuery).toHaveBeenCalledTimes(4);
   });
 
-  test('staggering with endpoint config overrides global config', async () => {
+  test('retrying with endpoint config that overrides baseQuery config', async () => {
     const baseBaseQuery = jest.fn<ReturnType<BaseQueryFn>, Parameters<BaseQueryFn>>();
     baseBaseQuery.mockRejectedValue(new Error('rejected'));
 
@@ -93,9 +93,35 @@ describe('configuration', () => {
     expect(baseBaseQuery).toHaveBeenCalledTimes(9);
   });
 
-  test('staggered retries also work with mutations', async () => {
+  test('retrying also works with mutations', async () => {
     const baseBaseQuery = jest.fn<ReturnType<BaseQueryFn>, Parameters<BaseQueryFn>>();
     baseBaseQuery.mockRejectedValue(new Error('rejected'));
+
+    const baseQuery = retry(baseBaseQuery, { maxRetries: 3 });
+    const api = createApi({
+      baseQuery,
+      endpoints: (build) => ({
+        m1: build.mutation({
+          query: () => ({ method: 'PUT' }),
+        }),
+      }),
+    });
+
+    const storeRef = setupApiStore(api);
+
+    storeRef.store.dispatch(api.endpoints.m1.initiate({}));
+
+    await loopTimers(5);
+
+    expect(baseBaseQuery).toHaveBeenCalledTimes(4);
+  });
+
+  test('retrying stops after a success from a mutation', async () => {
+    const baseBaseQuery = jest.fn<ReturnType<BaseQueryFn>, Parameters<BaseQueryFn>>();
+    baseBaseQuery
+      .mockRejectedValueOnce(new Error('rejected'))
+      .mockRejectedValueOnce(new Error('rejected'))
+      .mockResolvedValue({ data: { success: true } });
 
     const baseQuery = retry(baseBaseQuery, { maxRetries: 3 });
     const api = createApi({
@@ -206,7 +232,7 @@ describe('configuration', () => {
     expect(baseBaseQuery).toHaveBeenCalledTimes(16);
   });
 
-  test('stops retrying after a success', async () => {
+  test('stops retrying a mutation after a success', async () => {
     const baseBaseQuery = jest.fn<ReturnType<BaseQueryFn>, Parameters<BaseQueryFn>>();
     baseBaseQuery
       .mockRejectedValueOnce(new Error('rejected'))
@@ -226,10 +252,37 @@ describe('configuration', () => {
     const storeRef = setupApiStore(api);
     storeRef.store.dispatch(api.endpoints.q1.initiate({}));
 
-    await loopTimers(4);
+    await loopTimers(6);
 
     expect(baseBaseQuery).toHaveBeenCalledTimes(3);
   });
 
-  test.todo('allows a custom backoff fn');
+  test('accepts a custom backoff fn', async () => {
+    const baseBaseQuery = jest.fn<ReturnType<BaseQueryFn>, Parameters<BaseQueryFn>>();
+    baseBaseQuery.mockRejectedValue(new Error('rejected'));
+
+    const baseQuery = retry(baseBaseQuery, {
+      maxRetries: 8,
+      backoff: async (attempt, maxRetries) => {
+        const attempts = Math.min(attempt, maxRetries);
+        const timeout = attempts * 300; // Scale up by 300ms per request, ex: 300ms, 600ms, 900ms, 1200ms...
+        await new Promise((resolve) => setTimeout((res) => resolve(res), timeout));
+      },
+    });
+    const api = createApi({
+      baseQuery,
+      endpoints: (build) => ({
+        q1: build.query({
+          query: () => {},
+        }),
+      }),
+    });
+
+    const storeRef = setupApiStore(api);
+    storeRef.store.dispatch(api.endpoints.q1.initiate({}));
+
+    await loopTimers();
+
+    expect(baseBaseQuery).toHaveBeenCalledTimes(9);
+  });
 });

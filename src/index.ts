@@ -20,6 +20,8 @@ export { Api, ApiWithInjectedEndpoints } from './apiTypes';
 export { fetchBaseQuery, FetchBaseQueryError } from './fetchBaseQuery';
 export { QueryStatus } from './apiState';
 
+export { ApiProvider } from './ApiProvider';
+
 export type SerializeQueryArgs<InternalQueryArgs> = (_: {
   queryArgs: any;
   internalQueryArgs: InternalQueryArgs;

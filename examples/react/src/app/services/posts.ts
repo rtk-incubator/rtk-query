@@ -1,5 +1,6 @@
 import { createApi, fetchBaseQuery, retryStaggered } from '@rtk-incubator/rtk-query';
 import { setCredentials } from 'src/features/auth/authSlice';
+
 import { RootState } from '../store';
 
 export interface Post {

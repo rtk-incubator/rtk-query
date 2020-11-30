@@ -25,10 +25,11 @@
   },
   "scripts": {
     "start": "tsdx watch",
-    "build": "tsdx build && ./typesversions.sh",
+    "build": "tsdx build && node typesversions.js",
     "test": "tsdx test",
     "lint": "tsdx lint",
-    "prepare": "yarn build; ./prepare-examples.sh",
+    "prepare": "yarn build",
+    "prepareExamples": "./prepare-examples.sh",
     "size": "size-limit",
     "format": "prettier --write \"src/**/*.ts\" \"**/*.md\"",
     "analyze": "size-limit --why",
@@ -64,10 +65,10 @@
     }
   ],
   "dependencies": {
-    "@reduxjs/toolkit": "^1.5.0",
     "immer": ">=8.0.0"
   },
   "peerDependencies": {
+    "@reduxjs/toolkit": "^1.5.0",
     "react": "^16.14.0 || ^17.0.0",
     "react-dom": "^16.14.0 || ^17.0.0",
     "react-redux": "^7.2.1"
@@ -89,6 +90,7 @@
     }
   },
   "devDependencies": {
+    "@reduxjs/toolkit": "^1.5.0",
     "@size-limit/preset-small-lib": "^4.6.0",
     "@testing-library/react": "^11.1.0",
     "@testing-library/react-hooks": "^3.4.2",
@@ -104,6 +106,7 @@
     "react-dom": "^16.14.0 || 17.0.0",
     "react-redux": "^7.2.1",
     "react-test-renderer": "^17.0.1",
+    "shelljs": "^0.8.4",
     "size-limit": "^4.6.0",
     "ts-node": "^9.0.0",
     "ts-unused-exports": "^7.0.0",

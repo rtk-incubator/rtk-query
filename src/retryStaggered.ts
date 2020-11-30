@@ -35,12 +35,10 @@ export const retryStaggered: BaseQueryEnhancer<unknown, StaggerOptions, StaggerO
 
   while (true) {
     try {
-      // TODO: handling for `{error: ...}` return value from baseQuery - maybe also make that
-      // configurable as "graceful exit" so we don't need `throw withoutStaggering(error)`?
       const result = await baseQuery(args, api, extraOptions);
-      // fetchBaseQuery returns an error property, so we should check for that and throw it
+      // baseQueries _should_ return an error property, so we should check for that and throw it to continue retrying
       if (result.error && 'status' in (result.error as any) && 'data' in (result.error as any)) {
-        throw result.error;
+        throw result;
       }
       return result;
     } catch (e) {

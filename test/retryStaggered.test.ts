@@ -9,7 +9,7 @@ const loopTimers = async (max: number = 12) => {
   let count = 0;
   while (count < max) {
     await waitMs(1);
-    jest.runOnlyPendingTimers();
+    jest.advanceTimersByTime(120000);
     count++;
   }
 };

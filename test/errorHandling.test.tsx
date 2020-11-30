@@ -1,6 +1,7 @@
 import { createApi, fetchBaseQuery } from '@rtk-incubator/rtk-query';
 import { renderHook, act } from '@testing-library/react-hooks';
 import { rest } from 'msw';
+import axios, { AxiosError, AxiosRequestConfig } from 'axios';
 import { hookWaitFor, setupApiStore } from './helpers';
 import { server } from './mocks/server';
 
@@ -273,5 +274,56 @@ describe('mutation error handling', () => {
       );
       expect(result.current[1].error).toBeUndefined();
     }
+  });
+});
+
+describe('custom axios baseQuery', () => {
+  const axiosBaseQuery = ({ baseUrl }: { baseUrl: string } = { baseUrl: '' }) => async ({
+    url,
+    method,
+    data,
+  }: {
+    url: string;
+    method: AxiosRequestConfig['method'];
+    data?: AxiosRequestConfig['data'];
+  }) => {
+    try {
+      const result = await axios({ url: baseUrl + url, method, data });
+      return { data: result.data };
+    } catch (axiosError) {
+      let err = axiosError as AxiosError;
+      return { error: { status: err.response?.status, data: err.response?.data } };
+    }
+  };
+
+  const api = createApi({
+    baseQuery: axiosBaseQuery({
+      baseUrl: 'http://example.com',
+    }),
+    endpoints(build) {
+      return {
+        query: build.query({ query: () => ({ url: '/query', method: 'get' }) }),
+        mutation: build.mutation({ query: () => ({ url: '/mutation', method: 'post' }) }),
+      };
+    },
+  });
+
+  const storeRef2 = setupApiStore(api);
+  test('axios errors behave as expected', async () => {
+    server.use(
+      rest.get('http://example.com/query', (_, res, ctx) => res(ctx.status(500), ctx.json({ value: 'error' })))
+    );
+
+    const { result } = renderHook(() => api.useQueryQuery({}), { wrapper: storeRef2.wrapper });
+
+    await hookWaitFor(() => expect(result.current.isFetching).toBeFalsy());
+    expect(result.current).toEqual(
+      expect.objectContaining({
+        isLoading: false,
+        isError: true,
+        isSuccess: false,
+        error: { status: 500, data: { value: 'error' } },
+      })
+    );
   });
 });

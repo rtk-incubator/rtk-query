@@ -19,7 +19,7 @@ import { Api, BaseQueryArg, BaseQueryFn } from './apiTypes';
 export { Api, ApiWithInjectedEndpoints, BaseQueryFn, BaseQueryEnhancer } from './apiTypes';
 export { fetchBaseQuery, FetchBaseQueryError } from './fetchBaseQuery';
 export { QueryStatus } from './apiState';
-export { retryStaggered } from './retryStaggered';
+export { retryStaggered, withoutStaggering } from './retryStaggered';
 
 export type SerializeQueryArgs<InternalQueryArgs> = (_: {
   queryArgs: any;

@@ -1,7 +1,19 @@
 import { BaseQueryEnhancer } from './apiTypes';
 
-// TODO
-async function waitStaggered(...args: any[]) {}
+async function waitStaggered(attempt: number = 0, maxRetries: number = 5, delay: number = 300) {
+  const attempts = Math.min(attempt, maxRetries);
+  /**
+   * Exponential backoff that would give a baseline like:
+   * 1 - 600ms + rand
+   * 2 - 1200ms + rand
+   * 3 - 2400ms + rand
+   * 4 - 4800ms + rand
+   * 5 - 9600ms + rand
+   *
+   */
+  const timeout = ~~((Math.random() + 0.4) * (delay << attempts)); // Force a positive int in the case we make this an option
+  await new Promise((resolve) => setTimeout((res) => resolve(res), timeout));
+}
 
 interface StaggerOptions {
   /**
@@ -20,17 +32,21 @@ export const retryStaggered: BaseQueryEnhancer<unknown, StaggerOptions, StaggerO
 ) => async (args, api, extraOptions) => {
   const options = { maxRetries: 5, ...defaultOptions, ...extraOptions };
   let retry = 0;
+
   while (true) {
     try {
-      // TODO: handling for `{error: ...}` return value from baseQuery - maybe also make that
-      // configurable as "graceful exit" so we don't need `throw withoutStaggering(error)`?
-      return await baseQuery(args, api, extraOptions);
+      const result = await baseQuery(args, api, extraOptions);
+      // baseQueries _should_ return an error property, so we should check for that and throw it to continue retrying
+      if (result.error && 'status' in (result.error as any) && 'data' in (result.error as any)) {
+        throw result;
+      }
+      return result;
     } catch (e) {
       retry++;
       if (e.throwImmediately || retry > options.maxRetries) {
         throw e;
       }
-      await waitStaggered(retry); // whatever
+      await waitStaggered(retry, options.maxRetries);
     }
   }
 };

@@ -93,6 +93,31 @@ describe('configuration', () => {
     expect(baseBaseQuery).toHaveBeenCalledTimes(9);
   });
 
+  test('stops retrying a query after a success', async () => {
+    const baseBaseQuery = jest.fn<ReturnType<BaseQueryFn>, Parameters<BaseQueryFn>>();
+    baseBaseQuery
+      .mockRejectedValueOnce(new Error('rejected'))
+      .mockRejectedValueOnce(new Error('rejected'))
+      .mockResolvedValue({ data: { success: true } });
+
+    const baseQuery = retry(baseBaseQuery, { maxRetries: 10 });
+    const api = createApi({
+      baseQuery,
+      endpoints: (build) => ({
+        q1: build.mutation({
+          query: () => {},
+        }),
+      }),
+    });
+
+    const storeRef = setupApiStore(api);
+    storeRef.store.dispatch(api.endpoints.q1.initiate({}));
+
+    await loopTimers(6);
+
+    expect(baseBaseQuery).toHaveBeenCalledTimes(3);
+  });
+
   test('retrying also works with mutations', async () => {
     const baseBaseQuery = jest.fn<ReturnType<BaseQueryFn>, Parameters<BaseQueryFn>>();
     baseBaseQuery.mockRejectedValue(new Error('rejected'));
@@ -139,7 +164,7 @@ describe('configuration', () => {
 
     await loopTimers(5);
 
-    expect(baseBaseQuery).toHaveBeenCalledTimes(4);
+    expect(baseBaseQuery).toHaveBeenCalledTimes(3);
   });
   test('non-error-cases should **not** retry', async () => {
     const baseBaseQuery = jest.fn<ReturnType<BaseQueryFn>, Parameters<BaseQueryFn>>();
@@ -230,31 +255,6 @@ describe('configuration', () => {
     await loopTimers(18);
 
     expect(baseBaseQuery).toHaveBeenCalledTimes(16);
-  });
-
-  test('stops retrying a mutation after a success', async () => {
-    const baseBaseQuery = jest.fn<ReturnType<BaseQueryFn>, Parameters<BaseQueryFn>>();
-    baseBaseQuery
-      .mockRejectedValueOnce(new Error('rejected'))
-      .mockRejectedValueOnce(new Error('rejected'))
-      .mockResolvedValue({ data: { success: true } });
-
-    const baseQuery = retry(baseBaseQuery, { maxRetries: 10 });
-    const api = createApi({
-      baseQuery,
-      endpoints: (build) => ({
-        q1: build.query({
-          query: () => {},
-        }),
-      }),
-    });
-
-    const storeRef = setupApiStore(api);
-    storeRef.store.dispatch(api.endpoints.q1.initiate({}));
-
-    await loopTimers(6);
-
-    expect(baseBaseQuery).toHaveBeenCalledTimes(3);
   });
 
   test('accepts a custom backoff fn', async () => {

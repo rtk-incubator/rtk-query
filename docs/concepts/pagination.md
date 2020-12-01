@@ -55,11 +55,12 @@ const PostList = () => {
         {posts.data.map(({ id, title, status }) => (
           <div key={id}>{title} - {status}</div>
         ))}
-        <button onClick={() => setPage(page - 1)}>
+        <button onClick={() => setPage(page - 1)} isLoading={isFetching}>
           Previous
         </button>
         <button
           onClick={() => setPage(page + 1)}
+          isLoading={isFetching}
         >
          Next
         </button>

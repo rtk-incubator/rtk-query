@@ -32,7 +32,7 @@ export const api = createApi({
   })
 });
 
-export const { useListPostsQuery } = api.hooks;
+export const { useListPostsQuery } = api;
 ```
 
 ## Trigger the next page by incrementing the `page` state variable

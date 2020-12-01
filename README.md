@@ -37,13 +37,13 @@ It features:
 ## Getting started
 
 ```sh title="Example installation"
-yarn add @rtk-incubator/rtk-query
+yarn add @rtk-incubator/rtk-query @reduxjs/toolkit
 ```
 
 Or with npm:
 
 ```sh
-npm install @rtk-incubator/rtk-query
+npm install @rtk-incubator/rtk-query @reduxjs/toolkit
 ```
 
 Then follow along with the [Getting Started instructions](https://rtk-query-docs.netlify.app/introduction/getting-started).

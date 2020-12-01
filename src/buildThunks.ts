@@ -1,5 +1,5 @@
 import { InternalSerializeQueryArgs } from '.';
-import { Api, ApiEndpointQuery, BaseQueryFn, BaseQueryArg } from './apiTypes';
+import { Api, ApiEndpointQuery, BaseQueryFn, BaseQueryArg, BaseQueryError } from './apiTypes';
 import { InternalRootState, QueryKeys, QueryStatus, QuerySubstateIdentifier } from './apiState';
 import { StartQueryActionCreatorOptions } from './buildActionMaps';
 import {
@@ -32,9 +32,13 @@ declare module './apiTypes' {
 type EndpointThunk<
   Thunk extends AsyncThunk<any, any, any>,
   Definition extends EndpointDefinition<any, any, any, any>
-> = Definition extends EndpointDefinition<infer QueryArg, any, any, infer ResultType>
+> = Definition extends EndpointDefinition<infer QueryArg, infer BaseQueryFn, any, infer ResultType>
   ? Thunk extends AsyncThunk<infer ATResult, infer ATArg, infer ATConfig>
-    ? AsyncThunk<ATResult & { result: ResultType }, ATArg & { originalArgs: QueryArg }, ATConfig>
+    ? AsyncThunk<
+        ATResult & { result: ResultType },
+        ATArg & { originalArgs: QueryArg },
+        ATConfig & { rejectValue: BaseQueryError<BaseQueryFn> }
+      >
     : never
   : never;
 

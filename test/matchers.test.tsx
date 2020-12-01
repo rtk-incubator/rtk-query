@@ -1,7 +1,7 @@
-import { AnyAction, createSlice } from '@reduxjs/toolkit';
+import { AnyAction, createSlice, SerializedError } from '@reduxjs/toolkit';
 import { createApi, fetchBaseQuery } from '@rtk-incubator/rtk-query';
 import { renderHook, act } from '@testing-library/react-hooks';
-import { expectExactType, expectUnknown, hookWaitFor, setupApiStore } from './helpers';
+import { expectExactType, hookWaitFor, setupApiStore } from './helpers';
 
 interface ResultType {
   result: 'complex';
@@ -124,14 +124,18 @@ test('inferred types', () => {
       builder
         .addMatcher(api.endpoints.querySuccess.matchPending, (state, action) => {
           expectExactType(undefined)(action.payload);
+          // @ts-expect-error
+          console.log(action.error);
           expectExactType({} as ArgType)(action.meta.arg.originalArgs);
         })
         .addMatcher(api.endpoints.querySuccess.matchFulfilled, (state, action) => {
           expectExactType({} as ResultType)(action.payload.result);
+          // @ts-expect-error
+          console.log(action.error);
           expectExactType({} as ArgType)(action.meta.arg.originalArgs);
         })
         .addMatcher(api.endpoints.querySuccess.matchRejected, (state, action) => {
-          expectUnknown(action.payload);
+          expectExactType({} as SerializedError)(action.error);
           expectExactType({} as ArgType)(action.meta.arg.originalArgs);
         });
     },

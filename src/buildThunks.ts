@@ -34,24 +34,47 @@ export type PendingAction<
   Thunk extends AsyncThunk<any, any, any>,
   Definition extends EndpointDefinition<any, any, any, any>
 > = Definition extends EndpointDefinition<infer QueryArg, any, any, infer ResultType>
-  ? OverrideActionProps<ReturnType<Thunk['pending']>, QueryArg>
+  ? OverridePendingActionProps<ReturnType<Thunk['pending']>, QueryArg>
   : never;
 
 export type FulfilledAction<
   Thunk extends AsyncThunk<any, any, any>,
   Definition extends EndpointDefinition<any, any, any, any>
 > = Definition extends EndpointDefinition<infer QueryArg, any, any, infer ResultType>
-  ? OverrideActionProps<ReturnType<Thunk['fulfilled']>, QueryArg, ResultType>
+  ? OverrideFulfilledActionProps<ReturnType<Thunk['fulfilled']>, QueryArg, ResultType>
   : never;
 
 export type RejectedAction<
   Thunk extends AsyncThunk<any, any, any>,
   Definition extends EndpointDefinition<any, any, any, any>
 > = Definition extends EndpointDefinition<infer QueryArg, any, any, infer ResultType>
-  ? OverrideActionProps<ReturnType<Thunk['rejected']>, QueryArg>
+  ? OverrideRejectedActionProps<ReturnType<Thunk['rejected']>, QueryArg>
   : never;
 
-type OverrideActionProps<
+type OverridePendingActionProps<
+  A extends { payload?: any; meta: { arg: { originalArgs: any } } },
+  QueryArg,
+  Payload = void
+> = Id<
+  Omit<A, 'payload' | 'meta'> & {
+    payload: [void] extends [Payload] ? A['payload'] : Payload;
+    meta: Id<Omit<A['meta'], 'arg'> & { arg: Id<Omit<A['meta']['arg'], 'originalArgs'> & { originalArgs: QueryArg }> }>;
+  }
+>;
+
+type OverrideFulfilledActionProps<
+  A extends { payload?: any; meta: { arg: { originalArgs: any } } },
+  QueryArg,
+  Payload = void
+> = Id<
+  Omit<A, 'payload' | 'meta'> & {
+    payload: { result: [void] extends [Payload] ? A['payload'] : Payload };
+    fulfilledTimestamp: number;
+    meta: Id<Omit<A['meta'], 'arg'> & { arg: Id<Omit<A['meta']['arg'], 'originalArgs'> & { originalArgs: QueryArg }> }>;
+  }
+>;
+
+type OverrideRejectedActionProps<
   A extends { payload?: any; meta: { arg: { originalArgs: any } } },
   QueryArg,
   Payload = void

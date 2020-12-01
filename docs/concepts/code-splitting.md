@@ -46,3 +46,11 @@ You will get a warning if you inject an endpoint that already exists in developm
 :::
 
 ## Example
+
+<iframe
+  src="https://codesandbox.io/embed/concepts-code-splitting-9cll0?fontsize=12&hidenavigation=1&theme=dark&module=%2Fsrc%2Ffeatures%2Fposts%2FPostsManager.tsx"
+  style={{ width: '100%', height: '600px', border: 0, borderRadius: '4px', overflow: 'hidden' }}
+     title="Concepts Code Splitting"
+  allow="geolocation; microphone; camera; midi; vr; accelerometer; gyroscope; payment; ambient-light-sensor; encrypted-media; usb"
+  sandbox="allow-modals allow-forms allow-popups allow-scripts allow-same-origin"
+></iframe>

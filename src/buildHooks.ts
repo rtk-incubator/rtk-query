@@ -24,7 +24,7 @@ import { Id, Override } from './tsHelpers';
 
 interface QueryHookOptions extends SubscriptionOptions {
   skip?: boolean;
-  refetchOnMount?: boolean;
+  refetchOnMount?: boolean | number;
 }
 
 declare module './apiTypes' {
@@ -144,9 +144,7 @@ export function buildHooks<Definitions extends EndpointDefinitions>({
           lastPromise.updateSubscriptionOptions({ pollingInterval });
         } else {
           if (lastPromise) lastPromise.unsubscribe();
-          const promise = dispatch(
-            initiate(stableArg, { subscriptionOptions: { pollingInterval }, forceRefetch: refetchOnMount })
-          );
+          const promise = dispatch(initiate(stableArg, { subscriptionOptions: { pollingInterval }, refetchOnMount }));
           promiseRef.current = promise;
         }
       }, [stableArg, dispatch, skip, pollingInterval, refetchOnMount, initiate]);

@@ -4,7 +4,7 @@ import { act, fireEvent, render, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { DEFAULT_DELAY_MS, setupApiStore, waitMs } from './helpers';
 
-// Just setup a temporary in-memory counter for tests that `getNumber`.
+// Just setup a temporary in-memory counter for tests that `getIncrementedAmount`.
 // This can be used to test how many renders happen due to data changes or
 // the refetching behavior of components.
 let amount = 0;
@@ -21,7 +21,7 @@ const api = createApi({
     getUser: build.query<any, number>({
       query: (arg) => arg,
     }),
-    getAmount: build.query<any, void>({
+    getIncrementedAmount: build.query<any, void>({
       query: () => ({
         url: '',
         body: {
@@ -157,10 +157,13 @@ describe('hooks tests', () => {
   test('useQuery hook respects refetchOnMount: true', async () => {
     let data, isLoading, isFetching;
     function User() {
-      ({ data, isLoading } = api.endpoints.getAmount.useQuery());
+      ({ data, isLoading, isFetching } = api.endpoints.getIncrementedAmount.useQuery(undefined, {
+        refetchOnMount: true,
+      }));
       return (
         <div>
           <div data-testid="isLoading">{String(isLoading)}</div>
+          <div data-testid="isFetching">{String(isFetching)}</div>
           <div data-testid="amount">{String(data?.amount)}</div>
         </div>
       );
@@ -175,18 +178,9 @@ describe('hooks tests', () => {
 
     unmount();
 
-    function OtherUser() {
-      ({ data, isFetching } = api.endpoints.getAmount.useQuery(undefined, { refetchOnMount: true }));
-      return (
-        <div>
-          <div data-testid="isFetching">{String(isFetching)}</div>
-          <div data-testid="amount">{String(data?.amount)}</div>
-        </div>
-      );
-    }
-
-    ({ getByTestId } = render(<OtherUser />, { wrapper: storeRef.wrapper }));
+    ({ getByTestId } = render(<User />, { wrapper: storeRef.wrapper }));
     // Let's make sure we actually fetch, and we increment
+    expect(getByTestId('isLoading').textContent).toBe('false');
     await waitFor(() => expect(getByTestId('isFetching').textContent).toBe('true'));
     await waitFor(() => expect(getByTestId('isFetching').textContent).toBe('false'));
 
@@ -196,10 +190,13 @@ describe('hooks tests', () => {
   test('useQuery does not refetch when refetchOnMount: NUMBER condition is not met', async () => {
     let data, isLoading, isFetching;
     function User() {
-      ({ data, isLoading } = api.endpoints.getAmount.useQuery());
+      ({ data, isLoading, isFetching } = api.endpoints.getIncrementedAmount.useQuery(undefined, {
+        refetchOnMount: 10,
+      }));
       return (
         <div>
           <div data-testid="isLoading">{String(isLoading)}</div>
+          <div data-testid="isFetching">{String(isFetching)}</div>
           <div data-testid="amount">{String(data?.amount)}</div>
         </div>
       );
@@ -214,31 +211,23 @@ describe('hooks tests', () => {
 
     unmount();
 
-    function OtherUser() {
-      ({ data, isFetching } = api.endpoints.getAmount.useQuery(undefined, { refetchOnMount: 10 }));
-      return (
-        <div>
-          <div data-testid="isFetching">{String(isFetching)}</div>
-          <div data-testid="amount">{String(data?.amount)}</div>
-        </div>
-      );
-    }
-
-    ({ getByTestId } = render(<OtherUser />, { wrapper: storeRef.wrapper }));
+    ({ getByTestId } = render(<User />, { wrapper: storeRef.wrapper }));
     // Let's make sure we actually fetch, and we increment. Should be false because we do this immediately
     // and the condition is set to 10 seconds
-    await waitFor(() => expect(getByTestId('isFetching').textContent).toBe('false'));
-
+    expect(getByTestId('isFetching').textContent).toBe('false');
     await waitFor(() => expect(getByTestId('amount').textContent).toBe('1'));
   });
 
   test('useQuery refetches when refetchOnMount: NUMBER condition is met', async () => {
     let data, isLoading, isFetching;
     function User() {
-      ({ data, isLoading } = api.endpoints.getAmount.useQuery());
+      ({ data, isLoading, isFetching } = api.endpoints.getIncrementedAmount.useQuery(undefined, {
+        refetchOnMount: 0.5,
+      }));
       return (
         <div>
           <div data-testid="isLoading">{String(isLoading)}</div>
+          <div data-testid="isFetching">{String(isFetching)}</div>
           <div data-testid="amount">{String(data?.amount)}</div>
         </div>
       );
@@ -253,19 +242,10 @@ describe('hooks tests', () => {
 
     unmount();
 
+    // Wait to make sure we've passed the `refetchOnMount` value
     await waitMs(510);
 
-    function OtherUser() {
-      ({ data, isFetching } = api.endpoints.getAmount.useQuery(undefined, { refetchOnMount: 0.5 }));
-      return (
-        <div>
-          <div data-testid="isFetching">{String(isFetching)}</div>
-          <div data-testid="amount">{String(data?.amount)}</div>
-        </div>
-      );
-    }
-
-    ({ getByTestId } = render(<OtherUser />, { wrapper: storeRef.wrapper }));
+    ({ getByTestId } = render(<User />, { wrapper: storeRef.wrapper }));
     // Let's make sure we actually fetch, and we increment
     await waitFor(() => expect(getByTestId('isFetching').textContent).toBe('true'));
     await waitFor(() => expect(getByTestId('isFetching').textContent).toBe('false'));
@@ -569,7 +549,7 @@ describe('hooks with createApi defaults set', () => {
       return { data: arg?.body ? { ...arg.body, ...(amount ? { amount } : {}) } : undefined };
     },
     endpoints: (build) => ({
-      getAmount: build.query<any, void>({
+      getIncrementedAmount: build.query<any, void>({
         query: () => ({
           url: '',
           body: {
@@ -586,7 +566,7 @@ describe('hooks with createApi defaults set', () => {
     let data, isLoading, isFetching;
 
     function User() {
-      ({ data, isLoading } = defaultApi.endpoints.getAmount.useQuery());
+      ({ data, isLoading } = defaultApi.endpoints.getIncrementedAmount.useQuery());
       return (
         <div>
           <div data-testid="isLoading">{String(isLoading)}</div>
@@ -605,7 +585,7 @@ describe('hooks with createApi defaults set', () => {
     unmount();
 
     function OtherUser() {
-      ({ data, isFetching } = defaultApi.endpoints.getAmount.useQuery(undefined, { refetchOnMount: true }));
+      ({ data, isFetching } = defaultApi.endpoints.getIncrementedAmount.useQuery(undefined, { refetchOnMount: true }));
       return (
         <div>
           <div data-testid="isFetching">{String(isFetching)}</div>
@@ -626,7 +606,7 @@ describe('hooks with createApi defaults set', () => {
     let data, isLoading, isFetching;
 
     function User() {
-      ({ data, isLoading } = defaultApi.endpoints.getAmount.useQuery());
+      ({ data, isLoading } = defaultApi.endpoints.getIncrementedAmount.useQuery());
       return (
         <div>
           <div data-testid="isLoading">{String(isLoading)}</div>
@@ -645,7 +625,7 @@ describe('hooks with createApi defaults set', () => {
     unmount();
 
     function OtherUser() {
-      ({ data, isFetching } = defaultApi.endpoints.getAmount.useQuery(undefined, { refetchOnMount: false }));
+      ({ data, isFetching } = defaultApi.endpoints.getIncrementedAmount.useQuery(undefined, { refetchOnMount: false }));
       return (
         <div>
           <div data-testid="isFetching">{String(isFetching)}</div>

@@ -136,14 +136,14 @@ export function buildThunks<
   endpointDefinitions,
   serializeQueryArgs,
   api,
-  refetchOnMount: baseRefetchOnMount = false,
+  refetchOnMountOrArgChange: baserefetchOnMountOrArgChange = false,
 }: {
   baseQuery: BaseQuery;
   reducerPath: ReducerPath;
   endpointDefinitions: Definitions;
   serializeQueryArgs: InternalSerializeQueryArgs<BaseQueryArg<BaseQuery>>;
   api: Api<BaseQuery, Definitions, ReducerPath, string>;
-  refetchOnMount: boolean | number;
+  refetchOnMountOrArgChange: boolean | number;
 }) {
   type InternalQueryArgs = BaseQueryArg<BaseQuery>;
   type State = InternalRootState<ReducerPath>;
@@ -218,9 +218,9 @@ export function buildThunks<
         const fulfilledVal = requestState?.fulfilledTimeStamp;
         const refetchVal = arg.forceRefetch
           ? arg.forceRefetch
-          : typeof arg.refetchOnMount !== 'undefined'
-          ? arg.refetchOnMount
-          : baseRefetchOnMount;
+          : typeof arg.refetchOnMountOrArgChange !== 'undefined'
+          ? arg.refetchOnMountOrArgChange
+          : baserefetchOnMountOrArgChange;
 
         // Don't retry a request that's currently in-flight
         if (requestState?.status === 'pending') return false;

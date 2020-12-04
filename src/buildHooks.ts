@@ -24,7 +24,7 @@ import { Id, Override } from './tsHelpers';
 
 interface QueryHookOptions extends SubscriptionOptions {
   skip?: boolean;
-  refetchOnMount?: boolean | number;
+  refetchOnMountOrArgChange?: boolean | number;
 }
 
 declare module './apiTypes' {
@@ -118,7 +118,7 @@ export function buildHooks<Definitions extends EndpointDefinitions>({
   }
 
   function buildQueryHook(name: string): QueryHook<any> {
-    return (arg: any, { refetchOnMount = false, skip = false, pollingInterval = 0 } = {}) => {
+    return (arg: any, { refetchOnMountOrArgChange = false, skip = false, pollingInterval = 0 } = {}) => {
       const { select, initiate } = api.endpoints[name] as ApiEndpointQuery<
         QueryDefinition<any, any, any, any, any>,
         Definitions
@@ -144,10 +144,12 @@ export function buildHooks<Definitions extends EndpointDefinitions>({
           lastPromise.updateSubscriptionOptions({ pollingInterval });
         } else {
           if (lastPromise) lastPromise.unsubscribe();
-          const promise = dispatch(initiate(stableArg, { subscriptionOptions: { pollingInterval }, refetchOnMount }));
+          const promise = dispatch(
+            initiate(stableArg, { subscriptionOptions: { pollingInterval }, refetchOnMountOrArgChange })
+          );
           promiseRef.current = promise;
         }
-      }, [stableArg, dispatch, skip, pollingInterval, refetchOnMount, initiate]);
+      }, [stableArg, dispatch, skip, pollingInterval, refetchOnMountOrArgChange, initiate]);
 
       useEffect(() => {
         return () => void promiseRef.current?.unsubscribe();

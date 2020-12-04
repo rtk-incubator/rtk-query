@@ -22,7 +22,7 @@ Hooks are automatically generated based on the name of the `endpoint` in the ser
 #### Query Hook Options
 
 - [pollingInterval?](./polling) - Defaults to `0`
-- [refetchOnMount?](../api/createApi#refetchonmount) - Defaults to `false`. Will override any value that was specified in `createApi`.
+- [refetchOnMountOrArgChange?](../api/createApi#refetchOnMountOrArgChange) - Defaults to `false`. Will override any value that was specified in `createApi`.
 - [skip?](./conditional-fetching) - Defaults to `false`
 
 Here is an example of a `PostDetail` component:
@@ -31,7 +31,7 @@ Here is an example of a `PostDetail` component:
 export const PostDetail = ({ id }: { id: string }) => {
   const { data: post, isFetching, isLoading } = useGetPostQuery(id, {
     pollingInterval: 3000,
-    refetchOnMount: true,
+    refetchOnMountOrArgChange: true,
     skip: false,
   });
 

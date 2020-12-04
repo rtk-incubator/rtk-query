@@ -154,11 +154,11 @@ describe('hooks tests', () => {
     });
   });
 
-  test('useQuery hook respects refetchOnMount: true', async () => {
+  test('useQuery hook respects refetchOnMountOrArgChange: true', async () => {
     let data, isLoading, isFetching;
     function User() {
       ({ data, isLoading, isFetching } = api.endpoints.getIncrementedAmount.useQuery(undefined, {
-        refetchOnMount: true,
+        refetchOnMountOrArgChange: true,
       }));
       return (
         <div>
@@ -187,11 +187,11 @@ describe('hooks tests', () => {
     await waitFor(() => expect(getByTestId('amount').textContent).toBe('2'));
   });
 
-  test('useQuery does not refetch when refetchOnMount: NUMBER condition is not met', async () => {
+  test('useQuery does not refetch when refetchOnMountOrArgChange: NUMBER condition is not met', async () => {
     let data, isLoading, isFetching;
     function User() {
       ({ data, isLoading, isFetching } = api.endpoints.getIncrementedAmount.useQuery(undefined, {
-        refetchOnMount: 10,
+        refetchOnMountOrArgChange: 10,
       }));
       return (
         <div>
@@ -218,11 +218,11 @@ describe('hooks tests', () => {
     await waitFor(() => expect(getByTestId('amount').textContent).toBe('1'));
   });
 
-  test('useQuery refetches when refetchOnMount: NUMBER condition is met', async () => {
+  test('useQuery refetches when refetchOnMountOrArgChange: NUMBER condition is met', async () => {
     let data, isLoading, isFetching;
     function User() {
       ({ data, isLoading, isFetching } = api.endpoints.getIncrementedAmount.useQuery(undefined, {
-        refetchOnMount: 0.5,
+        refetchOnMountOrArgChange: 0.5,
       }));
       return (
         <div>
@@ -242,11 +242,110 @@ describe('hooks tests', () => {
 
     unmount();
 
-    // Wait to make sure we've passed the `refetchOnMount` value
+    // Wait to make sure we've passed the `refetchOnMountOrArgChange` value
     await waitMs(510);
 
     ({ getByTestId } = render(<User />, { wrapper: storeRef.wrapper }));
     // Let's make sure we actually fetch, and we increment
+    await waitFor(() => expect(getByTestId('isFetching').textContent).toBe('true'));
+    await waitFor(() => expect(getByTestId('isFetching').textContent).toBe('false'));
+
+    await waitFor(() => expect(getByTestId('amount').textContent).toBe('2'));
+  });
+
+  test('refetchOnMountOrArgChange works as expected when changing skip from false->true', async () => {
+    let data, isLoading, isFetching;
+    function User() {
+      const [skip, setSkip] = React.useState(true);
+      ({ data, isLoading, isFetching } = api.endpoints.getIncrementedAmount.useQuery(undefined, {
+        refetchOnMountOrArgChange: 0.5,
+        skip,
+      }));
+
+      return (
+        <div>
+          <div data-testid="isLoading">{String(isLoading)}</div>
+          <div data-testid="isFetching">{String(isFetching)}</div>
+          <div data-testid="amount">{String(data?.amount)}</div>
+          <button onClick={() => setSkip((prev) => !prev)}>change skip</button>;
+        </div>
+      );
+    }
+
+    let { getByTestId, getByText } = render(<User />, { wrapper: storeRef.wrapper });
+
+    expect(getByTestId('isLoading').textContent).toBe('false');
+    expect(getByTestId('amount').textContent).toBe('undefined');
+
+    fireEvent.click(getByText('change skip'));
+
+    await waitFor(() => expect(getByTestId('isFetching').textContent).toBe('true'));
+    await waitFor(() => expect(getByTestId('isFetching').textContent).toBe('false'));
+
+    await waitFor(() => expect(getByTestId('amount').textContent).toBe('1'));
+  });
+
+  test('refetchOnMountOrArgChange works as expected when changing skip from false->true with a cached query', async () => {
+    // 1. we need to mount a skipped query, then toggle skip to generate a cached result
+    // 2. we need to mount a skipped component after that, then toggle skip as well. should pull from the cache.
+    // 3. we need to mount another skipped component, then toggle skip after the specified duration and expect the time condition to be satisfied
+
+    let data, isLoading, isFetching;
+    function User() {
+      const [skip, setSkip] = React.useState(true);
+      ({ data, isLoading, isFetching } = api.endpoints.getIncrementedAmount.useQuery(undefined, {
+        skip,
+        refetchOnMountOrArgChange: 0.5,
+      }));
+
+      return (
+        <div>
+          <div data-testid="isLoading">{String(isLoading)}</div>
+          <div data-testid="isFetching">{String(isFetching)}</div>
+          <div data-testid="amount">{String(data?.amount)}</div>
+          <button onClick={() => setSkip((prev) => !prev)}>change skip</button>;
+        </div>
+      );
+    }
+
+    let { getByTestId, getByText, unmount } = render(<User />, { wrapper: storeRef.wrapper });
+
+    // skipped queries do nothing by default, so we need to toggle that to get a cached result
+    fireEvent.click(getByText('change skip'));
+
+    await waitFor(() => expect(getByTestId('isFetching').textContent).toBe('true'));
+    await waitFor(() => expect(getByTestId('isFetching').textContent).toBe('false'));
+    await waitFor(() => expect(getByTestId('amount').textContent).toBe('1'));
+
+    unmount();
+
+    await waitMs(100);
+
+    // This will pull from the cache as the time criteria is not met.
+    ({ getByTestId, getByText, unmount } = render(<User />, {
+      wrapper: storeRef.wrapper,
+    }));
+
+    // skipped queries return nothing
+    expect(getByTestId('isFetching').textContent).toBe('false');
+    expect(getByTestId('amount').textContent).toBe('undefined');
+
+    // toggle skip -> true... won't refetch as the time critera is not met, and just loads the cached values
+    fireEvent.click(getByText('change skip'));
+    expect(getByTestId('isFetching').textContent).toBe('false');
+    expect(getByTestId('amount').textContent).toBe('1');
+
+    unmount();
+
+    await waitMs(500);
+
+    ({ getByTestId, getByText, unmount } = render(<User />, {
+      wrapper: storeRef.wrapper,
+    }));
+
+    // toggle skip -> true... will cause a refetch as the time criteria is now satisfied
+    fireEvent.click(getByText('change skip'));
+
     await waitFor(() => expect(getByTestId('isFetching').textContent).toBe('true'));
     await waitFor(() => expect(getByTestId('isFetching').textContent).toBe('false'));
 
@@ -558,11 +657,11 @@ describe('hooks with createApi defaults set', () => {
         }),
       }),
     }),
-    refetchOnMount: true,
+    refetchOnMountOrArgChange: true,
   });
 
   const storeRef = setupApiStore(defaultApi);
-  test('useQuery hook respects refetchOnMount: true when set in createApi options', async () => {
+  test('useQuery hook respects refetchOnMountOrArgChange: true when set in createApi options', async () => {
     let data, isLoading, isFetching;
 
     function User() {
@@ -585,7 +684,9 @@ describe('hooks with createApi defaults set', () => {
     unmount();
 
     function OtherUser() {
-      ({ data, isFetching } = defaultApi.endpoints.getIncrementedAmount.useQuery(undefined, { refetchOnMount: true }));
+      ({ data, isFetching } = defaultApi.endpoints.getIncrementedAmount.useQuery(undefined, {
+        refetchOnMountOrArgChange: true,
+      }));
       return (
         <div>
           <div data-testid="isFetching">{String(isFetching)}</div>
@@ -602,7 +703,7 @@ describe('hooks with createApi defaults set', () => {
     await waitFor(() => expect(getByTestId('amount').textContent).toBe('2'));
   });
 
-  test('useQuery hook overrides default refetchOnMount: false that was set by createApi', async () => {
+  test('useQuery hook overrides default refetchOnMountOrArgChange: false that was set by createApi', async () => {
     let data, isLoading, isFetching;
 
     function User() {
@@ -625,7 +726,9 @@ describe('hooks with createApi defaults set', () => {
     unmount();
 
     function OtherUser() {
-      ({ data, isFetching } = defaultApi.endpoints.getIncrementedAmount.useQuery(undefined, { refetchOnMount: false }));
+      ({ data, isFetching } = defaultApi.endpoints.getIncrementedAmount.useQuery(undefined, {
+        refetchOnMountOrArgChange: false,
+      }));
       return (
         <div>
           <div data-testid="isFetching">{String(isFetching)}</div>

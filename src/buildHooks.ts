@@ -25,6 +25,8 @@ import { Id, Override } from './tsHelpers';
 interface QueryHookOptions extends SubscriptionOptions {
   skip?: boolean;
   refetchOnMountOrArgChange?: boolean | number;
+  refetchOnReconnect?: boolean;
+  refetchOnFocus?: boolean;
 }
 
 declare module './apiTypes' {
@@ -118,7 +120,16 @@ export function buildHooks<Definitions extends EndpointDefinitions>({
   }
 
   function buildQueryHook(name: string): QueryHook<any> {
-    return (arg: any, { refetchOnMountOrArgChange = false, skip = false, pollingInterval = 0 } = {}) => {
+    return (
+      arg: any,
+      {
+        refetchOnMountOrArgChange = false,
+        refetchOnFocus = false,
+        refetchOnReconnect = false,
+        skip = false,
+        pollingInterval = 0,
+      } = {}
+    ) => {
       const { select, initiate } = api.endpoints[name] as ApiEndpointQuery<
         QueryDefinition<any, any, any, any, any>,
         Definitions
@@ -145,11 +156,25 @@ export function buildHooks<Definitions extends EndpointDefinitions>({
         } else {
           if (lastPromise) lastPromise.unsubscribe();
           const promise = dispatch(
-            initiate(stableArg, { subscriptionOptions: { pollingInterval }, refetchOnMountOrArgChange })
+            initiate(stableArg, {
+              subscriptionOptions: { pollingInterval },
+              refetchOnMountOrArgChange,
+              refetchOnReconnect,
+              refetchOnFocus,
+            })
           );
           promiseRef.current = promise;
         }
-      }, [stableArg, dispatch, skip, pollingInterval, refetchOnMountOrArgChange, initiate]);
+      }, [
+        stableArg,
+        dispatch,
+        skip,
+        pollingInterval,
+        refetchOnMountOrArgChange,
+        refetchOnReconnect,
+        refetchOnFocus,
+        initiate,
+      ]);
 
       useEffect(() => {
         return () => void promiseRef.current?.unsubscribe();

@@ -81,6 +81,8 @@ const TimeDisplay = ({ offset, label }: { offset: string; label: string }) => {
   const { data, refetch, isFetching } = useGetTimeQuery(offset, {
     pollingInterval: canPoll ? pollingInterval : 0,
     refetchOnMountOrArgChange: 10,
+    refetchOnReconnect: true,
+    refetchOnFocus: true,
   });
 
   return (

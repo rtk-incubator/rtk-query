@@ -12,10 +12,12 @@ import {
   Subscribers,
   QueryCacheKey,
   SubscriptionState,
+  ConfigState,
 } from './apiState';
 import type { MutationThunkArg, QueryThunkArg, ThunkResult } from './buildThunks';
 import { AssertEntityTypes, calculateProvidedBy, EndpointDefinitions } from './endpointDefinitions';
 import { applyPatches, Patch } from 'immer';
+import { onOffline, onOnline } from './setupListeners';
 
 export type InternalState = CombinedState<any, string>;
 
@@ -96,6 +98,8 @@ export function buildSlice({
             substate.data = payload.result;
             substate.error = undefined;
             substate.fulfilledTimeStamp = payload.fulfilledTimeStamp;
+            substate.refetchOnReconnect = meta.arg.refetchOnReconnect;
+            substate.refetchOnFocus = meta.arg.refetchOnFocus;
           });
         })
         .addCase(queryThunk.rejected, (draft, { meta: { condition, arg, requestId }, error, payload }) => {
@@ -236,11 +240,30 @@ export function buildSlice({
     },
   });
 
+  const configSlice = createSlice({
+    name: `${reducerPath}/config`,
+    initialState: {
+      online: true,
+      focused: true,
+    } as ConfigState,
+    reducers: {},
+    extraReducers: (builder) => {
+      builder
+        .addCase(onOnline, (state) => {
+          state.online = true;
+        })
+        .addCase(onOffline, (state) => {
+          state.online = false;
+        });
+    },
+  });
+
   const reducer = combineReducers<InternalState>({
     queries: querySlice.reducer,
     mutations: mutationSlice.reducer,
     provided: invalidationSlice.reducer,
     subscriptions: subscriptionSlice.reducer,
+    config: configSlice.reducer,
   });
 
   const actions = {

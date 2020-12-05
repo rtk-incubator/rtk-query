@@ -24,6 +24,7 @@ export type { Api, ApiWithInjectedEndpoints, BaseQueryEnhancer, BaseQueryFn } fr
 export { fetchBaseQuery } from './fetchBaseQuery';
 export type { FetchBaseQueryError, FetchArgs } from './fetchBaseQuery';
 export { retry } from './retry';
+export { setupListeners } from './setupListeners';
 
 export function createApi<
   BaseQuery extends BaseQueryFn,
@@ -38,6 +39,8 @@ export function createApi<
   endpoints,
   keepUnusedDataFor = 60,
   refetchOnMountOrArgChange = false,
+  refetchOnFocus = false,
+  refetchOnReconnect = false,
 }: {
   baseQuery: BaseQuery;
   entityTypes?: readonly EntityTypes[];
@@ -46,6 +49,8 @@ export function createApi<
   endpoints(build: EndpointBuilder<BaseQuery, EntityTypes, ReducerPath>): Definitions;
   keepUnusedDataFor?: number;
   refetchOnMountOrArgChange?: boolean | number;
+  refetchOnFocus?: boolean;
+  refetchOnReconnect?: boolean;
 }): Api<BaseQuery, Definitions, ReducerPath, EntityTypes> {
   type State = CombinedState<Definitions, EntityTypes>;
 
@@ -102,7 +107,9 @@ export function createApi<
     endpointDefinitions,
     api,
     serializeQueryArgs,
+    refetchOnFocus,
     refetchOnMountOrArgChange,
+    refetchOnReconnect,
   });
   Object.assign(api.util, { patchQueryResult, updateQueryResult });
 

@@ -81,6 +81,8 @@ type BaseQuerySubState<D extends BaseEndpointDefinition<any, any, any>> = {
   endpoint: string;
   startedTimeStamp: number;
   fulfilledTimeStamp?: number;
+  refetchOnReconnect?: boolean;
+  refetchOnFocus?: boolean;
 };
 
 export type QuerySubState<D extends BaseEndpointDefinition<any, any, any>> = Id<
@@ -103,6 +105,8 @@ export type QuerySubState<D extends BaseEndpointDefinition<any, any, any>> = Id<
       endpoint?: string;
       startedTimeStamp?: undefined;
       fulfilledTimeStamp?: undefined;
+      refetchOnReconnect?: undefined;
+      refetchOnFocus?: undefined;
     }
 >;
 
@@ -144,6 +148,7 @@ export type CombinedState<D extends EndpointDefinitions, E extends string> = {
   mutations: MutationState<D>;
   provided: InvalidationState<E>;
   subscriptions: SubscriptionState;
+  config: ConfigState;
 };
 
 export type InvalidationState<EntityTypes extends string> = {
@@ -159,6 +164,11 @@ export type QueryState<D extends EndpointDefinitions> = {
 
 export type SubscriptionState = {
   [queryCacheKey: string]: Subscribers | undefined;
+};
+
+export type ConfigState = {
+  online: boolean;
+  focused: boolean;
 };
 
 export type MutationState<D extends EndpointDefinitions> = {

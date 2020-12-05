@@ -9,6 +9,7 @@ import {
   EndpointDefinitions,
   FullEntityDescription,
 } from './endpointDefinitions';
+import { onFocus, onOnline } from './setupListeners';
 import { flatten } from './utils';
 
 const batch = typeof reactBatch !== 'undefined' ? reactBatch : (fn: Function) => fn();
@@ -70,10 +71,45 @@ export function buildMiddleware<Definitions extends EndpointDefinitions, Reducer
       startNextPoll(action.meta.arg, mwApi);
     }
 
+    if (onFocus.match(action)) {
+      refetchValidQueries(mwApi, 'refetchOnFocus');
+    }
+    if (onOnline.match(action)) {
+      refetchValidQueries(mwApi, 'refetchOnReconnect');
+    }
+
     return result;
   };
 
   return { middleware };
+
+  function refetchValidQueries(api: MWApi, type: 'refetchOnFocus' | 'refetchOnReconnect') {
+    const state = api.getState()[reducerPath];
+
+    batch(() => {
+      for (const queryCacheKey of Object.keys(state.queries)) {
+        const querySubState = state.queries[queryCacheKey];
+        if (querySubState) {
+          if (querySubState.status !== QueryStatus.uninitialized && querySubState[type]) {
+            api.dispatch(
+              queryThunk({
+                endpoint: querySubState.endpoint,
+                originalArgs: querySubState.originalArgs,
+                internalQueryArgs: querySubState.internalQueryArgs,
+                subscribe: false,
+                forceRefetch: true,
+                startedTimeStamp: Date.now(),
+                queryCacheKey: queryCacheKey as any,
+                refetchOnReconnect: querySubState.refetchOnReconnect,
+                refetchOnFocus: querySubState.refetchOnFocus,
+                // should we keep refetchOnMountOrArgChange here?
+              })
+            );
+          }
+        }
+      }
+    });
+  }
 
   function invalidateEntities(entities: readonly FullEntityDescription<string>[], api: MWApi) {
     const state = api.getState()[reducerPath];

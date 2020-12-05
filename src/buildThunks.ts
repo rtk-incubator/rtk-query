@@ -137,6 +137,8 @@ export function buildThunks<
   serializeQueryArgs,
   api,
   refetchOnMountOrArgChange: baserefetchOnMountOrArgChange = false,
+  refetchOnFocus: baserefetchOnFocus = false,
+  refetchOnReconnect: baserefetchOnReconnect = false,
 }: {
   baseQuery: BaseQuery;
   reducerPath: ReducerPath;
@@ -144,6 +146,8 @@ export function buildThunks<
   serializeQueryArgs: InternalSerializeQueryArgs<BaseQueryArg<BaseQuery>>;
   api: Api<BaseQuery, Definitions, ReducerPath, string>;
   refetchOnMountOrArgChange: boolean | number;
+  refetchOnFocus: boolean | number;
+  refetchOnReconnect: boolean | number;
 }) {
   type InternalQueryArgs = BaseQueryArg<BaseQuery>;
   type State = InternalRootState<ReducerPath>;

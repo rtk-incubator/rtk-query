@@ -1,6 +1,7 @@
 import { configureStore } from '@reduxjs/toolkit';
 import React from 'react';
 import { Provider } from 'react-redux';
+import { setupListeners } from './setupListeners';
 import { Api } from './apiTypes';
 
 /**
@@ -18,6 +19,8 @@ export function ApiProvider<A extends Api<any, {}, any, string>>(props: { childr
       middleware: (gDM) => gDM().concat(props.api.middleware),
     })
   );
+  // Adds the event listeners for online/offline/focus/etc
+  setupListeners(store.dispatch);
 
   return <Provider store={store}>{props.children}</Provider>;
 }

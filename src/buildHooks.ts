@@ -8,6 +8,7 @@ import {
   RequestStatusFlags,
   SubscriptionOptions,
   QueryKeys,
+  ConfigState,
 } from './apiState';
 import {
   EndpointDefinitions,
@@ -25,8 +26,6 @@ import { Id, Override } from './tsHelpers';
 interface QueryHookOptions extends SubscriptionOptions {
   skip?: boolean;
   refetchOnMountOrArgChange?: boolean | number;
-  refetchOnReconnect?: boolean;
-  refetchOnFocus?: boolean;
 }
 
 declare module './apiTypes' {
@@ -100,8 +99,10 @@ export type PrefetchOptions =
 
 export function buildHooks<Definitions extends EndpointDefinitions>({
   api,
+  config,
 }: {
   api: Api<any, Definitions, any, string>;
+  config: Omit<ConfigState, 'online' | 'focused'>;
 }) {
   return { buildQueryHook, buildMutationHook, usePrefetch };
 
@@ -123,9 +124,9 @@ export function buildHooks<Definitions extends EndpointDefinitions>({
     return (
       arg: any,
       {
-        refetchOnMountOrArgChange = false,
-        refetchOnFocus = false,
-        refetchOnReconnect = false,
+        refetchOnMountOrArgChange = config.refetchOnMountOrArgChange,
+        refetchOnFocus = config.refetchOnFocus,
+        refetchOnReconnect = config.refetchOnReconnect,
         skip = false,
         pollingInterval = 0,
       } = {}
@@ -152,15 +153,13 @@ export function buildHooks<Definitions extends EndpointDefinitions>({
         const lastPromise = promiseRef.current;
         if (lastPromise && lastPromise.arg === stableArg) {
           // arg did not change, but options did probably, update them
-          lastPromise.updateSubscriptionOptions({ pollingInterval });
+          lastPromise.updateSubscriptionOptions({ pollingInterval, refetchOnFocus, refetchOnReconnect });
         } else {
           if (lastPromise) lastPromise.unsubscribe();
           const promise = dispatch(
             initiate(stableArg, {
-              subscriptionOptions: { pollingInterval },
+              subscriptionOptions: { pollingInterval, refetchOnReconnect, refetchOnFocus },
               refetchOnMountOrArgChange,
-              refetchOnReconnect,
-              refetchOnFocus,
             })
           );
           promiseRef.current = promise;

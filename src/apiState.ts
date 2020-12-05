@@ -61,7 +61,11 @@ export function getRequestStatusFlags(status: QueryStatus): RequestStatusFlags {
   } as any;
 }
 
-export type SubscriptionOptions = { pollingInterval?: number };
+export type SubscriptionOptions = {
+  pollingInterval?: number;
+  refetchOnReconnect?: boolean;
+  refetchOnFocus?: boolean;
+};
 export type Subscribers = { [requestId: string]: SubscriptionOptions };
 export type QueryKeys<Definitions extends EndpointDefinitions> = {
   [K in keyof Definitions]: Definitions[K] extends QueryDefinition<any, any, any, any> ? K : never;
@@ -169,6 +173,9 @@ export type SubscriptionState = {
 export type ConfigState = {
   online: boolean;
   focused: boolean;
+  refetchOnMountOrArgChange: boolean | number;
+  refetchOnReconnect: boolean;
+  refetchOnFocus: boolean;
 };
 
 export type MutationState<D extends EndpointDefinitions> = {

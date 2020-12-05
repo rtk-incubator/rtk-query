@@ -107,18 +107,21 @@ export function createApi<
     endpointDefinitions,
     api,
     serializeQueryArgs,
-    refetchOnFocus,
-    refetchOnMountOrArgChange,
-    refetchOnReconnect,
   });
   Object.assign(api.util, { patchQueryResult, updateQueryResult });
 
+  const config = {
+    refetchOnFocus,
+    refetchOnReconnect,
+    refetchOnMountOrArgChange,
+  };
   const { reducer, actions: sliceActions } = buildSlice({
     endpointDefinitions,
     queryThunk,
     mutationThunk,
     reducerPath,
     assertEntityType,
+    config,
   });
   assertCast<Reducer<State & QueryStatePhantomType<ReducerPath>, AnyAction>>(reducer);
   Object.assign(api.internalActions, sliceActions);
@@ -151,7 +154,7 @@ export function createApi<
     serializeQueryArgs,
   });
 
-  const { buildQueryHook, buildMutationHook, usePrefetch } = buildHooks({ api });
+  const { buildQueryHook, buildMutationHook, usePrefetch } = buildHooks({ api, config });
 
   api.usePrefetch = usePrefetch;
 

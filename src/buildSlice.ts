@@ -49,12 +49,14 @@ export function buildSlice({
   mutationThunk,
   endpointDefinitions: definitions,
   assertEntityType,
+  config,
 }: {
   reducerPath: string;
   queryThunk: AsyncThunk<ThunkResult, QueryThunkArg<any>, {}>;
   mutationThunk: AsyncThunk<ThunkResult, MutationThunkArg<any>, {}>;
   endpointDefinitions: EndpointDefinitions;
   assertEntityType: AssertEntityTypes;
+  config: Omit<ConfigState, 'online' | 'focused'>;
 }) {
   const querySlice = createSlice({
     name: `${reducerPath}/queries`,
@@ -98,8 +100,6 @@ export function buildSlice({
             substate.data = payload.result;
             substate.error = undefined;
             substate.fulfilledTimeStamp = payload.fulfilledTimeStamp;
-            substate.refetchOnReconnect = meta.arg.refetchOnReconnect;
-            substate.refetchOnFocus = meta.arg.refetchOnFocus;
           });
         })
         .addCase(queryThunk.rejected, (draft, { meta: { condition, arg, requestId }, error, payload }) => {
@@ -245,6 +245,9 @@ export function buildSlice({
     initialState: {
       online: true,
       focused: true,
+      refetchOnMountOrArgChange: config.refetchOnMountOrArgChange,
+      refetchOnReconnect: config.refetchOnReconnect,
+      refetchOnFocus: config.refetchOnFocus,
     } as ConfigState,
     reducers: {},
     extraReducers: (builder) => {

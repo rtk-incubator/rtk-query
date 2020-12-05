@@ -26,8 +26,6 @@ export interface StartQueryActionCreatorOptions {
   forceRefetch?: boolean;
   subscriptionOptions?: SubscriptionOptions;
   refetchOnMountOrArgChange?: boolean | number;
-  refetchOnFocus?: boolean;
-  refetchOnReconnect?: boolean;
 }
 
 type StartQueryActionCreator<D extends QueryDefinition<any, any, any, any, any>> = (
@@ -83,23 +81,14 @@ export function buildActionMaps<Definitions extends EndpointDefinitions, Interna
   function buildQueryAction(endpoint: string, definition: QueryDefinition<any, any, any, any>) {
     const queryAction: StartQueryActionCreator<any> = (
       arg,
-      {
-        subscribe = true,
-        forceRefetch = false,
-        refetchOnFocus = false,
-        refetchOnMountOrArgChange = false,
-        refetchOnReconnect = false,
-        subscriptionOptions,
-      } = {}
+      { subscribe = true, forceRefetch = false, refetchOnMountOrArgChange = false, subscriptionOptions } = {}
     ) => (dispatch, getState) => {
       const internalQueryArgs = definition.query(arg);
       const queryCacheKey = serializeQueryArgs({ queryArgs: arg, internalQueryArgs, endpoint });
       const thunk = queryThunk({
         subscribe,
         forceRefetch,
-        refetchOnFocus,
         refetchOnMountOrArgChange,
-        refetchOnReconnect,
         subscriptionOptions,
         endpoint,
         originalArgs: arg,

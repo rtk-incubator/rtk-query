@@ -85,12 +85,22 @@ export function buildMiddleware<Definitions extends EndpointDefinitions, Reducer
 
   function refetchValidQueries(api: MWApi, type: 'refetchOnFocus' | 'refetchOnReconnect') {
     const state = api.getState()[reducerPath];
+    const queries = state.queries;
+    const subscriptions = state.subscriptions;
+    const baseTypeValue = state.config[type]; // The defaults are set in buildSlice when calling createApi
 
     batch(() => {
-      for (const queryCacheKey of Object.keys(state.queries)) {
-        const querySubState = state.queries[queryCacheKey];
-        if (querySubState) {
-          if (querySubState.status !== QueryStatus.uninitialized && querySubState[type]) {
+      for (const queryCacheKey of Object.keys(subscriptions)) {
+        const querySubState = queries[queryCacheKey];
+
+        const allSubsAreFalse = Object.values(subscriptions[queryCacheKey] || {}).every(
+          (entry) => type in entry && !entry[type]
+        );
+
+        const shouldRefetch = (baseTypeValue && !allSubsAreFalse) || !allSubsAreFalse;
+
+        if (querySubState && shouldRefetch) {
+          if (querySubState.status !== QueryStatus.uninitialized) {
             api.dispatch(
               queryThunk({
                 endpoint: querySubState.endpoint,
@@ -100,9 +110,6 @@ export function buildMiddleware<Definitions extends EndpointDefinitions, Reducer
                 forceRefetch: true,
                 startedTimeStamp: Date.now(),
                 queryCacheKey: queryCacheKey as any,
-                refetchOnReconnect: querySubState.refetchOnReconnect,
-                refetchOnFocus: querySubState.refetchOnFocus,
-                // should we keep refetchOnMountOrArgChange here?
               })
             );
           }

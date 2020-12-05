@@ -80,8 +80,7 @@ const TimeDisplay = ({ offset, label }: { offset: string; label: string }) => {
   const [pollingInterval, setPollingInterval] = React.useState(0);
   const { data, refetch, isFetching } = useGetTimeQuery(offset, {
     pollingInterval: canPoll ? pollingInterval : 0,
-    refetchOnMountOrArgChange: 10,
-    refetchOnReconnect: true,
+    refetchOnReconnect: false,
     refetchOnFocus: true,
   });
 

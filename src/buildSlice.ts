@@ -13,6 +13,7 @@ import {
   QueryCacheKey,
   SubscriptionState,
   ConfigState,
+  RefetchConfigOptions,
 } from './apiState';
 import type { MutationThunkArg, QueryThunkArg, ThunkResult } from './buildThunks';
 import { AssertEntityTypes, calculateProvidedBy, EndpointDefinitions } from './endpointDefinitions';
@@ -56,7 +57,7 @@ export function buildSlice({
   mutationThunk: AsyncThunk<ThunkResult, MutationThunkArg<any>, {}>;
   endpointDefinitions: EndpointDefinitions;
   assertEntityType: AssertEntityTypes;
-  config: Omit<ConfigState, 'online' | 'focused'>;
+  config: RefetchConfigOptions;
 }) {
   const querySlice = createSlice({
     name: `${reducerPath}/queries`,

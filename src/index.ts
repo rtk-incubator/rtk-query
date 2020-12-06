@@ -1,5 +1,5 @@
 import type { AnyAction, Reducer } from '@reduxjs/toolkit';
-import type { CombinedState, QueryStatePhantomType } from './apiState';
+import type { CombinedState, QueryStatePhantomType, RefetchConfigOptions } from './apiState';
 import { Api, BaseQueryArg, BaseQueryFn } from './apiTypes';
 import { buildActionMaps } from './buildActionMaps';
 import { buildHooks } from './buildHooks';
@@ -110,11 +110,12 @@ export function createApi<
   });
   Object.assign(api.util, { patchQueryResult, updateQueryResult });
 
-  const config = {
+  const config: RefetchConfigOptions = {
     refetchOnFocus,
     refetchOnReconnect,
     refetchOnMountOrArgChange,
   };
+
   const { reducer, actions: sliceActions } = buildSlice({
     endpointDefinitions,
     queryThunk,

@@ -1,3 +1,4 @@
+import { setupListeners } from '@internal/setupListeners';
 import { AnyAction, configureStore, EnhancedStore, Middleware, Store } from '@reduxjs/toolkit';
 
 import { act } from '@testing-library/react-hooks';
@@ -74,6 +75,7 @@ export function setupApiStore<
     const store = getStore() as StoreType;
     refObj.store = store;
     refObj.wrapper = withProvider(store);
+    setupListeners(store.dispatch);
   });
 
   return refObj;

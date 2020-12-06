@@ -22,6 +22,7 @@ export function setupListeners(dispatch: ThunkDispatch<any, any, any>) {
       },
       false
     );
+    window.addEventListener('focus', () => dispatch(onFocus()), false);
 
     // Handle connection events
     window.addEventListener('online', () => dispatch(onOnline()), false);

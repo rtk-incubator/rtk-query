@@ -14,6 +14,12 @@ export type QueryCacheKey = string & { _type: 'queryCacheKey' };
 export type QuerySubstateIdentifier = { queryCacheKey: QueryCacheKey };
 export type MutationSubstateIdentifier = { requestId: string };
 
+export type RefetchConfigOptions = {
+  refetchOnMountOrArgChange: boolean | number;
+  refetchOnReconnect: boolean;
+  refetchOnFocus: boolean;
+};
+
 export enum QueryStatus {
   uninitialized = 'uninitialized',
   pending = 'pending',
@@ -170,12 +176,9 @@ export type SubscriptionState = {
   [queryCacheKey: string]: Subscribers | undefined;
 };
 
-export type ConfigState = {
+export type ConfigState = RefetchConfigOptions & {
   online: boolean;
   focused: boolean;
-  refetchOnMountOrArgChange: boolean | number;
-  refetchOnReconnect: boolean;
-  refetchOnFocus: boolean;
 };
 
 export type MutationState<D extends EndpointDefinitions> = {

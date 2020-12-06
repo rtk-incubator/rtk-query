@@ -742,4 +742,60 @@ describe('hooks with createApi defaults set', () => {
 
     await waitFor(() => expect(getByTestId('amount').textContent).toBe('1'));
   });
+
+  describe('refetchOnFocus tests', () => {
+    const defaultApi = createApi({
+      baseQuery: async (arg: any) => {
+        await waitMs();
+        if ('amount' in arg?.body) {
+          amount += 1;
+        }
+        return { data: arg?.body ? { ...arg.body, ...(amount ? { amount } : {}) } : undefined };
+      },
+      endpoints: (build) => ({
+        getIncrementedAmount: build.query<any, void>({
+          query: () => ({
+            url: '',
+            body: {
+              amount,
+            },
+          }),
+        }),
+      }),
+      refetchOnFocus: true,
+    });
+
+    const storeRef = setupApiStore(defaultApi);
+
+    test('useQuery hook respects refetchOnFocus: true when set in createApi options', async () => {
+      let data, isLoading, isFetching;
+
+      function User() {
+        ({ data, isFetching, isLoading } = defaultApi.endpoints.getIncrementedAmount.useQuery());
+        return (
+          <div>
+            <div data-testid="isLoading">{String(isLoading)}</div>
+            <div data-testid="isFetching">{String(isFetching)}</div>
+            <div data-testid="amount">{String(data?.amount)}</div>
+          </div>
+        );
+      }
+
+      let { getByTestId } = render(<User />, { wrapper: storeRef.wrapper });
+
+      await waitFor(() => expect(getByTestId('isLoading').textContent).toBe('true'));
+      await waitFor(() => expect(getByTestId('isLoading').textContent).toBe('false'));
+      await waitFor(() => expect(getByTestId('amount').textContent).toBe('1'));
+
+      act(() => {
+        fireEvent.focus(window);
+      });
+
+      // todo: why aren't queries tracking here so that they're available to be checked in middleware?
+
+      await waitMs();
+
+      await waitFor(() => expect(getByTestId('amount').textContent).toBe('2'));
+    });
+  });
 });

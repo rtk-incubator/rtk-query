@@ -8,7 +8,7 @@ import {
   RequestStatusFlags,
   SubscriptionOptions,
   QueryKeys,
-  ConfigState,
+  RefetchConfigOptions,
 } from './apiState';
 import {
   EndpointDefinitions,
@@ -102,7 +102,7 @@ export function buildHooks<Definitions extends EndpointDefinitions>({
   config,
 }: {
   api: Api<any, Definitions, any, string>;
-  config: Omit<ConfigState, 'online' | 'focused'>;
+  config: RefetchConfigOptions;
 }) {
   return { buildQueryHook, buildMutationHook, usePrefetch };
 

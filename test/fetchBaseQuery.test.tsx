@@ -102,7 +102,7 @@ describe('fetchBaseQuery', () => {
       expect(req).toBeInstanceOf(Promise);
       const res = await req;
       expect(res).toBeInstanceOf(Object);
-      expect(res.data).toBeNull();
+      expect(res.data).toBeUndefined();
     });
 
     it('should return an error and status for error responses', async () => {

@@ -18,7 +18,7 @@ import {
 import type { MutationThunkArg, QueryThunkArg, ThunkResult } from './buildThunks';
 import { AssertEntityTypes, calculateProvidedBy, EndpointDefinitions } from './endpointDefinitions';
 import { applyPatches, Patch } from 'immer';
-import { onOffline, onOnline } from './setupListeners';
+import { onFocus, onFocusLost, onOffline, onOnline } from './setupListeners';
 
 export type InternalState = CombinedState<any, string>;
 
@@ -258,6 +258,12 @@ export function buildSlice({
         })
         .addCase(onOffline, (state) => {
           state.online = false;
+        })
+        .addCase(onFocus, (state) => {
+          state.focused = true;
+        })
+        .addCase(onFocusLost, (state) => {
+          state.focused = false;
         });
     },
   });

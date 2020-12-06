@@ -70,12 +70,16 @@ export function setupApiStore<
     store: initialStore,
     wrapper: withProvider(initialStore),
   };
+  let cleanupListeners: () => void;
 
   beforeEach(() => {
     const store = getStore() as StoreType;
     refObj.store = store;
     refObj.wrapper = withProvider(store);
-    setupListeners(store.dispatch);
+    cleanupListeners = setupListeners(store.dispatch);
+  });
+  afterEach(() => {
+    cleanupListeners();
   });
 
   return refObj;

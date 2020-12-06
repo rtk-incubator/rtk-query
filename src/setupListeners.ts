@@ -7,26 +7,36 @@ export const onOffline = createAction('__rtkq/offline');
 
 let initialized = false;
 export function setupListeners(dispatch: ThunkDispatch<any, any, any>) {
-  if (initialized) return;
+  const handleFocus = () => dispatch(onFocus());
+  const handleFocusLost = () => dispatch(onFocusLost());
+  const handleOnline = () => dispatch(onOnline());
+  const handleOffline = () => dispatch(onOffline());
+  const handleVisibilityChange = () => {
+    if (window.document.visibilityState === 'visible') {
+      handleFocus();
+    } else {
+      handleFocusLost();
+    }
+  };
 
-  if (typeof window !== 'undefined' && window.addEventListener) {
-    // Handle focus events
-    window.addEventListener(
-      'visibilitychange',
-      () => {
-        if (window.document.visibilityState === 'visible') {
-          dispatch(onFocus());
-        } else {
-          dispatch(onFocusLost());
-        }
-      },
-      false
-    );
-    window.addEventListener('focus', () => dispatch(onFocus()), false);
+  if (!initialized) {
+    if (typeof window !== 'undefined' && window.addEventListener) {
+      // Handle focus events
+      window.addEventListener('visibilitychange', handleVisibilityChange, false);
+      window.addEventListener('focus', handleFocus, false);
 
-    // Handle connection events
-    window.addEventListener('online', () => dispatch(onOnline()), false);
-    window.addEventListener('offline', () => dispatch(onOffline()), false);
-    initialized = true;
+      // Handle connection events
+      window.addEventListener('online', handleOnline, false);
+      window.addEventListener('offline', handleOffline, false);
+      initialized = true;
+    }
   }
+  const unsubscribe = () => {
+    window.removeEventListener('focus', handleFocus);
+    window.removeEventListener('visibilitychange', handleVisibilityChange);
+    window.removeEventListener('online', handleOnline);
+    window.removeEventListener('offline', handleOffline);
+    initialized = false;
+  };
+  return unsubscribe;
 }

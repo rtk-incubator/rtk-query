@@ -89,7 +89,7 @@ describe('fetchBaseQuery', () => {
       expect(res.data).toEqual({ value: 'success' });
     });
 
-    it('should return null for a simple GET request when the response is null', async () => {
+    it('should return undefined for a simple GET request when the response is empty', async () => {
       const req = baseQuery(
         '/empty',
         {

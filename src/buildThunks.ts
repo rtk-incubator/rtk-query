@@ -73,6 +73,7 @@ export interface QueryThunkArg<InternalQueryArgs> extends QuerySubstateIdentifie
   endpoint: string;
   internalQueryArgs: InternalQueryArgs;
   startedTimeStamp: number;
+  reducerPath: string;
 }
 
 export interface MutationThunkArg<InternalQueryArgs> {
@@ -81,6 +82,7 @@ export interface MutationThunkArg<InternalQueryArgs> {
   internalQueryArgs: InternalQueryArgs;
   track?: boolean;
   startedTimeStamp: number;
+  reducerPath: string;
 }
 
 export interface ThunkResult {
@@ -157,6 +159,7 @@ export function buildThunks<
           internalQueryArgs: endpoint.query(args),
           endpoint: endpointName,
         }),
+        reducerPath,
         patches,
       })
     );
@@ -195,17 +198,15 @@ export function buildThunks<
     QueryThunkArg<InternalQueryArgs>,
     { state: InternalRootState<ReducerPath> }
   >(
-    `${reducerPath}/executeQuery`,
+    `__rtkq/executeQuery`,
     async (arg, { signal, rejectWithValue, dispatch, getState }) => {
-      const result = await baseQuery(
-        arg.internalQueryArgs,
-        { signal, dispatch, getState },
-        endpointDefinitions[arg.endpoint].extraOptions as any
-      );
+      const extraOptions = getState()[reducerPath].config.endpoints[arg.endpoint]?.extraOptions;
+      const result = await baseQuery(arg.internalQueryArgs, { signal, dispatch, getState }, extraOptions as any);
       if (result.error) return rejectWithValue(result.error);
 
       return {
         fulfilledTimeStamp: Date.now(),
+        // TODO: what's the best way to make this happen?
         result: (endpointDefinitions[arg.endpoint].transformResponse ?? defaultTransformResponse)(result.data),
       };
     },
@@ -245,7 +246,7 @@ export function buildThunks<
     ThunkResult,
     MutationThunkArg<InternalQueryArgs>,
     { state: InternalRootState<ReducerPath> }
-  >(`${reducerPath}/executeMutation`, async (arg, { signal, rejectWithValue, ...api }) => {
+  >(`__rtkq/executeMutation`, async (arg, { signal, rejectWithValue, ...api }) => {
     const endpoint = endpointDefinitions[arg.endpoint] as MutationDefinition<any, any, any, any>;
 
     const context: Record<string, any> = {};
@@ -259,7 +260,7 @@ export function buildThunks<
       const result = await baseQuery(
         arg.internalQueryArgs,
         { signal, dispatch: api.dispatch, getState: api.getState },
-        endpointDefinitions[arg.endpoint].extraOptions as any
+        endpointDefinitions[arg.endpoint]?.extraOptions as any
       );
       if (result.error) throw new HandledError(result.error);
       if (endpoint.onSuccess) endpoint.onSuccess(arg.originalArgs, mutationApi, result.data);

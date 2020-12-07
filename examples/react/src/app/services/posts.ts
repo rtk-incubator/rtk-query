@@ -73,7 +73,10 @@ export const postApi = createApi({
           body,
         };
       },
-      invalidates: (_, { id }) => [{ type: 'Posts', id }],
+      invalidates: (_, { id }) => [
+        { type: 'Posts', id },
+        { type: 'Posts', id: 'LIST' },
+      ],
     }),
     deletePost: build.mutation<{ success: boolean; id: number }, number>({
       query(id) {

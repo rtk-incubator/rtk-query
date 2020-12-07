@@ -18,8 +18,7 @@ export const createStore = (options?: ConfigureStoreOptions['preloadedState'] | 
       polling,
       auth,
     },
-    middleware: (getDefaultMiddleware) =>
-      getDefaultMiddleware().concat(counterApi.middleware, postApi.middleware, timeApi.middleware, splitApi.middleware),
+    middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(counterApi.middleware),
     ...options,
   });
 

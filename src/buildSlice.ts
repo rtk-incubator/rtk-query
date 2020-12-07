@@ -14,11 +14,13 @@ import {
   SubscriptionState,
   ConfigState,
   RefetchConfigOptions,
+  ConfigStateEndpoints,
 } from './apiState';
 import type { MutationThunkArg, QueryThunkArg, ThunkResult } from './buildThunks';
 import { AssertEntityTypes, calculateProvidedBy, EndpointDefinitions } from './endpointDefinitions';
 import { applyPatches, Patch } from 'immer';
 import { onOffline, onOnline } from './setupListeners';
+import { removeQueryResult } from './buildMiddleware';
 
 export type InternalState = CombinedState<any, string>;
 
@@ -57,15 +59,12 @@ export function buildSlice({
   mutationThunk: AsyncThunk<ThunkResult, MutationThunkArg<any>, {}>;
   endpointDefinitions: EndpointDefinitions;
   assertEntityType: AssertEntityTypes;
-  config: RefetchConfigOptions;
+  config: RefetchConfigOptions & ConfigStateEndpoints;
 }) {
   const querySlice = createSlice({
     name: `${reducerPath}/queries`,
     initialState: {} as QueryState<any>,
     reducers: {
-      removeQueryResult(draft, { payload: { queryCacheKey } }: PayloadAction<QuerySubstateIdentifier>) {
-        delete draft[queryCacheKey];
-      },
       queryResultPatched(
         draft,
         { payload: { queryCacheKey, patches } }: PayloadAction<QuerySubstateIdentifier & { patches: Patch[] }>
@@ -77,6 +76,11 @@ export function buildSlice({
     },
     extraReducers(builder) {
       builder
+        .addCase(removeQueryResult, (draft, { payload }) => {
+          if (reducerPath === payload.reducerPath) {
+            delete draft[payload.queryCacheKey];
+          }
+        })
         .addCase(queryThunk.pending, (draft, { meta: { arg, requestId } }) => {
           if (arg.subscribe) {
             // only initialize substate if we want to subscribe to it
@@ -121,7 +125,7 @@ export function buildSlice({
     name: `${reducerPath}/mutations`,
     initialState: {} as MutationState<any>,
     reducers: {
-      unsubscribeResult(draft, action: PayloadAction<MutationSubstateIdentifier>) {
+      unsubscribeResult(draft, action: PayloadAction<MutationSubstateIdentifier & { reducerPath: string }>) {
         if (action.payload.requestId in draft) {
           delete draft[action.payload.requestId];
         }
@@ -182,15 +186,16 @@ export function buildSlice({
             }
           }
         })
-        .addCase(querySlice.actions.removeQueryResult, (draft, { payload: { queryCacheKey } }) => {
-          for (const entityTypeSubscriptions of Object.values(draft)) {
-            for (const idSubscriptions of Object.values(entityTypeSubscriptions)) {
-              const foundAt = idSubscriptions.indexOf(queryCacheKey);
-              if (foundAt !== -1) {
-                idSubscriptions.splice(foundAt, 1);
+        .addCase(removeQueryResult, (draft, { payload }) => {
+          if (reducerPath === payload.reducerPath)
+            for (const entityTypeSubscriptions of Object.values(draft)) {
+              for (const idSubscriptions of Object.values(entityTypeSubscriptions)) {
+                const foundAt = idSubscriptions.indexOf(payload.queryCacheKey);
+                if (foundAt !== -1) {
+                  idSubscriptions.splice(foundAt, 1);
+                }
               }
             }
-          }
         });
     },
   });
@@ -222,8 +227,10 @@ export function buildSlice({
     },
     extraReducers: (builder) => {
       builder
-        .addCase(querySlice.actions.removeQueryResult, (draft, { payload: { queryCacheKey } }) => {
-          delete draft[queryCacheKey];
+        .addCase(removeQueryResult, (draft, { payload }) => {
+          if (reducerPath === payload.reducerPath) {
+            delete draft[payload.queryCacheKey];
+          }
         })
         .addCase(queryThunk.pending, (draft, { meta: { arg, requestId } }) => {
           if (arg.subscribe) {
@@ -273,7 +280,6 @@ export function buildSlice({
   const actions = {
     updateSubscriptionOptions: subscriptionSlice.actions.updateSubscriptionOptions,
     queryResultPatched: querySlice.actions.queryResultPatched,
-    removeQueryResult: querySlice.actions.removeQueryResult,
     unsubscribeQueryResult: subscriptionSlice.actions.unsubscribeResult,
     unsubscribeMutationResult: mutationSlice.actions.unsubscribeResult,
   };

@@ -1,5 +1,5 @@
 import { SerializedError } from '@reduxjs/toolkit';
-import { BaseQueryError } from './apiTypes';
+import { BaseQueryError, BaseQueryExtraOptions, BaseQueryFn } from './apiTypes';
 import {
   QueryDefinition,
   MutationDefinition,
@@ -11,7 +11,7 @@ import {
 import { Id, WithRequiredProp } from './tsHelpers';
 
 export type QueryCacheKey = string & { _type: 'queryCacheKey' };
-export type QuerySubstateIdentifier = { queryCacheKey: QueryCacheKey };
+export type QuerySubstateIdentifier = { queryCacheKey: QueryCacheKey; reducerPath: string };
 export type MutationSubstateIdentifier = { requestId: string };
 
 export type RefetchConfigOptions = {
@@ -176,10 +176,18 @@ export type SubscriptionState = {
   [queryCacheKey: string]: Subscribers | undefined;
 };
 
-export type ConfigState = RefetchConfigOptions & {
-  online: boolean;
-  focused: boolean;
+export type ConfigStateEndpoints = {
+  endpoints: {
+    [key: string]: {
+      extraOptions?: BaseQueryExtraOptions<BaseQueryFn>;
+    };
+  };
 };
+export type ConfigState = RefetchConfigOptions &
+  ConfigStateEndpoints & {
+    online: boolean;
+    focused: boolean;
+  };
 
 export type MutationState<D extends EndpointDefinitions> = {
   [requestId: string]: MutationSubState<D[string]> | undefined;

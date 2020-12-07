@@ -12,6 +12,7 @@ import {
   AssertEntityTypes,
   DefinitionType,
   EndpointBuilder,
+  EndpointDefinition,
   EndpointDefinitions,
   isMutationDefinition,
   isQueryDefinition,
@@ -25,6 +26,24 @@ export { fetchBaseQuery } from './fetchBaseQuery';
 export type { FetchBaseQueryError, FetchArgs } from './fetchBaseQuery';
 export { retry } from './retry';
 export { setupListeners } from './setupListeners';
+
+export function createMiddleware(...apis: any) {
+  let endpointDefinitions: { [key: string]: EndpointDefinitions } = {};
+  if (Array.isArray(apis)) {
+    for (const api of apis) {
+      endpointDefinitions[api.reducerPath] = api.endpoints;
+    }
+  } else {
+    endpointDefinitions[apis.reducerPath] = apis.endpoints;
+  }
+
+  return buildMiddleware({
+    endpointDefinitions,
+    queryThunk,
+    keepUnusedDataFor,
+    assertEntityType,
+  });
+}
 
 export function createApi<
   BaseQuery extends BaseQueryFn,
@@ -59,7 +78,6 @@ export function createApi<
   assertCast<InternalSerializeQueryArgs<InternalQueryArgs>>(serializeQueryArgs);
 
   const endpointDefinitions: EndpointDefinitions = {};
-
   const assertEntityType: AssertEntityTypes = (entity) => {
     if (IS_DEV()) {
       if (!entityTypes.includes(entity.type as any)) {
@@ -68,7 +86,6 @@ export function createApi<
     }
     return entity;
   };
-
   const uninitialized: any = () => {
     throw Error('called before initialization');
   };
@@ -77,7 +94,6 @@ export function createApi<
     reducerPath,
     endpoints: {},
     internalActions: {
-      removeQueryResult: uninitialized,
       unsubscribeMutationResult: uninitialized,
       unsubscribeQueryResult: uninitialized,
       updateSubscriptionOptions: uninitialized,
@@ -122,8 +138,21 @@ export function createApi<
     mutationThunk,
     reducerPath,
     assertEntityType,
-    config,
+    config: {
+      ...config,
+      // Throw the extra options into the config slice per endpoint?
+      endpoints: Object.entries(endpointDefinitions).reduce(
+        (acc, [key, entry]: [string, EndpointDefinition<any, any, any, any>]) => {
+          acc[key] = { extraOptions: entry.extraOptions };
+          return acc;
+        },
+        {} as { [key: string]: { extraOptions?: any } }
+      ),
+    },
   });
+
+  // TODO: queryThunk and mutationThunk need to get moved into generic creators that take a reducerPath?
+
   assertCast<Reducer<State & QueryStatePhantomType<ReducerPath>, AnyAction>>(reducer);
   Object.assign(api.internalActions, sliceActions);
   api.reducer = reducer;
@@ -131,17 +160,15 @@ export function createApi<
   Object.assign(api.internalActions, sliceActions, { prefetchThunk });
   api.reducer = reducer;
 
-  const { middleware } = buildMiddleware({
-    reducerPath,
-    endpointDefinitions,
-    queryThunk,
-    mutationThunk,
-    keepUnusedDataFor,
-    api,
-    assertEntityType,
-  });
+  // const { middleware } = buildMiddleware({
+  //   endpointDefinitions,
+  //   queryThunk,
+  //   keepUnusedDataFor,
+  //   api,
+  //   assertEntityType,
+  // });
 
-  api.middleware = middleware;
+  // api.middleware = middleware;
 
   const { buildQuerySelector, buildMutationSelector } = buildSelectors({
     serializeQueryArgs,

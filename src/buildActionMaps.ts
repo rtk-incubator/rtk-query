@@ -95,6 +95,7 @@ export function buildActionMaps<Definitions extends EndpointDefinitions, Interna
         internalQueryArgs,
         queryCacheKey,
         startedTimeStamp: Date.now(),
+        reducerPath: api.reducerPath,
       });
       const thunkResult = dispatch(thunk);
       const { requestId, abort } = thunkResult;
@@ -114,11 +115,14 @@ export function buildActionMaps<Definitions extends EndpointDefinitions, Interna
               unsubscribeQueryResult({
                 queryCacheKey,
                 requestId,
+                reducerPath: api.reducerPath,
               })
             );
         },
         updateSubscriptionOptions(options: SubscriptionOptions) {
-          dispatch(updateSubscriptionOptions({ endpoint, requestId, queryCacheKey, options }));
+          dispatch(
+            updateSubscriptionOptions({ endpoint, requestId, queryCacheKey, options, reducerPath: api.reducerPath })
+          );
         },
       });
     };
@@ -137,6 +141,7 @@ export function buildActionMaps<Definitions extends EndpointDefinitions, Interna
         originalArgs: arg,
         track,
         startedTimeStamp: Date.now(),
+        reducerPath: api.reducerPath,
       });
       const thunkResult = dispatch(thunk);
       const { requestId, abort } = thunkResult;
@@ -149,7 +154,7 @@ export function buildActionMaps<Definitions extends EndpointDefinitions, Interna
         requestId,
         abort,
         unsubscribe() {
-          if (track) dispatch(unsubscribeMutationResult({ requestId }));
+          if (track) dispatch(unsubscribeMutationResult({ requestId, reducerPath: api.reducerPath }));
         },
       });
     };

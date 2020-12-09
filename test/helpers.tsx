@@ -76,12 +76,12 @@ export function setupApiStore<
     const store = getStore() as StoreType;
     refObj.store = store;
     refObj.wrapper = withProvider(store);
-    if (withoutListeners) {
+    if (!withoutListeners) {
       cleanupListeners = setupListeners(store.dispatch);
     }
   });
   afterEach(() => {
-    if (withoutListeners) {
+    if (!withoutListeners) {
       cleanupListeners();
     }
   });

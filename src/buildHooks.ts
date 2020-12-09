@@ -8,7 +8,6 @@ import {
   RequestStatusFlags,
   SubscriptionOptions,
   QueryKeys,
-  RefetchConfigOptions,
 } from './apiState';
 import {
   EndpointDefinitions,
@@ -99,10 +98,8 @@ export type PrefetchOptions =
 
 export function buildHooks<Definitions extends EndpointDefinitions>({
   api,
-  config,
 }: {
   api: Api<any, Definitions, any, string>;
-  config: RefetchConfigOptions;
 }) {
   return { buildQueryHook, buildMutationHook, usePrefetch };
 
@@ -124,9 +121,9 @@ export function buildHooks<Definitions extends EndpointDefinitions>({
     return (
       arg: any,
       {
-        refetchOnMountOrArgChange = config.refetchOnMountOrArgChange,
-        refetchOnFocus = config.refetchOnFocus,
-        refetchOnReconnect = config.refetchOnReconnect,
+        refetchOnReconnect: _reconnect = undefined,
+        refetchOnFocus: _focus = undefined,
+        refetchOnMountOrArgChange: _mount = undefined,
         skip = false,
         pollingInterval = 0,
       } = {}
@@ -136,7 +133,6 @@ export function buildHooks<Definitions extends EndpointDefinitions>({
         Definitions
       >;
       const dispatch = useDispatch<ThunkDispatch<any, any, AnyAction>>();
-
       const stableArg = useShallowStableValue(arg);
 
       const lastData = useRef<ResultTypeFrom<Definitions[string]> | undefined>();
@@ -144,6 +140,15 @@ export function buildHooks<Definitions extends EndpointDefinitions>({
 
       const querySelector = useMemo(() => select(skip ? skipSelector : stableArg), [select, skip, stableArg]);
       const currentState = useSelector(querySelector);
+      const baseRefetchOnMountOrArgChange = useSelector(
+        (state: any) => state[api.reducerPath].config.refetchOnMountOrArgChange
+      );
+      const baseRefetchOnReconnect = useSelector((state: any) => state[api.reducerPath].config.refetchOnReconnect);
+      const baseRefetchOnFocus = useSelector((state: any) => state[api.reducerPath].config.refetchOnFocus);
+
+      const refetchOnMountOrArgChange = _mount !== undefined ? _mount : baseRefetchOnMountOrArgChange;
+      const refetchOnReconnect = _reconnect !== undefined ? _reconnect : baseRefetchOnReconnect;
+      const refetchOnFocus = _focus !== undefined ? _focus : baseRefetchOnFocus;
 
       useEffect(() => {
         if (skip) {
@@ -153,7 +158,7 @@ export function buildHooks<Definitions extends EndpointDefinitions>({
         const lastPromise = promiseRef.current;
         if (lastPromise && lastPromise.arg === stableArg) {
           // arg did not change, but options did probably, update them
-          lastPromise.updateSubscriptionOptions({ pollingInterval, refetchOnFocus, refetchOnReconnect });
+          lastPromise.updateSubscriptionOptions({ pollingInterval });
         } else {
           if (lastPromise) lastPromise.unsubscribe();
           const promise = dispatch(
@@ -170,8 +175,8 @@ export function buildHooks<Definitions extends EndpointDefinitions>({
         skip,
         pollingInterval,
         refetchOnMountOrArgChange,
-        refetchOnReconnect,
         refetchOnFocus,
+        refetchOnReconnect,
         initiate,
       ]);
 

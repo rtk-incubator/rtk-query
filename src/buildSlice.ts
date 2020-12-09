@@ -13,12 +13,12 @@ import {
   QueryCacheKey,
   SubscriptionState,
   ConfigState,
-  RefetchConfigOptions,
 } from './apiState';
 import type { MutationThunkArg, QueryThunkArg, ThunkResult } from './buildThunks';
 import { AssertEntityTypes, calculateProvidedBy, EndpointDefinitions } from './endpointDefinitions';
 import { applyPatches, Patch } from 'immer';
 import { onFocus, onFocusLost, onOffline, onOnline } from './setupListeners';
+import { isDocumentVisible, isOnline } from './utils';
 
 export type InternalState = CombinedState<any, string>;
 
@@ -57,7 +57,7 @@ export function buildSlice({
   mutationThunk: AsyncThunk<ThunkResult, MutationThunkArg<any>, {}>;
   endpointDefinitions: EndpointDefinitions;
   assertEntityType: AssertEntityTypes;
-  config: RefetchConfigOptions;
+  config: Omit<ConfigState, 'online' | 'focused'>;
 }) {
   const querySlice = createSlice({
     name: `${reducerPath}/queries`,
@@ -244,11 +244,9 @@ export function buildSlice({
   const configSlice = createSlice({
     name: `${reducerPath}/config`,
     initialState: {
-      online: true,
-      focused: true,
-      refetchOnMountOrArgChange: config.refetchOnMountOrArgChange,
-      refetchOnReconnect: config.refetchOnReconnect,
-      refetchOnFocus: config.refetchOnFocus,
+      online: isOnline(),
+      focused: isDocumentVisible(),
+      ...config,
     } as ConfigState,
     reducers: {},
     extraReducers: (builder) => {

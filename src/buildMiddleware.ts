@@ -22,7 +22,6 @@ export function buildMiddleware<Definitions extends EndpointDefinitions, Reducer
   endpointDefinitions,
   queryThunk,
   mutationThunk,
-  keepUnusedDataFor,
   api,
   assertEntityType,
 }: {
@@ -31,7 +30,6 @@ export function buildMiddleware<Definitions extends EndpointDefinitions, Reducer
   queryThunk: AsyncThunk<ThunkResult, QueryThunkArg<any>, {}>;
   mutationThunk: AsyncThunk<ThunkResult, MutationThunkArg<any>, {}>;
   api: Api<any, Definitions, ReducerPath, string>;
-  keepUnusedDataFor: number;
   assertEntityType: AssertEntityTypes;
 }) {
   type MWApi = MiddlewareAPI<ThunkDispatch<any, any, AnyAction>, RootState<Definitions, string, ReducerPath>>;
@@ -87,17 +85,31 @@ export function buildMiddleware<Definitions extends EndpointDefinitions, Reducer
     const state = api.getState()[reducerPath];
     const queries = state.queries;
     const subscriptions = state.subscriptions;
-    const baseTypeValue = state.config[type]; // The defaults are set in buildSlice when calling createApi
 
     batch(() => {
       for (const queryCacheKey of Object.keys(subscriptions)) {
         const querySubState = queries[queryCacheKey];
 
-        const allSubsAreFalse = Object.values(subscriptions[queryCacheKey] || {}).every(
-          (entry) => type in entry && !entry[type]
+        const { tCount, fCount, total } = Object.values(subscriptions[queryCacheKey] || {}).reduce(
+          (acc, curr) => {
+            if (type in curr) {
+              const res = curr[type] ? 'tCount' : 'fCount';
+              acc[res] += 1;
+            }
+            acc['total'] += 1;
+            return acc;
+          },
+          { tCount: 0, fCount: 0, total: 0 }
         );
+        let shouldRefetch = state.config[type]; // use the default from state
 
-        const shouldRefetch = (baseTypeValue && !allSubsAreFalse) || !allSubsAreFalse;
+        // all false
+        if (fCount && fCount === total) {
+          shouldRefetch = false;
+          // at least one true from a hook/action
+        } else if (tCount) {
+          shouldRefetch = true;
+        }
 
         if (querySubState && shouldRefetch) {
           if (querySubState.status !== QueryStatus.uninitialized) {
@@ -167,6 +179,7 @@ export function buildMiddleware<Definitions extends EndpointDefinitions, Reducer
   }
 
   function handleUnsubscribe({ queryCacheKey }: QuerySubstateIdentifier, api: MWApi) {
+    const keepUnusedDataFor = api.getState()[reducerPath].config.keepUnusedDataFor;
     const currentTimeout = currentRemovalTimeouts[queryCacheKey];
     if (currentTimeout) {
       clearTimeout(currentTimeout);
@@ -174,15 +187,16 @@ export function buildMiddleware<Definitions extends EndpointDefinitions, Reducer
     currentRemovalTimeouts[queryCacheKey] = setTimeout(() => {
       const subscriptions = api.getState()[reducerPath].subscriptions[queryCacheKey];
       if (!subscriptions || Object.keys(subscriptions).length === 0) {
-        api.dispatch(removeQueryResult({ queryCacheKey: queryCacheKey }));
+        api.dispatch(removeQueryResult({ queryCacheKey }));
       }
       delete currentRemovalTimeouts![queryCacheKey];
     }, keepUnusedDataFor * 1000);
   }
 
   function startNextPoll({ queryCacheKey }: QuerySubstateIdentifier, api: MWApi) {
-    const querySubState = api.getState()[reducerPath].queries[queryCacheKey];
-    const subscriptions = api.getState()[reducerPath].subscriptions[queryCacheKey];
+    const state = api.getState()[reducerPath];
+    const querySubState = state.queries[queryCacheKey];
+    const subscriptions = state.subscriptions[queryCacheKey];
 
     if (!querySubState || querySubState.status === QueryStatus.uninitialized) return;
 
@@ -219,8 +233,9 @@ export function buildMiddleware<Definitions extends EndpointDefinitions, Reducer
   }
 
   function updatePollingInterval({ queryCacheKey }: QuerySubstateIdentifier, api: MWApi) {
-    const querySubState = api.getState()[reducerPath].queries[queryCacheKey];
-    const subscriptions = api.getState()[reducerPath].subscriptions[queryCacheKey];
+    const state = api.getState()[reducerPath];
+    const querySubState = state.queries[queryCacheKey];
+    const subscriptions = state.subscriptions[queryCacheKey];
 
     if (!querySubState || querySubState.status === QueryStatus.uninitialized) {
       return;

@@ -101,12 +101,12 @@ export function buildMiddleware<Definitions extends EndpointDefinitions, Reducer
           },
           { tCount: 0, fCount: 0, total: 0 }
         );
-        let shouldRefetch = state.config[type]; // use the default from state
+        let shouldRefetch = state.config[type]; // use the default from the config state
 
         // all false
         if (fCount && fCount === total) {
           shouldRefetch = false;
-          // at least one true from a hook/action
+          // at least one is true from a hook/action
         } else if (tCount) {
           shouldRefetch = true;
         }

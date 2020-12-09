@@ -8,6 +8,7 @@ import {
   RequestStatusFlags,
   SubscriptionOptions,
   QueryKeys,
+  InternalRootState,
 } from './apiState';
 import {
   EndpointDefinitions,
@@ -143,8 +144,12 @@ export function buildHooks<Definitions extends EndpointDefinitions>({
       const baseRefetchOnMountOrArgChange = useSelector(
         (state: any) => state[api.reducerPath].config.refetchOnMountOrArgChange
       );
-      const baseRefetchOnReconnect = useSelector((state: any) => state[api.reducerPath].config.refetchOnReconnect);
-      const baseRefetchOnFocus = useSelector((state: any) => state[api.reducerPath].config.refetchOnFocus);
+      const baseRefetchOnReconnect = useSelector(
+        (state: InternalRootState<string>) => state[api.reducerPath].config.refetchOnReconnect
+      );
+      const baseRefetchOnFocus = useSelector(
+        (state: InternalRootState<string>) => state[api.reducerPath].config.refetchOnFocus
+      );
 
       const refetchOnMountOrArgChange = _mount !== undefined ? _mount : baseRefetchOnMountOrArgChange;
       const refetchOnReconnect = _reconnect !== undefined ? _reconnect : baseRefetchOnReconnect;

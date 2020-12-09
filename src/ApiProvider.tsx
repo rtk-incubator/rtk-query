@@ -10,7 +10,11 @@ import { Api } from './apiTypes';
  * conflict with each other - please use the traditional redux setup
  * in that case.
  */
-export function ApiProvider<A extends Api<any, {}, any, string>>(props: { children: any; api: A }) {
+export function ApiProvider<A extends Api<any, {}, any, string>>(props: {
+  children: any;
+  api: A;
+  setupListeners?: Parameters<typeof setupListeners>[1];
+}) {
   const [store] = React.useState(() =>
     configureStore({
       reducer: {
@@ -20,7 +24,7 @@ export function ApiProvider<A extends Api<any, {}, any, string>>(props: { childr
     })
   );
   // Adds the event listeners for online/offline/focus/etc
-  setupListeners(store.dispatch);
+  setupListeners(store.dispatch, props.setupListeners);
 
   return <Provider store={store}>{props.children}</Provider>;
 }

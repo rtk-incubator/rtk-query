@@ -1,7 +1,9 @@
 import * as React from 'react';
-import { createApi } from '@rtk-incubator/rtk-query';
+import { createApi, setupListeners } from '@rtk-incubator/rtk-query';
 import { act, fireEvent, render, waitFor } from '@testing-library/react';
 import { setupApiStore, waitMs } from './helpers';
+import { onOnline } from '@internal/setupListeners';
+import { AnyAction } from '@reduxjs/toolkit';
 
 // Just setup a temporary in-memory counter for tests that `getIncrementedAmount`.
 // This can be used to test how many renders happen due to data changes or
@@ -246,5 +248,64 @@ describe('refetchOnReconnect tests', () => {
     await waitFor(() => expect(getByTestId('isFetching').textContent).toBe('true'));
     await waitFor(() => expect(getByTestId('isFetching').textContent).toBe('false'));
     await waitFor(() => expect(getByTestId('amount').textContent).toBe('2'));
+  });
+});
+
+describe('customListenersHandler', () => {
+  const storeRef = setupApiStore(defaultApi, undefined, true);
+
+  test('setupListeners accepts a custom callback and executes it', async () => {
+    const consoleSpy = jest.spyOn(console, 'log');
+    const dispatchSpy = jest.spyOn(storeRef.store, 'dispatch');
+
+    let unsubscribe = () => {};
+    unsubscribe = setupListeners(storeRef.store.dispatch, (dispatch, actions) => {
+      const handleOnline = () => dispatch(actions.onOnline());
+      window.addEventListener('online', handleOnline, false);
+      console.log('setup!');
+      return () => {
+        window.removeEventListener('online', handleOnline);
+        console.log('cleanup!');
+      };
+    });
+
+    await waitMs();
+
+    let data, isLoading, isFetching;
+
+    function User() {
+      ({ data, isFetching, isLoading } = defaultApi.endpoints.getIncrementedAmount.useQuery(undefined, {
+        refetchOnReconnect: true,
+      }));
+      return (
+        <div>
+          <div data-testid="isLoading">{String(isLoading)}</div>
+          <div data-testid="isFetching">{String(isFetching)}</div>
+          <div data-testid="amount">{String(data?.amount)}</div>
+        </div>
+      );
+    }
+
+    let { getByTestId } = render(<User />, { wrapper: storeRef.wrapper });
+
+    expect(consoleSpy).toHaveBeenCalledWith('setup!');
+
+    await waitFor(() => expect(getByTestId('isLoading').textContent).toBe('true'));
+    await waitFor(() => expect(getByTestId('isLoading').textContent).toBe('false'));
+    await waitFor(() => expect(getByTestId('amount').textContent).toBe('1'));
+
+    act(() => {
+      window.dispatchEvent(new Event('offline'));
+      window.dispatchEvent(new Event('online'));
+    });
+    expect(dispatchSpy).toHaveBeenCalled();
+    expect(onOnline.match(dispatchSpy.mock.calls[1][0] as AnyAction)).toBe(true);
+
+    await waitFor(() => expect(getByTestId('isFetching').textContent).toBe('true'));
+    await waitFor(() => expect(getByTestId('isFetching').textContent).toBe('false'));
+    await waitFor(() => expect(getByTestId('amount').textContent).toBe('2'));
+
+    unsubscribe();
+    expect(consoleSpy).toHaveBeenCalledWith('cleanup!');
   });
 });

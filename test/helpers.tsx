@@ -45,7 +45,7 @@ export const hookWaitFor = async (cb: () => void, time = 2000) => {
 export function setupApiStore<
   A extends { reducerPath: any; reducer: Reducer<any, any>; middleware: Middleware<any> },
   R extends Record<string, Reducer<any, any>>
->(api: A, extraReducers?: R) {
+>(api: A, extraReducers?: R, withoutListeners?: boolean) {
   const getStore = () =>
     configureStore({
       reducer: { [api.reducerPath]: api.reducer, ...extraReducers },
@@ -76,10 +76,14 @@ export function setupApiStore<
     const store = getStore() as StoreType;
     refObj.store = store;
     refObj.wrapper = withProvider(store);
-    cleanupListeners = setupListeners(store.dispatch);
+    if (withoutListeners) {
+      cleanupListeners = setupListeners(store.dispatch);
+    }
   });
   afterEach(() => {
-    cleanupListeners();
+    if (withoutListeners) {
+      cleanupListeners();
+    }
   });
 
   return refObj;

@@ -81,7 +81,7 @@ export function buildActionMaps<Definitions extends EndpointDefinitions, Interna
   function buildQueryAction(endpoint: string, definition: QueryDefinition<any, any, any, any>) {
     const queryAction: StartQueryActionCreator<any> = (
       arg,
-      { subscribe = true, forceRefetch = false, refetchOnMountOrArgChange = false, subscriptionOptions } = {}
+      { subscribe = true, forceRefetch = false, refetchOnMountOrArgChange, subscriptionOptions } = {}
     ) => (dispatch, getState) => {
       const internalQueryArgs = definition.query(arg);
       const queryCacheKey = serializeQueryArgs({ queryArgs: arg, internalQueryArgs, endpoint });

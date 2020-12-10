@@ -1,6 +1,6 @@
 import { AnyAction, AsyncThunk, Middleware, MiddlewareAPI, ThunkDispatch } from '@reduxjs/toolkit';
 import { batch as reactBatch } from 'react-redux';
-import { QueryCacheKey, QueryStatus, QuerySubstateIdentifier, RootState, Subscribers } from './apiState';
+import { QueryCacheKey, QueryStatus, QuerySubState, QuerySubstateIdentifier, RootState, Subscribers } from './apiState';
 import { Api } from './apiTypes';
 import { MutationThunkArg, QueryThunkArg, ThunkResult } from './buildThunks';
 import {
@@ -81,6 +81,23 @@ export function buildMiddleware<Definitions extends EndpointDefinitions, Reducer
 
   return { middleware };
 
+  function refetchQuery(
+    querySubState: Exclude<QuerySubState<any>, { status: QueryStatus.uninitialized }>,
+    queryCacheKey: string,
+    override: Partial<QueryThunkArg<any>> = {}
+  ) {
+    return queryThunk({
+      endpoint: querySubState.endpoint,
+      originalArgs: querySubState.originalArgs,
+      internalQueryArgs: querySubState.internalQueryArgs,
+      subscribe: false,
+      forceRefetch: true,
+      startedTimeStamp: Date.now(),
+      queryCacheKey: queryCacheKey as any,
+      ...override,
+    });
+  }
+
   function refetchValidQueries(api: MWApi, type: 'refetchOnFocus' | 'refetchOnReconnect') {
     const state = api.getState()[reducerPath];
     const queries = state.queries;
@@ -89,42 +106,16 @@ export function buildMiddleware<Definitions extends EndpointDefinitions, Reducer
     batch(() => {
       for (const queryCacheKey of Object.keys(subscriptions)) {
         const querySubState = queries[queryCacheKey];
+        const subscriptionSubState = subscriptions[queryCacheKey];
 
-        const { tCount, fCount, total } = Object.values(subscriptions[queryCacheKey] || {}).reduce(
-          (acc, curr) => {
-            if (type in curr) {
-              const res = curr[type] ? 'tCount' : 'fCount';
-              acc[res] += 1;
-            }
-            acc['total'] += 1;
-            return acc;
-          },
-          { tCount: 0, fCount: 0, total: 0 }
-        );
-        let shouldRefetch = state.config[type]; // use the default from the config state
+        if (!subscriptionSubState || !querySubState || querySubState.status === QueryStatus.uninitialized) return;
 
-        // all false
-        if (fCount && fCount === total) {
-          shouldRefetch = false;
-          // at least one is true from a hook/action
-        } else if (tCount) {
-          shouldRefetch = true;
-        }
+        const shouldRefetch =
+          Object.values(subscriptionSubState).some((sub) => sub[type] === true) ||
+          (Object.values(subscriptionSubState).every((sub) => sub[type] === undefined) && state.config[type]);
 
-        if (querySubState && shouldRefetch) {
-          if (querySubState.status !== QueryStatus.uninitialized) {
-            api.dispatch(
-              queryThunk({
-                endpoint: querySubState.endpoint,
-                originalArgs: querySubState.originalArgs,
-                internalQueryArgs: querySubState.internalQueryArgs,
-                subscribe: false,
-                forceRefetch: true,
-                startedTimeStamp: Date.now(),
-                queryCacheKey: queryCacheKey as any,
-              })
-            );
-          }
+        if (shouldRefetch) {
+          api.dispatch(refetchQuery(querySubState, queryCacheKey));
         }
       }
     });
@@ -160,17 +151,7 @@ export function buildMiddleware<Definitions extends EndpointDefinitions, Reducer
           if (Object.keys(subscriptionSubState).length === 0) {
             api.dispatch(removeQueryResult({ queryCacheKey }));
           } else if (querySubState.status !== QueryStatus.uninitialized) {
-            api.dispatch(
-              queryThunk({
-                endpoint: querySubState.endpoint,
-                originalArgs: querySubState.originalArgs,
-                internalQueryArgs: querySubState.internalQueryArgs,
-                queryCacheKey,
-                subscribe: false,
-                forceRefetch: true,
-                startedTimeStamp: Date.now(),
-              })
-            );
+            api.dispatch(refetchQuery(querySubState, queryCacheKey));
           } else {
           }
         }
@@ -217,17 +198,7 @@ export function buildMiddleware<Definitions extends EndpointDefinitions, Reducer
       pollingInterval: lowestPollingInterval,
       timeout: setTimeout(() => {
         currentInterval!.timeout = undefined;
-        api.dispatch(
-          queryThunk({
-            endpoint: querySubState.endpoint,
-            originalArgs: querySubState.originalArgs,
-            internalQueryArgs: querySubState.internalQueryArgs,
-            queryCacheKey,
-            subscribe: false,
-            forceRefetch: true,
-            startedTimeStamp: Date.now(),
-          })
-        );
+        api.dispatch(refetchQuery(querySubState, queryCacheKey));
       }, lowestPollingInterval),
     });
   }

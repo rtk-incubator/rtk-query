@@ -8,7 +8,6 @@ import {
   RequestStatusFlags,
   SubscriptionOptions,
   QueryKeys,
-  InternalRootState,
 } from './apiState';
 import {
   EndpointDefinitions,
@@ -121,13 +120,7 @@ export function buildHooks<Definitions extends EndpointDefinitions>({
   function buildQueryHook(name: string): QueryHook<any> {
     return (
       arg: any,
-      {
-        refetchOnReconnect: _reconnect = undefined,
-        refetchOnFocus: _focus = undefined,
-        refetchOnMountOrArgChange: _mount = undefined,
-        skip = false,
-        pollingInterval = 0,
-      } = {}
+      { refetchOnReconnect, refetchOnFocus, refetchOnMountOrArgChange, skip = false, pollingInterval = 0 } = {}
     ) => {
       const { select, initiate } = api.endpoints[name] as ApiEndpointQuery<
         QueryDefinition<any, any, any, any, any>,
@@ -141,19 +134,6 @@ export function buildHooks<Definitions extends EndpointDefinitions>({
 
       const querySelector = useMemo(() => select(skip ? skipSelector : stableArg), [select, skip, stableArg]);
       const currentState = useSelector(querySelector);
-      const baseRefetchOnMountOrArgChange = useSelector(
-        (state: any) => state[api.reducerPath].config.refetchOnMountOrArgChange
-      );
-      const baseRefetchOnReconnect = useSelector(
-        (state: InternalRootState<string>) => state[api.reducerPath].config.refetchOnReconnect
-      );
-      const baseRefetchOnFocus = useSelector(
-        (state: InternalRootState<string>) => state[api.reducerPath].config.refetchOnFocus
-      );
-
-      const refetchOnMountOrArgChange = _mount !== undefined ? _mount : baseRefetchOnMountOrArgChange;
-      const refetchOnReconnect = _reconnect !== undefined ? _reconnect : baseRefetchOnReconnect;
-      const refetchOnFocus = _focus !== undefined ? _focus : baseRefetchOnFocus;
 
       useEffect(() => {
         if (skip) {
@@ -163,7 +143,7 @@ export function buildHooks<Definitions extends EndpointDefinitions>({
         const lastPromise = promiseRef.current;
         if (lastPromise && lastPromise.arg === stableArg) {
           // arg did not change, but options did probably, update them
-          lastPromise.updateSubscriptionOptions({ pollingInterval });
+          lastPromise.updateSubscriptionOptions({ pollingInterval, refetchOnReconnect, refetchOnFocus });
         } else {
           if (lastPromise) lastPromise.unsubscribe();
           const promise = dispatch(

@@ -216,11 +216,7 @@ export function buildThunks<
         const baseFetchOnMountOrArgChange = state.config.refetchOnMountOrArgChange;
 
         const fulfilledVal = requestState?.fulfilledTimeStamp;
-        const refetchVal = arg.forceRefetch
-          ? arg.forceRefetch
-          : typeof arg.refetchOnMountOrArgChange !== 'undefined'
-          ? arg.refetchOnMountOrArgChange
-          : baseFetchOnMountOrArgChange;
+        const refetchVal = arg.forceRefetch || (arg.refetchOnMountOrArgChange ?? baseFetchOnMountOrArgChange);
 
         // Don't retry a request that's currently in-flight
         if (requestState?.status === 'pending') return false;

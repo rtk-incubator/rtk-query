@@ -149,7 +149,7 @@ export function buildHooks<Definitions extends EndpointDefinitions>({
           const promise = dispatch(
             initiate(stableArg, {
               subscriptionOptions: { pollingInterval, refetchOnReconnect, refetchOnFocus },
-              refetchOnMountOrArgChange,
+              forceRefetch: refetchOnMountOrArgChange,
             })
           );
           promiseRef.current = promise;

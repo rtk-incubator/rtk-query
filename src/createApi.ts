@@ -51,6 +51,14 @@ export function buildCreateApi<Modules extends [Module<any>, ...Module<any>[]]>(
 
     const api = {
       injectEndpoints,
+      enhanceEndpoints(partialDefinitions) {
+        for (const [endpoint, partialDefinition] of Object.entries(partialDefinitions)) {
+          if (typeof partialDefinition === 'function') {
+            partialDefinition(context.endpointDefinitions[endpoint]);
+          }
+          Object.assign(context.endpointDefinitions[endpoint] || {}, partialDefinition);
+        }
+      },
     } as Api<BaseQueryFn, {}, string, string, Modules[number]['name']>;
 
     const initializedModules = modules.map((m) => m.init(api as any, optionsWithDefaults, context));

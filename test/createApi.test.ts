@@ -1,7 +1,7 @@
 import { configureStore } from '@reduxjs/toolkit';
 import { Api, createApi, fetchBaseQuery } from '@rtk-incubator/rtk-query';
 import { QueryDefinition, MutationDefinition } from '@internal/endpointDefinitions';
-import { ANY, expectType, setupApiStore, waitMs } from './helpers';
+import { ANY, expectType, expectExactType, setupApiStore, waitMs } from './helpers';
 
 test('sensible defaults', () => {
   const api = createApi({
@@ -282,6 +282,93 @@ describe('endpoint definition typings', () => {
         })(),
       }),
     });
+  });
+
+  describe('enhancing endpoint definitions', () => {
+    const api = createApi({
+      baseQuery: fetchBaseQuery(),
+      endpoints: (build) => ({
+        query1: build.query<'out1', 'in1'>({ query: (id) => `${id}` }),
+        query2: build.query<'out2', 'in2'>({ query: (id) => `${id}` }),
+        mutation1: build.mutation<'out1', 'in1'>({ query: (id) => `${id}` }),
+        mutation2: build.mutation<'out2', 'in2'>({ query: (id) => `${id}` }),
+      }),
+    });
+
+    let assertionCount = 0;
+
+    api.enhanceEndpoints({
+      query1(definition) {
+        assertionCount++;
+        expect(definition.query('in1')).toBe('in1');
+      },
+      query2(definition) {
+        assertionCount++;
+        expect(definition.query('in2')).toBe('in2');
+      },
+      mutation1(definition) {
+        assertionCount++;
+        expect(definition.query('in1')).toBe('in1');
+      },
+      mutation2(definition) {
+        assertionCount++;
+        expect(definition.query('in2')).toBe('in2');
+      },
+    });
+
+    api.enhanceEndpoints({
+      query1: {
+        query: (x) => {
+          expectExactType('in1' as const)(x);
+          return 'modified1';
+        },
+      },
+      query2(definition) {
+        definition.query = (x) => {
+          expectExactType('in2' as const)(x);
+          return 'modified2';
+        };
+      },
+      mutation1: {
+        query: (x) => {
+          expectExactType('in1' as const)(x);
+          return 'modified1';
+        },
+      },
+      mutation2(definition) {
+        definition.query = (x) => {
+          expectExactType('in2' as const)(x);
+          return 'modified2';
+        };
+      },
+      // @ts-expect-error
+      nonExisting: {},
+    });
+
+    api.enhanceEndpoints({
+      query1(definition) {
+        assertionCount++;
+        expect(definition.query('in1')).toBe('modified1');
+      },
+      query2(definition) {
+        assertionCount++;
+        expect(definition.query('in2')).toBe('modified2');
+      },
+      mutation1(definition) {
+        assertionCount++;
+        expect(definition.query('in1')).toBe('modified1');
+      },
+      mutation2(definition) {
+        assertionCount++;
+        expect(definition.query('in2')).toBe('modified2');
+      },
+      // @ts-expect-error
+      nonExisting(definition) {
+        assertionCount++;
+        expect(definition).toBeUndefined();
+      },
+    });
+    expect(assertionCount).toBe(9);
   });
 });
 

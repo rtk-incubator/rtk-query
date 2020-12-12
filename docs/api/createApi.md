@@ -23,7 +23,6 @@ The main point where you will define a service to use in your application.
   refetchOnMountOrArgChange?: boolean | number; // value is in seconds
   refetchOnFocus?: boolean;
   refetchOnReconnect?: boolean;
-
 ```
 
 ### `baseQuery`

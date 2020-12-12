@@ -18,6 +18,7 @@ import {
 } from './endpointDefinitions';
 import { assertCast } from './tsHelpers';
 import { capitalize, IS_DEV } from './utils';
+import { onFocus, onFocusLost, onOnline, onOffline } from './setupListeners';
 export { ApiProvider } from './ApiProvider';
 export { QueryStatus } from './apiState';
 export type { Api, ApiWithInjectedEndpoints, BaseQueryEnhancer, BaseQueryFn } from './apiTypes';
@@ -83,6 +84,10 @@ export function createApi<
       updateSubscriptionOptions: uninitialized,
       queryResultPatched: uninitialized,
       prefetchThunk: uninitialized,
+      onOnline,
+      onOffline,
+      onFocus,
+      onFocusLost,
     },
     util: {
       patchQueryResult: uninitialized,

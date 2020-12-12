@@ -1,6 +1,7 @@
 import { createSlice } from '@reduxjs/toolkit';
 import { createApi, fetchBaseQuery } from '@rtk-incubator/rtk-query';
 import { setupApiStore } from './helpers';
+import { default as crossFetch } from 'cross-fetch';
 
 const defaultHeaders: Record<string, string> = {
   fake: 'header',
@@ -346,5 +347,30 @@ describe('fetchBaseQuery', () => {
 
       expect(request.headers['authorization']).toBe(`Bearer ${token}`);
     });
+  });
+});
+
+describe('fetchFn', () => {
+  test('accepts a custom fetchFn', async () => {
+    const baseUrl = 'http://example.com';
+    const params = new URLSearchParams({ apple: 'fruit' });
+
+    const baseQuery = fetchBaseQuery({
+      baseUrl,
+      fetchFn: crossFetch,
+    });
+
+    let request: any;
+    ({ data: request } = await baseQuery(
+      { url: '/echo', params },
+      {
+        signal: undefined,
+        dispatch: storeRef.store.dispatch,
+        getState: storeRef.store.getState,
+      },
+      {}
+    ));
+
+    expect(request.url).toEqual(`${baseUrl}/echo?apple=fruit`);
   });
 });

@@ -22,18 +22,17 @@ import { useShallowStableValue } from './utils';
 import { Api, ApiEndpointMutation, ApiEndpointQuery } from './apiTypes';
 import { Id, Override } from './tsHelpers';
 
-interface QueryHookOptions extends SubscriptionOptions {
-  skip?: boolean;
-  refetchOnMountOrArgChange?: boolean | number;
+interface QueryHooks<Definition extends QueryDefinition<any, any, any, any, any>> {
+  useQuery: UseQuery<Definition>;
+  useQuerySubscription: UseQuerySubscription<Definition>;
+  useQueryState: UseQueryState<Definition>;
 }
 
 declare module './apiTypes' {
   export interface ApiEndpointQuery<
     Definition extends QueryDefinition<any, any, any, any, any>,
     Definitions extends EndpointDefinitions
-  > {
-    useQuery: QueryHook<Definition>;
-  }
+  > extends QueryHooks<Definition> {}
 
   export interface ApiEndpointMutation<
     Definition extends MutationDefinition<any, any, any, any, any>,
@@ -43,12 +42,31 @@ declare module './apiTypes' {
   }
 }
 
-export type QueryHook<D extends QueryDefinition<any, any, any, any>> = (
+export type UseQuery<D extends QueryDefinition<any, any, any, any>> = (
   arg: QueryArgFrom<D>,
-  options?: QueryHookOptions
-) => QueryHookResult<D>;
+  options?: UseQuerySubscriptionOptions
+) => UseQueryStateResult<D> & ReturnType<UseQuerySubscription<D>>;
 
-type BaseQueryHookResult<D extends QueryDefinition<any, any, any, any>> = QuerySubState<D> & {
+interface UseQuerySubscriptionOptions extends SubscriptionOptions {
+  skip?: boolean;
+  refetchOnMountOrArgChange?: boolean | number;
+}
+
+export type UseQuerySubscription<D extends QueryDefinition<any, any, any, any>> = (
+  arg: QueryArgFrom<D>,
+  options?: UseQuerySubscriptionOptions
+) => Pick<QueryActionCreatorResult<D>, 'refetch'>;
+
+interface UseQueryStateOptions {
+  skip?: boolean;
+}
+
+export type UseQueryState<D extends QueryDefinition<any, any, any, any>> = (
+  arg: QueryArgFrom<D>,
+  options?: UseQueryStateOptions
+) => UseQueryStateResult<D>;
+
+type UseQueryStateBaseResult<D extends QueryDefinition<any, any, any, any>> = QuerySubState<D> & {
   /**
    * Query has not started yet.
    */
@@ -69,17 +87,17 @@ type BaseQueryHookResult<D extends QueryDefinition<any, any, any, any>> = QueryS
    * Query is currently in "error" state.
    */
   isError: false;
-} & Pick<QueryActionCreatorResult<D>, 'refetch'>;
+};
 
-type QueryHookResult<D extends QueryDefinition<any, any, any, any>> = Id<
-  | Override<Extract<BaseQueryHookResult<D>, { status: QueryStatus.uninitialized }>, { isUninitialized: true }>
+type UseQueryStateResult<D extends QueryDefinition<any, any, any, any>> = Id<
+  | Override<Extract<UseQueryStateBaseResult<D>, { status: QueryStatus.uninitialized }>, { isUninitialized: true }>
   | Override<
-      BaseQueryHookResult<D>,
+      UseQueryStateBaseResult<D>,
       | { isLoading: true; isFetching: boolean; data: undefined }
       | ({ isSuccess: true; isFetching: boolean; error: undefined } & Required<
-          Pick<BaseQueryHookResult<D>, 'data' | 'fulfilledTimeStamp'>
+          Pick<UseQueryStateBaseResult<D>, 'data' | 'fulfilledTimeStamp'>
         >)
-      | ({ isError: true } & Required<Pick<BaseQueryHookResult<D>, 'error'>>)
+      | ({ isError: true } & Required<Pick<UseQueryStateBaseResult<D>, 'error'>>)
     >
 >;
 
@@ -101,7 +119,7 @@ export function buildHooks<Definitions extends EndpointDefinitions>({
 }: {
   api: Api<any, Definitions, any, string>;
 }) {
-  return { buildQueryHook, buildMutationHook, usePrefetch };
+  return { buildQueryHooks, buildMutationHook, usePrefetch };
 
   function usePrefetch<EndpointName extends QueryKeys<Definitions>>(
     endpointName: EndpointName,
@@ -117,23 +135,19 @@ export function buildHooks<Definitions extends EndpointDefinitions>({
     );
   }
 
-  function buildQueryHook(name: string): QueryHook<any> {
-    return (
+  function buildQueryHooks(name: string): QueryHooks<any> {
+    const useQuerySubscription: UseQuerySubscription<any> = (
       arg: any,
       { refetchOnReconnect, refetchOnFocus, refetchOnMountOrArgChange, skip = false, pollingInterval = 0 } = {}
     ) => {
-      const { select, initiate } = api.endpoints[name] as ApiEndpointQuery<
+      const { initiate } = api.endpoints[name] as ApiEndpointQuery<
         QueryDefinition<any, any, any, any, any>,
         Definitions
       >;
       const dispatch = useDispatch<ThunkDispatch<any, any, AnyAction>>();
       const stableArg = useShallowStableValue(arg);
 
-      const lastData = useRef<ResultTypeFrom<Definitions[string]> | undefined>();
       const promiseRef = useRef<QueryActionCreatorResult<any>>();
-
-      const querySelector = useMemo(() => select(skip ? skipSelector : stableArg), [select, skip, stableArg]);
-      const currentState = useSelector(querySelector);
 
       useEffect(() => {
         if (skip) {
@@ -169,13 +183,25 @@ export function buildHooks<Definitions extends EndpointDefinitions>({
         return () => void promiseRef.current?.unsubscribe();
       }, []);
 
+      const refetch = useCallback(() => void promiseRef.current?.refetch(), []);
+
+      return useMemo(() => ({ refetch }), [refetch]);
+    };
+
+    const useQueryState: UseQueryState<any> = (arg: any, { skip = false } = {}) => {
+      const { select } = api.endpoints[name] as ApiEndpointQuery<QueryDefinition<any, any, any, any, any>, Definitions>;
+      const stableArg = useShallowStableValue(arg);
+
+      const lastData = useRef<ResultTypeFrom<Definitions[string]> | undefined>();
+
+      const querySelector = useMemo(() => select(skip ? skipSelector : stableArg), [select, skip, stableArg]);
+      const currentState = useSelector(querySelector);
+
       useEffect(() => {
         if (currentState.status === QueryStatus.fulfilled) {
           lastData.current = currentState.data;
         }
       }, [currentState]);
-
-      const refetch = useCallback(() => void promiseRef.current?.refetch(), []);
 
       // data is the last known good request result
       const data = currentState.status === 'fulfilled' ? currentState.data : lastData.current;
@@ -188,14 +214,26 @@ export function buildHooks<Definitions extends EndpointDefinitions>({
       // isSuccess = true when data is present
       const isSuccess: any = currentState.status === 'fulfilled' || (isPending && !!data);
 
-      return useMemo(() => ({ ...currentState, data, isFetching, isLoading, isSuccess, refetch }), [
+      return useMemo(() => ({ ...currentState, data, isFetching, isLoading, isSuccess }), [
         currentState,
         data,
         isFetching,
         isLoading,
         isSuccess,
-        refetch,
       ]);
+    };
+
+    return {
+      useQueryState,
+      useQuerySubscription,
+      useQuery(arg, options) {
+        const querySubscriptionResults = useQuerySubscription(arg, options);
+        const queryStateResults = useQueryState(arg, options);
+        return useMemo(() => ({ ...queryStateResults, ...querySubscriptionResults }), [
+          queryStateResults,
+          querySubscriptionResults,
+        ]);
+      },
     };
   }
 

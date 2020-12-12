@@ -39,7 +39,7 @@ export interface FetchBaseQueryError {
 export function fetchBaseQuery({
   baseUrl,
   prepareHeaders = (x) => x,
-  customFetch,
+  fetchFn = fetch,
   ...baseFetchOptions
 }: {
   baseUrl?: string;
@@ -48,9 +48,8 @@ export function fetchBaseQuery({
    * Accepts a custom `fetch` function if you do not want to use the default on the window.
    * Useful in SSR environments if you need to pass isomorphic-fetch or cross-fetch
    */
-  customFetch?: (input: RequestInfo, init?: RequestInit | undefined) => Promise<Response>;
+  fetchFn?: (input: RequestInfo, init?: RequestInit | undefined) => Promise<Response>;
 } & RequestInit = {}): BaseQueryFn<string | FetchArgs, unknown, FetchBaseQueryError, {}> {
-  const usableFetch = customFetch || fetch;
   return async (arg, { signal, getState }) => {
     let {
       url,
@@ -88,7 +87,7 @@ export function fetchBaseQuery({
 
     url = joinUrls(baseUrl, url);
 
-    const response = await usableFetch(url, config);
+    const response = await fetchFn(url, config);
     const resultData = await handleResponse(response, responseHandler);
 
     return validateStatus(response, resultData)

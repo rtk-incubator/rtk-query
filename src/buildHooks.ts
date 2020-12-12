@@ -1,6 +1,6 @@
 import { AnyAction, ThunkDispatch } from '@reduxjs/toolkit';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useDispatch, useSelector, batch } from 'react-redux';
+import { useDispatch, useSelector, batch, shallowEqual } from 'react-redux';
 import {
   MutationSubState,
   QueryStatus,
@@ -8,19 +8,14 @@ import {
   RequestStatusFlags,
   SubscriptionOptions,
   QueryKeys,
+  RootState,
 } from './apiState';
-import {
-  EndpointDefinitions,
-  MutationDefinition,
-  QueryDefinition,
-  QueryArgFrom,
-  ResultTypeFrom,
-} from './endpointDefinitions';
-import { skipSelector } from './buildSelectors';
+import { EndpointDefinitions, MutationDefinition, QueryDefinition, QueryArgFrom } from './endpointDefinitions';
+import { QueryResultSelectorResult, skipSelector } from './buildSelectors';
 import { QueryActionCreatorResult, MutationActionCreatorResult } from './buildActionMaps';
 import { useShallowStableValue } from './utils';
 import { Api, ApiEndpointMutation, ApiEndpointQuery } from './apiTypes';
-import { Id, Override } from './tsHelpers';
+import { Id, Override, NoInfer } from './tsHelpers';
 
 interface QueryHooks<Definition extends QueryDefinition<any, any, any, any, any>> {
   useQuery: UseQuery<Definition>;
@@ -57,14 +52,19 @@ export type UseQuerySubscription<D extends QueryDefinition<any, any, any, any>> 
   options?: UseQuerySubscriptionOptions
 ) => Pick<QueryActionCreatorResult<D>, 'refetch'>;
 
-interface UseQueryStateOptions {
-  skip?: boolean;
-}
+export type QueryStateSelector<R, D extends QueryDefinition<any, any, any, any>> = (
+  state: QueryResultSelectorResult<D>,
+  lastResult: R | undefined
+) => R;
 
-export type UseQueryState<D extends QueryDefinition<any, any, any, any>> = (
+export type UseQueryState<D extends QueryDefinition<any, any, any, any>> = <R = UseQueryStateResult<D>>(
   arg: QueryArgFrom<D>,
-  options?: UseQueryStateOptions
-) => UseQueryStateResult<D>;
+  options?: {
+    skip?: boolean;
+    subSelector?: QueryStateSelector<R, D>;
+    shouldUpdateLastValue?(newValue: NoInfer<R>, oldValue: NoInfer<R> | undefined): boolean;
+  }
+) => R;
 
 type UseQueryStateBaseResult<D extends QueryDefinition<any, any, any, any>> = QuerySubState<D> & {
   /**
@@ -113,6 +113,21 @@ export type PrefetchOptions =
   | {
       ifOlderThan?: false | number;
     };
+
+const defaultQueryStateSelector: QueryStateSelector<UseQueryStateResult<any>, any> = (currentState, lastResult) => {
+  // data is the last known good request result
+  const data = currentState.status === 'fulfilled' ? currentState.data : lastResult?.data;
+
+  const isPending = currentState.status === QueryStatus.pending;
+  // isLoading = true only when loading while no data is present yet (initial load)
+  const isLoading: any = !lastResult?.data && isPending;
+  // isFetching = true any time a request is in flight
+  const isFetching: any = isPending;
+  // isSuccess = true when data is present
+  const isSuccess: any = currentState.status === 'fulfilled' || (isPending && !!data);
+
+  return { ...currentState, data, isFetching, isLoading, isSuccess } as any; // TODO
+};
 
 export function buildHooks<Definitions extends EndpointDefinitions>({
   api,
@@ -183,44 +198,50 @@ export function buildHooks<Definitions extends EndpointDefinitions>({
         return () => void promiseRef.current?.unsubscribe();
       }, []);
 
-      const refetch = useCallback(() => void promiseRef.current?.refetch(), []);
-
-      return useMemo(() => ({ refetch }), [refetch]);
+      return useMemo(
+        () => ({
+          refetch: () => void promiseRef.current?.refetch(),
+        }),
+        []
+      );
     };
 
-    const useQueryState: UseQueryState<any> = (arg: any, { skip = false } = {}) => {
+    const useQueryState: UseQueryState<any> = (
+      arg: any,
+      {
+        skip = false,
+        subSelector = defaultQueryStateSelector as QueryStateSelector<any, any>,
+        shouldUpdateLastValue,
+      } = {}
+    ) => {
       const { select } = api.endpoints[name] as ApiEndpointQuery<QueryDefinition<any, any, any, any, any>, Definitions>;
       const stableArg = useShallowStableValue(arg);
 
-      const lastData = useRef<ResultTypeFrom<Definitions[string]> | undefined>();
+      const lastValue = useRef<any>();
 
-      const querySelector = useMemo(() => select(skip ? skipSelector : stableArg), [select, skip, stableArg]);
-      const currentState = useSelector(querySelector);
+      const selector = useCallback(
+        (state: RootState<Definitions, any, any>) => {
+          const querySelector = select(skip ? skipSelector : stableArg);
+          return subSelector(querySelector(state), lastValue.current);
+        },
+        [select, skip, stableArg, subSelector]
+      );
+
+      const currentState = useSelector(selector, shallowEqual);
 
       useEffect(() => {
-        if (currentState.status === QueryStatus.fulfilled) {
-          lastData.current = currentState.data;
+        if ((shouldUpdateLastValue || defaultUpdateLastValue)(currentState, lastValue.current)) {
+          lastValue.current = currentState;
         }
-      }, [currentState]);
 
-      // data is the last known good request result
-      const data = currentState.status === 'fulfilled' ? currentState.data : lastData.current;
+        function defaultUpdateLastValue(newValue: any, oldValue: any) {
+          return subSelector === defaultQueryStateSelector
+            ? newValue.status === QueryStatus.fulfilled
+            : newValue !== oldValue;
+        }
+      }, [currentState, shouldUpdateLastValue, subSelector]);
 
-      const isPending = currentState.status === QueryStatus.pending;
-      // isLoading = true only when loading while no data is present yet (initial load)
-      const isLoading: any = !lastData.current && isPending;
-      // isFetching = true any time a request is in flight
-      const isFetching: any = isPending;
-      // isSuccess = true when data is present
-      const isSuccess: any = currentState.status === 'fulfilled' || (isPending && !!data);
-
-      return useMemo(() => ({ ...currentState, data, isFetching, isLoading, isSuccess }), [
-        currentState,
-        data,
-        isFetching,
-        isLoading,
-        isSuccess,
-      ]);
+      return currentState;
     };
 
     return {

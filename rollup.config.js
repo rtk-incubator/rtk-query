@@ -1,6 +1,7 @@
 import babel from '@rollup/plugin-babel';
 import typescript from '@rollup/plugin-typescript';
 import { terser } from 'rollup-plugin-terser';
+import replace from '@rollup/plugin-replace';
 
 /** @type {import("rollup").RollupOptions} */
 const defaultConfig = {
@@ -74,6 +75,11 @@ const configs = [
           ? defaultTsConfig
           : { ...defaultTsConfig, declarationDir: 'dist/ts', declaration: true, declarationMap: true }
       ),
+      replace({
+        values: {
+          'process.env.NODE_ENV': JSON.stringify(minfied ? 'production' : 'development'),
+        },
+      }),
       babel({
         exclude: 'node_modules/**',
         extensions: ['.js', '.ts'],

@@ -59,25 +59,25 @@ const configs = [
     ],
   },
   // CJS:
-  ...withMinfy((minfied) => ({
+  ...withMinify((minified) => ({
     ...defaultConfig,
     output: [
       {
         dir: 'dist',
         format: 'cjs',
         sourcemap: true,
-        entryFileNames: minfied ? '[name].cjs.production.min.js' : '[name].cjs.development.js',
+        entryFileNames: minified ? '[name].cjs.production.min.js' : '[name].cjs.development.js',
       },
     ],
     plugins: [
       typescript(
-        minfied
+        minified
           ? defaultTsConfig
           : { ...defaultTsConfig, declarationDir: 'dist/ts', declaration: true, declarationMap: true }
       ),
       replace({
         values: {
-          'process.env.NODE_ENV': JSON.stringify(minfied ? 'production' : 'development'),
+          'process.env.NODE_ENV': JSON.stringify(minified ? 'production' : 'development'),
         },
       }),
       babel({
@@ -87,12 +87,12 @@ const configs = [
         presets: [['@babel/preset-env', { targets: { node: true, browsers: ['defaults'] } }]],
         plugins: [['@babel/plugin-transform-runtime', { useESModules: false }]],
       }),
-      ...(minfied ? [terser({ ...defaultTerserOptions, toplevel: true })] : []),
+      ...(minified ? [terser({ ...defaultTerserOptions, toplevel: true })] : []),
     ],
   })),
 ];
 
-function withMinfy(build) {
+function withMinify(build) {
   return [build(false), build(true)];
 }
 

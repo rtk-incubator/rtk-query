@@ -32,6 +32,9 @@ const api = createApi({
     updateUser: build.mutation<any, { name: string }>({
       query: (update) => ({ body: update }),
     }),
+    getError: build.query({
+      query: (query) => '/error',
+    }),
   }),
 });
 

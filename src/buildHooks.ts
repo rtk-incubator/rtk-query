@@ -15,7 +15,7 @@ import { QueryResultSelectorResult, skipSelector } from './buildSelectors';
 import { QueryActionCreatorResult, MutationActionCreatorResult } from './buildActionMaps';
 import { useShallowStableValue } from './utils';
 import { Api, ApiEndpointMutation, ApiEndpointQuery } from './apiTypes';
-import { Id, Override } from './tsHelpers';
+import { Id, NoInfer, Override } from './tsHelpers';
 
 interface QueryHooks<Definition extends QueryDefinition<any, any, any, any, any>> {
   useQuery: UseQuery<Definition>;
@@ -73,7 +73,7 @@ export type UseQueryStateOptions<D extends QueryDefinition<any, any, any, any>, 
   subSelector?: QueryStateSelector<R, D>;
 };
 
-export type UseQueryStateResult<_ extends QueryDefinition<any, any, any, any>, R> = R;
+export type UseQueryStateResult<_ extends QueryDefinition<any, any, any, any>, R> = NoInfer<R>;
 
 type UseQueryStateBaseResult<D extends QueryDefinition<any, any, any, any>> = QuerySubState<D> & {
   /**

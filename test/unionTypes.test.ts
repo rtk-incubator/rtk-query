@@ -123,12 +123,21 @@ describe.skip('TS only tests', () => {
     expectExactType(useQueryStateWithSubSelector)(useQueryResultWithoutMethods);
   });
 
-  test('queryHookResult (with subSelector)', () => {
+  test('useQueryState (with subSelector)', () => {
     const result = api.endpoints.test.useQueryState(undefined, {
       subSelector({ data, isLoading }) {
         return { data: data ?? 1, isLoading };
       },
     });
     expectExactType({ data: '' as string | number, isLoading: true as boolean })(result);
+  });
+
+  test('useQuery (with subSelector)', () => {
+    const result = api.endpoints.test.useQuery(undefined, {
+      subSelector({ data, isLoading }) {
+        return { data: data ?? 1, isLoading };
+      },
+    });
+    expectExactType({ data: '' as string | number, isLoading: true as boolean, refetch: () => {} })(result);
   });
 });

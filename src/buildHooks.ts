@@ -1,4 +1,4 @@
-import { AnyAction, ThunkDispatch } from '@reduxjs/toolkit';
+import { AnyAction, createSelector, ThunkDispatch } from '@reduxjs/toolkit';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useDispatch, useSelector, batch, shallowEqual } from 'react-redux';
 import {
@@ -37,10 +37,10 @@ declare module './apiTypes' {
   }
 }
 
-export type UseQuery<D extends QueryDefinition<any, any, any, any>> = (
+export type UseQuery<D extends QueryDefinition<any, any, any, any>> = <R = UseQueryStateDefaultResult<D>>(
   arg: QueryArgFrom<D>,
-  options?: UseQuerySubscriptionOptions
-) => UseQueryStateResult<D> & ReturnType<UseQuerySubscription<D>>;
+  options?: UseQuerySubscriptionOptions & UseQueryStateOptions<D, R>
+) => UseQueryStateResult<D, R> & ReturnType<UseQuerySubscription<D>>;
 
 interface UseQuerySubscriptionOptions extends SubscriptionOptions {
   skip?: boolean;
@@ -60,16 +60,20 @@ export type QueryStateSelector<R, D extends QueryDefinition<any, any, any, any>>
 
 export type DefaultQueryStateSelector<D extends QueryDefinition<any, any, any, any>> = (
   state: QueryResultSelectorResult<D>,
-  lastResult: Pick<UseQueryStateResult<D>, 'data'>
-) => UseQueryStateResult<D>;
+  lastResult: Pick<UseQueryStateDefaultResult<D>, 'data'>
+) => UseQueryStateDefaultResult<D>;
 
-export type UseQueryState<D extends QueryDefinition<any, any, any, any>> = <R = UseQueryStateResult<D>>(
+export type UseQueryState<D extends QueryDefinition<any, any, any, any>> = <R = UseQueryStateDefaultResult<D>>(
   arg: QueryArgFrom<D>,
-  options?: {
-    skip?: boolean;
-    subSelector?: QueryStateSelector<R, D>;
-  }
-) => R;
+  options?: UseQueryStateOptions<D, R>
+) => UseQueryStateResult<D, R>;
+
+export type UseQueryStateOptions<D extends QueryDefinition<any, any, any, any>, R> = {
+  skip?: boolean;
+  subSelector?: QueryStateSelector<R, D>;
+};
+
+export type UseQueryStateResult<_ extends QueryDefinition<any, any, any, any>, R> = R;
 
 type UseQueryStateBaseResult<D extends QueryDefinition<any, any, any, any>> = QuerySubState<D> & {
   /**
@@ -94,7 +98,7 @@ type UseQueryStateBaseResult<D extends QueryDefinition<any, any, any, any>> = Qu
   isError: false;
 };
 
-type UseQueryStateResult<D extends QueryDefinition<any, any, any, any>> = Id<
+type UseQueryStateDefaultResult<D extends QueryDefinition<any, any, any, any>> = Id<
   | Override<Extract<UseQueryStateBaseResult<D>, { status: QueryStatus.uninitialized }>, { isUninitialized: true }>
   | Override<
       UseQueryStateBaseResult<D>,
@@ -130,7 +134,7 @@ const defaultQueryStateSelector: DefaultQueryStateSelector<any> = (currentState,
   // isSuccess = true when data is present
   const isSuccess = currentState.isSuccess || (isFetching && !!data);
 
-  return { ...currentState, data, isFetching, isLoading, isSuccess } as UseQueryStateResult<any>;
+  return { ...currentState, data, isFetching, isLoading, isSuccess } as UseQueryStateDefaultResult<any>;
 };
 
 export function buildHooks<Definitions extends EndpointDefinitions>({
@@ -219,15 +223,19 @@ export function buildHooks<Definitions extends EndpointDefinitions>({
 
       const lastValue = useRef<any>();
 
-      const selector = useCallback(
-        (state: RootState<Definitions, any, any>) => {
-          const querySelector = select(skip ? skipSelector : stableArg);
-          return subSelector(querySelector(state), lastValue.current, defaultQueryStateSelector);
-        },
+      const querySelector = useMemo(
+        () =>
+          createSelector(
+            [select(skip ? skipSelector : stableArg), (_: any, lastResult: any) => lastResult],
+            (subState, lastResult) => subSelector(subState, lastResult, defaultQueryStateSelector)
+          ),
         [select, skip, stableArg, subSelector]
       );
 
-      const currentState = useSelector(selector, shallowEqual);
+      const currentState = useSelector(
+        (state: RootState<Definitions, any, any>) => querySelector(state, lastValue.current),
+        shallowEqual
+      );
 
       useEffect(() => {
         lastValue.current = currentState;

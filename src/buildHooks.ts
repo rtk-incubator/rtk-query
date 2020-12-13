@@ -15,7 +15,7 @@ import { QueryResultSelectorResult, skipSelector } from './buildSelectors';
 import { QueryActionCreatorResult, MutationActionCreatorResult } from './buildActionMaps';
 import { useShallowStableValue } from './utils';
 import { Api, ApiEndpointMutation, ApiEndpointQuery } from './apiTypes';
-import { Id, Override, NoInfer } from './tsHelpers';
+import { Id, Override } from './tsHelpers';
 
 interface QueryHooks<Definition extends QueryDefinition<any, any, any, any, any>> {
   useQuery: UseQuery<Definition>;
@@ -54,15 +54,20 @@ export type UseQuerySubscription<D extends QueryDefinition<any, any, any, any>> 
 
 export type QueryStateSelector<R, D extends QueryDefinition<any, any, any, any>> = (
   state: QueryResultSelectorResult<D>,
-  lastResult: R | undefined
+  lastResult: R | undefined,
+  defaultQueryStateSelector: DefaultQueryStateSelector<D>
 ) => R;
+
+export type DefaultQueryStateSelector<D extends QueryDefinition<any, any, any, any>> = (
+  state: QueryResultSelectorResult<D>,
+  lastResult: Pick<UseQueryStateResult<D>, 'data'>
+) => UseQueryStateResult<D>;
 
 export type UseQueryState<D extends QueryDefinition<any, any, any, any>> = <R = UseQueryStateResult<D>>(
   arg: QueryArgFrom<D>,
   options?: {
     skip?: boolean;
     subSelector?: QueryStateSelector<R, D>;
-    shouldUpdateLastValue?(newValue: NoInfer<R>, oldValue: NoInfer<R> | undefined): boolean;
   }
 ) => R;
 
@@ -114,19 +119,18 @@ export type PrefetchOptions =
       ifOlderThan?: false | number;
     };
 
-const defaultQueryStateSelector: QueryStateSelector<UseQueryStateResult<any>, any> = (currentState, lastResult) => {
-  // data is the last known good request result
-  const data = currentState.status === 'fulfilled' ? currentState.data : lastResult?.data;
+const defaultQueryStateSelector: DefaultQueryStateSelector<any> = (currentState, lastResult) => {
+  // data is the last known good request result we have tracked - or if none has been tracked yet the last good result for the current args
+  const data = (currentState.isSuccess ? currentState.data : lastResult?.data) ?? currentState.data;
 
-  const isPending = currentState.status === QueryStatus.pending;
-  // isLoading = true only when loading while no data is present yet (initial load)
-  const isLoading: any = !lastResult?.data && isPending;
   // isFetching = true any time a request is in flight
-  const isFetching: any = isPending;
+  const isFetching = currentState.isLoading;
+  // isLoading = true only when loading while no data is present yet (initial load with no data in the cache)
+  const isLoading = !data && isFetching;
   // isSuccess = true when data is present
-  const isSuccess: any = currentState.status === 'fulfilled' || (isPending && !!data);
+  const isSuccess = currentState.isSuccess || (isFetching && !!data);
 
-  return { ...currentState, data, isFetching, isLoading, isSuccess } as any; // TODO
+  return { ...currentState, data, isFetching, isLoading, isSuccess } as UseQueryStateResult<any>;
 };
 
 export function buildHooks<Definitions extends EndpointDefinitions>({
@@ -208,11 +212,7 @@ export function buildHooks<Definitions extends EndpointDefinitions>({
 
     const useQueryState: UseQueryState<any> = (
       arg: any,
-      {
-        skip = false,
-        subSelector = defaultQueryStateSelector as QueryStateSelector<any, any>,
-        shouldUpdateLastValue,
-      } = {}
+      { skip = false, subSelector = defaultQueryStateSelector as QueryStateSelector<any, any> } = {}
     ) => {
       const { select } = api.endpoints[name] as ApiEndpointQuery<QueryDefinition<any, any, any, any, any>, Definitions>;
       const stableArg = useShallowStableValue(arg);
@@ -222,7 +222,7 @@ export function buildHooks<Definitions extends EndpointDefinitions>({
       const selector = useCallback(
         (state: RootState<Definitions, any, any>) => {
           const querySelector = select(skip ? skipSelector : stableArg);
-          return subSelector(querySelector(state), lastValue.current);
+          return subSelector(querySelector(state), lastValue.current, defaultQueryStateSelector);
         },
         [select, skip, stableArg, subSelector]
       );
@@ -230,16 +230,8 @@ export function buildHooks<Definitions extends EndpointDefinitions>({
       const currentState = useSelector(selector, shallowEqual);
 
       useEffect(() => {
-        if ((shouldUpdateLastValue || defaultUpdateLastValue)(currentState, lastValue.current)) {
-          lastValue.current = currentState;
-        }
-
-        function defaultUpdateLastValue(newValue: any, oldValue: any) {
-          return subSelector === defaultQueryStateSelector
-            ? newValue.status === QueryStatus.fulfilled
-            : newValue !== oldValue;
-        }
-      }, [currentState, shouldUpdateLastValue, subSelector]);
+        lastValue.current = currentState;
+      }, [currentState]);
 
       return currentState;
     };

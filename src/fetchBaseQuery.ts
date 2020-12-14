@@ -53,6 +53,25 @@ function cleanUndefinedHeaders(headers: any) {
   return copy;
 }
 
+/**
+ * This is a very small wrapper around fetch that aims to simplify requests.
+ *
+ * @param {string} baseUrl
+ * The base URL for an API service.
+ * Typically in the format of http://example.com/
+ *
+ * @param {(headers: Headers, api: { getState: () => unknown }) => Headers} prepareHeaders
+ * An optional function that can be used to inject headers on requests.
+ * Provides a Headers object, as well as the `getState` function from the
+ * redux store. Can be useful for authentication.
+ *
+ * @link https://developer.mozilla.org/en-US/docs/Web/API/Headers
+ *
+ * @param {(input: RequestInfo, init?: RequestInit | undefined) => Promise<Response>} fetchFn
+ * Accepts a custom `fetch` function if you do not want to use the default on the window.
+ * Useful in SSR environments if you need to use a library such as `isomorphic-fetch` or `cross-fetch`
+ *
+ */
 export function fetchBaseQuery({
   baseUrl,
   prepareHeaders = (x) => x,
@@ -61,10 +80,6 @@ export function fetchBaseQuery({
 }: {
   baseUrl?: string;
   prepareHeaders?: (headers: Headers, api: { getState: () => unknown }) => Headers;
-  /**
-   * Accepts a custom `fetch` function if you do not want to use the default on the window.
-   * Useful in SSR environments if you need to pass isomorphic-fetch or cross-fetch
-   */
   fetchFn?: (input: RequestInfo, init?: RequestInit | undefined) => Promise<Response>;
 } & RequestInit = {}): BaseQueryFn<string | FetchArgs, unknown, FetchBaseQueryError, {}> {
   return async (arg, { signal, getState }) => {

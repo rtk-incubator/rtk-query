@@ -1,4 +1,5 @@
 import React, { useCallback, useState } from 'react';
+import { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Route, Switch, useHistory } from 'react-router-dom';
 import {
@@ -73,6 +74,7 @@ const PostList = () => {
 };
 
 const PostFromUseQueryStateSubSelector = () => {
+  const [count, setCount] = useState(0);
   const id = 5;
   const idAsString = String(id);
 
@@ -80,69 +82,37 @@ const PostFromUseQueryStateSubSelector = () => {
     subSelector: ({ data }) => data?.find((entry) => entry.id === id),
   });
 
+  useEffect(() => {
+    setCount((prev) => prev + 1);
+  }, [post]);
+
   return (
     <div>
-      <h3>This won't render a post until `id: {idAsString}` exists!</h3>
+      <h3>
+        This won't render a post until `id: {idAsString}` exists! <small>(render count: {count})</small>
+      </h3>
       {post ? <div>{JSON.stringify(post)}</div> : <div>waiting to see id: {idAsString}</div>}
     </div>
   );
 };
 
 const PostFromUseQuerySelectorSubSelector = () => {
-  const id = 6;
-  const idAsString = String(id);
-  const { refetch, ...post } = postApi.useGetPostsQuery(undefined, {
-    subSelector: ({ data }) => data?.find((entry) => entry.id === id),
-  });
-
-  return (
-    <div>
-      <h3>This won't render a post until `id: {idAsString}` exists!</h3>
-      {post ? <div>{JSON.stringify(post)}</div> : <div>waiting to see id: {idAsString}</div>}
-    </div>
-  );
-};
-
-const PostFromUseQuerySelectorSubSelectorOther = () => {
-  const id = 6;
-  const idAsString = String(id);
-  const { refetch, ...post } = postApi.useGetPostsQuery(undefined, {
-    subSelector: ({ data }) => data?.find((entry) => entry.id === id),
-  });
-
-  return (
-    <div>
-      <h3>This won't render a post until `id: {idAsString}` exists!</h3>
-      {post ? <div>{JSON.stringify(post)}</div> : <div>waiting to see id: {idAsString}</div>}
-    </div>
-  );
-};
-
-const PostFromUseQuerySelectorSubSelectorWithCallback = () => {
+  const [count, setCount] = useState(0);
   const id = 6;
   const idAsString = String(id);
   const { refetch, post } = postApi.useGetPostsQuery(undefined, {
-    subSelector: useCallback(({ data }) => ({ post: data?.find((entry: any) => entry.id === id) }), []),
+    subSelector: ({ data }) => ({ post: data?.find((entry) => entry.id === id) }),
   });
+
+  useEffect(() => {
+    setCount((prev) => prev + 1);
+  }, [post]);
 
   return (
     <div>
-      <h3>This won't render a post until `id: {idAsString}` exists!</h3>
-      {post ? <div>{JSON.stringify(post)}</div> : <div>waiting to see id: {idAsString}</div>}
-    </div>
-  );
-};
-
-const PostFromUseQuerySelectorSubSelectorAdditionalWithoutCallback = () => {
-  const id = 6;
-  const idAsString = String(id);
-  const { refetch, post } = postApi.useGetPostsQuery(undefined, {
-    subSelector: ({ data }) => ({ post: data?.find((entry: any) => entry.id === id) }),
-  });
-
-  return (
-    <div>
-      <h3>This won't render a post until `id: {idAsString}` exists!</h3>
+      <h3>
+        This won't render a post until `id: {idAsString}` exists! <small>(render count: {count})</small>
+      </h3>
       {post ? <div>{JSON.stringify(post)}</div> : <div>waiting to see id: {idAsString}</div>}
     </div>
   );
@@ -180,15 +150,13 @@ export const PostsManager = () => {
             <Route path="/posts/:id" component={PostDetail} />
           </Switch>
 
-          <PostFromUseQueryStateSubSelector />
-          <hr />
-          <PostFromUseQuerySelectorSubSelector />
-          <hr />
-          <PostFromUseQuerySelectorSubSelectorOther />
-          <hr />
-          <PostFromUseQuerySelectorSubSelectorWithCallback />
-          <hr />
-          <PostFromUseQuerySelectorSubSelectorAdditionalWithoutCallback />
+          <div style={{ marginTop: 0, paddingTop: 20, borderTop: '1px solid #eee' }}>
+            If you look, these components will only rerender when the the selector criteria is met, or when the actual
+            underlying data changes. Try adding a few new posts to see this behavior.
+            <PostFromUseQueryStateSubSelector />
+            <hr />
+            <PostFromUseQuerySelectorSubSelector />
+          </div>
         </div>
       </div>
     </div>

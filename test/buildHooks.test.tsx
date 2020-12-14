@@ -1,8 +1,10 @@
 import * as React from 'react';
-import { createApi, QueryStatus } from '@rtk-incubator/rtk-query';
+import { createApi, fetchBaseQuery, QueryStatus } from '@rtk-incubator/rtk-query';
 import { act, fireEvent, render, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { DEFAULT_DELAY_MS, setupApiStore, waitMs } from './helpers';
+import { server } from './mocks/server';
+import { rest } from 'msw';
 
 // Just setup a temporary in-memory counter for tests that `getIncrementedAmount`.
 // This can be used to test how many renders happen due to data changes or
@@ -744,5 +746,251 @@ describe('hooks with createApi defaults set', () => {
     await waitFor(() => expect(getByTestId('isFetching').textContent).toBe('false'));
 
     await waitFor(() => expect(getByTestId('amount').textContent).toBe('1'));
+  });
+
+  describe('subSelector behaviors', () => {
+    let startingId = 3;
+    let initialPosts = [
+      { id: 1, name: 'A sample post', fetched_at: new Date().toUTCString() },
+      { id: 2, name: 'A post about rtk-query', fetched_at: new Date().toUTCString() },
+    ];
+    let posts = [] as typeof initialPosts;
+
+    beforeEach(() => {
+      startingId = 3;
+      posts = [...initialPosts];
+
+      const handlers = [
+        rest.get('http://example.com/posts', (req, res, ctx) => {
+          return res(ctx.json(posts));
+        }),
+        rest.put('http://example.com/posts/:id', (req, res, ctx) => {
+          // just change the fetched at date
+          const id = Number(req.params.id);
+          const idx = posts.findIndex((post) => post.id === id);
+
+          const newPosts = posts.map((post, index) =>
+            index !== idx
+              ? post
+              : {
+                  ...(req.body as any),
+                  id,
+                  fetched_at: new Date().toUTCString(),
+                }
+          );
+          posts = [...newPosts];
+
+          return res(ctx.json(posts));
+        }),
+        rest.post('http://example.com/posts', (req, res, ctx) => {
+          let post = req.body as Omit<Post, 'id'>;
+          startingId += 1;
+          posts.concat({ ...post, id: startingId });
+          return res(ctx.json(posts));
+        }),
+      ];
+
+      server.use(...handlers);
+    });
+
+    interface Post {
+      id: number;
+      name: string;
+      fetched_at: string;
+    }
+
+    type PostsResponse = Post[];
+
+    const api = createApi({
+      baseQuery: fetchBaseQuery({ baseUrl: 'http://example.com/' }),
+      entityTypes: ['Posts'],
+      endpoints: (build) => ({
+        getPosts: build.query<PostsResponse, void>({
+          query: () => ({ url: 'posts' }),
+          provides: (result) => [...result.map(({ id }) => ({ type: 'Posts', id } as const))],
+        }),
+        updatePost: build.mutation<Post, Partial<Post>>({
+          query: ({ id, ...body }) => ({
+            url: `posts/${id}`,
+            method: 'PUT',
+            body,
+          }),
+          invalidates: ({ id }) => [{ type: 'Posts', id }],
+        }),
+        addPost: build.mutation<Post, Partial<Post>>({
+          query: (body) => ({
+            url: `posts`,
+            method: 'POST',
+            body,
+          }),
+          invalidates: ['Posts'],
+        }),
+      }),
+    });
+
+    const storeRef = setupApiStore(api);
+
+    test('useQueryState serves a deeply memoized value and does not rerender unnecessarily', async () => {
+      function Posts() {
+        const { data: posts } = api.useGetPostsQuery();
+        const [addPost] = api.useAddPostMutation();
+        return (
+          <div>
+            <button
+              data-testid="addPost"
+              onClick={() => addPost({ name: `some text ${posts?.length}`, fetched_at: new Date().toISOString() })}
+            >
+              Add random post
+            </button>
+          </div>
+        );
+      }
+
+      function SelectedPost() {
+        const [renderCount, setRenderCount] = React.useState(0);
+        const { post } = api.endpoints.getPosts.useQueryState(undefined, {
+          subSelector: ({ data }) => ({ post: data?.find((post) => post.id === 1) }),
+        });
+
+        React.useEffect(() => {
+          setRenderCount((prev) => prev + 1);
+        }, [post]);
+
+        return <div data-testid="renderCount">{String(renderCount)}</div>;
+      }
+
+      let { getByTestId } = render(
+        <div>
+          <Posts />
+          <SelectedPost />
+        </div>,
+        { wrapper: storeRef.wrapper }
+      );
+
+      const addBtn = getByTestId('addPost');
+
+      await waitFor(() => expect(getByTestId('renderCount').textContent).toBe('2'));
+
+      fireEvent.click(addBtn);
+      await waitFor(() => expect(getByTestId('renderCount').textContent).toBe('2'));
+      fireEvent.click(addBtn);
+      fireEvent.click(addBtn);
+      await waitFor(() => expect(getByTestId('renderCount').textContent).toBe('2'));
+    });
+
+    test('useQuery with subSelector option serves a deeply memoized value and does not rerender unnecessarily', async () => {
+      function Posts() {
+        const { data: posts } = api.useGetPostsQuery();
+        const [addPost] = api.useAddPostMutation();
+        return (
+          <div>
+            <button
+              data-testid="addPost"
+              onClick={() => addPost({ name: `some text ${posts?.length}`, fetched_at: new Date().toISOString() })}
+            >
+              Add random post
+            </button>
+          </div>
+        );
+      }
+
+      function SelectedPost() {
+        const [renderCount, setRenderCount] = React.useState(0);
+        const { post } = api.useGetPostsQuery(undefined, {
+          subSelector: ({ data }) => ({ post: data?.find((post) => post.id === 1) }),
+        });
+
+        React.useEffect(() => {
+          setRenderCount((prev) => prev + 1);
+        }, [post]);
+
+        return <div data-testid="renderCount">{String(renderCount)}</div>;
+      }
+
+      let { getByTestId } = render(
+        <div>
+          <Posts />
+          <SelectedPost />
+        </div>,
+        { wrapper: storeRef.wrapper }
+      );
+
+      const addBtn = getByTestId('addPost');
+
+      await waitFor(() => expect(getByTestId('renderCount').textContent).toBe('2'));
+
+      fireEvent.click(addBtn);
+      await waitFor(() => expect(getByTestId('renderCount').textContent).toBe('2'));
+      fireEvent.click(addBtn);
+      fireEvent.click(addBtn);
+      await waitFor(() => expect(getByTestId('renderCount').textContent).toBe('2'));
+    });
+
+    test('useQuery with subSelector option serves a deeply memoized value, then ONLY updates when the underlying data changes', async () => {
+      let inspectablePost: Post | undefined;
+      function Posts() {
+        const { data: posts } = api.useGetPostsQuery();
+        const [addPost] = api.useAddPostMutation();
+        const [updatePost] = api.useUpdatePostMutation();
+
+        return (
+          <div>
+            <button
+              data-testid="addPost"
+              onClick={() => addPost({ name: `some text ${posts?.length}`, fetched_at: new Date().toISOString() })}
+            >
+              Add random post
+            </button>
+            <button data-testid="updatePost" onClick={() => updatePost({ id: 1, name: 'supercoooll!' })}>
+              Update post
+            </button>
+          </div>
+        );
+      }
+
+      function SelectedPost() {
+        const [renderCount, setRenderCount] = React.useState(0);
+        const { post } = api.useGetPostsQuery(undefined, {
+          subSelector: ({ data }) => ({ post: data?.find((post) => post.id === Number(1)) }),
+        });
+
+        React.useEffect(() => {
+          setRenderCount((prev) => prev + 1);
+          inspectablePost = post;
+        }, [post]);
+
+        return (
+          <div>
+            <div data-testid="postName">{post?.name}</div>
+            <div data-testid="renderCount">{String(renderCount)}</div>
+          </div>
+        );
+      }
+
+      let { getByTestId } = render(
+        <div>
+          <Posts />
+          <SelectedPost />
+        </div>,
+        { wrapper: storeRef.wrapper }
+      );
+      expect(getByTestId('renderCount').textContent).toBe('1');
+
+      const addBtn = getByTestId('addPost');
+      const updateBtn = getByTestId('updatePost');
+
+      fireEvent.click(addBtn);
+      await waitFor(() => expect(getByTestId('renderCount').textContent).toBe('2'));
+      fireEvent.click(addBtn);
+      fireEvent.click(addBtn);
+      await waitFor(() => expect(getByTestId('renderCount').textContent).toBe('2'));
+
+      fireEvent.click(updateBtn);
+      await waitFor(() => expect(getByTestId('renderCount').textContent).toBe('3'));
+      expect(inspectablePost?.name).toBe('supercoooll!');
+
+      fireEvent.click(addBtn);
+      await waitFor(() => expect(getByTestId('renderCount').textContent).toBe('3'));
+    });
   });
 });

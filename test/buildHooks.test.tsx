@@ -750,7 +750,7 @@ describe('hooks with createApi defaults set', () => {
 
   describe('subSelector behaviors', () => {
     let startingId = 3;
-    let initialPosts = [
+    const initialPosts = [
       { id: 1, name: 'A sample post', fetched_at: new Date().toUTCString() },
       { id: 2, name: 'A post about rtk-query', fetched_at: new Date().toUTCString() },
     ];
@@ -764,8 +764,7 @@ describe('hooks with createApi defaults set', () => {
         rest.get('http://example.com/posts', (req, res, ctx) => {
           return res(ctx.json(posts));
         }),
-        rest.put('http://example.com/posts/:id', (req, res, ctx) => {
-          // just change the fetched at date
+        rest.put<Partial<Post>>('http://example.com/posts/:id', (req, res, ctx) => {
           const id = Number(req.params.id);
           const idx = posts.findIndex((post) => post.id === id);
 
@@ -773,8 +772,9 @@ describe('hooks with createApi defaults set', () => {
             index !== idx
               ? post
               : {
-                  ...(req.body as any),
+                  ...req.body,
                   id,
+                  name: req.body.name || post.name,
                   fetched_at: new Date().toUTCString(),
                 }
           );
@@ -785,7 +785,7 @@ describe('hooks with createApi defaults set', () => {
         rest.post('http://example.com/posts', (req, res, ctx) => {
           let post = req.body as Omit<Post, 'id'>;
           startingId += 1;
-          posts.concat({ ...post, id: startingId });
+          posts.concat({ ...post, fetched_at: new Date().toISOString(), id: startingId });
           return res(ctx.json(posts));
         }),
       ];
@@ -836,10 +836,7 @@ describe('hooks with createApi defaults set', () => {
         const [addPost] = api.useAddPostMutation();
         return (
           <div>
-            <button
-              data-testid="addPost"
-              onClick={() => addPost({ name: `some text ${posts?.length}`, fetched_at: new Date().toISOString() })}
-            >
+            <button data-testid="addPost" onClick={() => addPost({ name: `some text ${posts?.length}` })}>
               Add random post
             </button>
           </div>
@@ -852,6 +849,15 @@ describe('hooks with createApi defaults set', () => {
           subSelector: ({ data }) => ({ post: data?.find((post) => post.id === 1) }),
         });
 
+        /**
+         * Notes on the renderCount behavior
+         *
+         * We initialize at 0, and the first render will bump that 1 while post is `undefined`.
+         * Once the request resolves, it will be at 2. What we're looking for is to make sure that
+         * any requests that don't directly change the value of the selected item will have no impact
+         * on rendering.
+         */
+
         React.useEffect(() => {
           setRenderCount((prev) => prev + 1);
         }, [post]);
@@ -859,13 +865,14 @@ describe('hooks with createApi defaults set', () => {
         return <div data-testid="renderCount">{String(renderCount)}</div>;
       }
 
-      let { getByTestId } = render(
+      const { getByTestId } = render(
         <div>
           <Posts />
           <SelectedPost />
         </div>,
         { wrapper: storeRef.wrapper }
       );
+      expect(getByTestId('renderCount').textContent).toBe('1');
 
       const addBtn = getByTestId('addPost');
 
@@ -873,9 +880,11 @@ describe('hooks with createApi defaults set', () => {
 
       fireEvent.click(addBtn);
       await waitFor(() => expect(getByTestId('renderCount').textContent).toBe('2'));
+      // We fire off a few requests that would typically cause a rerender as JSON.parse() on a request would always be a new object.
       fireEvent.click(addBtn);
       fireEvent.click(addBtn);
       await waitFor(() => expect(getByTestId('renderCount').textContent).toBe('2'));
+      // Being that it didn't rerender, we can be assured that the behavior is correct
     });
 
     test('useQuery with subSelector option serves a deeply memoized value and does not rerender unnecessarily', async () => {
@@ -907,13 +916,14 @@ describe('hooks with createApi defaults set', () => {
         return <div data-testid="renderCount">{String(renderCount)}</div>;
       }
 
-      let { getByTestId } = render(
+      const { getByTestId } = render(
         <div>
           <Posts />
           <SelectedPost />
         </div>,
         { wrapper: storeRef.wrapper }
       );
+      expect(getByTestId('renderCount').textContent).toBe('1');
 
       const addBtn = getByTestId('addPost');
 
@@ -927,7 +937,7 @@ describe('hooks with createApi defaults set', () => {
     });
 
     test('useQuery with subSelector option serves a deeply memoized value, then ONLY updates when the underlying data changes', async () => {
-      let inspectablePost: Post | undefined;
+      let expectablePost: Post | undefined;
       function Posts() {
         const { data: posts } = api.useGetPostsQuery();
         const [addPost] = api.useAddPostMutation();
@@ -951,12 +961,12 @@ describe('hooks with createApi defaults set', () => {
       function SelectedPost() {
         const [renderCount, setRenderCount] = React.useState(0);
         const { post } = api.useGetPostsQuery(undefined, {
-          subSelector: ({ data }) => ({ post: data?.find((post) => post.id === Number(1)) }),
+          subSelector: ({ data }) => ({ post: data?.find((post) => post.id === 1) }),
         });
 
         React.useEffect(() => {
           setRenderCount((prev) => prev + 1);
-          inspectablePost = post;
+          expectablePost = post;
         }, [post]);
 
         return (
@@ -967,7 +977,7 @@ describe('hooks with createApi defaults set', () => {
         );
       }
 
-      let { getByTestId } = render(
+      const { getByTestId } = render(
         <div>
           <Posts />
           <SelectedPost />
@@ -987,7 +997,7 @@ describe('hooks with createApi defaults set', () => {
 
       fireEvent.click(updateBtn);
       await waitFor(() => expect(getByTestId('renderCount').textContent).toBe('3'));
-      expect(inspectablePost?.name).toBe('supercoooll!');
+      expect(expectablePost?.name).toBe('supercoooll!');
 
       fireEvent.click(addBtn);
       await waitFor(() => expect(getByTestId('renderCount').textContent).toBe('3'));

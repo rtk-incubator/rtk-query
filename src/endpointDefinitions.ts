@@ -1,5 +1,5 @@
 import { AnyAction, ThunkDispatch } from '@reduxjs/toolkit';
-import { RootState } from './apiState';
+import { RootState } from './core/apiState';
 import { BaseQueryExtraOptions, BaseQueryFn, BaseQueryResult, BaseQueryArg } from './apiTypes';
 import { fetchBaseQuery } from './fetchBaseQuery';
 import { HasRequiredProps } from './tsHelpers';

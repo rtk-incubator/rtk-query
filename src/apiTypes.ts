@@ -1,22 +1,16 @@
 /**
  * Note: this file should import all other files for type discovery and declaration merging
  */
-import { PatchQueryResultThunk, QueryApi, UpdateQueryResultThunk } from './buildThunks';
-import { AnyAction, Middleware, Reducer, ThunkDispatch, ThunkAction } from '@reduxjs/toolkit';
-import { PrefetchOptions } from './buildHooks';
-import {
-  EndpointDefinitions,
-  EndpointBuilder,
-  QueryArgFrom,
-  QueryDefinition,
-  MutationDefinition,
-} from './endpointDefinitions';
-import { CombinedState, QueryKeys, RootState } from './apiState';
-import { UnionToIntersection } from './tsHelpers';
-import { TS41Hooks } from './ts41Types';
+import { QueryApi } from './core/buildThunks';
+import { AnyAction, ThunkAction } from '@reduxjs/toolkit';
+import { PrefetchOptions } from './redux-hooks/buildHooks';
+import { EndpointDefinitions, EndpointBuilder, EndpointDefinition } from './endpointDefinitions';
+import { UnionToIntersection, Id } from './tsHelpers';
 import './buildSelectors';
-import { SliceActions } from './buildSlice';
+import { SliceActions } from './core/buildSlice';
 import { onFocus, onFocusLost, onOffline, onOnline } from './setupListeners';
+import { CoreModule } from './core';
+import { CreateApiOptions } from './';
 
 type UnwrapPromise<T> = T extends PromiseLike<infer V> ? V : T;
 type MaybePromise<T> = T | PromiseLike<T>;
@@ -55,52 +49,49 @@ export type BaseQueryArg<T extends (arg: any, ...args: any[]) => any> = T extend
 
 export type BaseQueryExtraOptions<BaseQuery extends BaseQueryFn> = Parameters<BaseQuery>[2];
 
-export type Api<
+export interface ApiModules<
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  BaseQuery extends BaseQueryFn,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  Definitions extends EndpointDefinitions,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  ReducerPath extends string,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  EntityTypes extends string
+> {}
+
+export type ModuleName = keyof ApiModules<any, any, any, any>;
+
+export type Module<Name extends ModuleName> = <
   BaseQuery extends BaseQueryFn,
   Definitions extends EndpointDefinitions,
   ReducerPath extends string,
   EntityTypes extends string
-> = {
-  reducerPath: ReducerPath;
-  internalActions: InternalActions;
-  reducer: Reducer<CombinedState<Definitions, EntityTypes, ReducerPath>, AnyAction>;
-  middleware: Middleware<{}, RootState<Definitions, string, ReducerPath>, ThunkDispatch<any, any, AnyAction>>;
-  util: {
-    updateQueryResult: UpdateQueryResultThunk<Definitions, RootState<Definitions, string, ReducerPath>>;
-    patchQueryResult: PatchQueryResultThunk<Definitions, RootState<Definitions, string, ReducerPath>>;
-  };
-  // If you actually care about the return value, use useQuery
-  usePrefetch<EndpointName extends QueryKeys<Definitions>>(
-    endpointName: EndpointName,
-    options?: PrefetchOptions
-  ): (arg: QueryArgFrom<Definitions[EndpointName]>, options?: PrefetchOptions) => void;
-  injectEndpoints<NewDefinitions extends EndpointDefinitions>(_: {
-    endpoints: (build: EndpointBuilder<BaseQuery, EntityTypes, ReducerPath>) => NewDefinitions;
-    overrideExisting?: boolean;
-  }): Api<BaseQuery, Definitions & NewDefinitions, ReducerPath, EntityTypes>;
-  endpoints: {
-    [K in keyof Definitions]: Definitions[K] extends QueryDefinition<any, any, any, any, any>
-      ? ApiEndpointQuery<Definitions[K], Definitions>
-      : Definitions[K] extends MutationDefinition<any, any, any, any, any>
-      ? ApiEndpointMutation<Definitions[K], Definitions>
-      : never;
-  };
-} & TS41Hooks<Definitions>;
+>(
+  api: Api<BaseQuery, EndpointDefinitions, ReducerPath, EntityTypes, ModuleName>,
+  options: Required<CreateApiOptions<BaseQuery, Definitions, ReducerPath, EntityTypes>>,
+  context: {
+    endpointDefinitions: Definitions;
+  }
+) => {
+  name: Name;
+  injectEndpoint(endpoint: string, definition: EndpointDefinition<any, any, any, any>): void;
+};
 
-export interface ApiEndpointQuery<
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  Definition extends QueryDefinition<any, any, any, any, any>,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  Definitions extends EndpointDefinitions
-> {}
-
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-export interface ApiEndpointMutation<
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  Definition extends MutationDefinition<any, any, any, any, any>,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  Definitions extends EndpointDefinitions
-> {}
+export type Api<
+  BaseQuery extends BaseQueryFn,
+  Definitions extends EndpointDefinitions,
+  ReducerPath extends string,
+  EntityTypes extends string,
+  Enhancers extends ModuleName = CoreModule
+> = Id<
+  {
+    injectEndpoints<NewDefinitions extends EndpointDefinitions>(_: {
+      endpoints: (build: EndpointBuilder<BaseQuery, EntityTypes, ReducerPath>) => NewDefinitions;
+      overrideExisting?: boolean;
+    }): Api<BaseQuery, Definitions & NewDefinitions, ReducerPath, EntityTypes, Enhancers>;
+  } & Id<UnionToIntersection<ApiModules<BaseQuery, Definitions, ReducerPath, EntityTypes>[Enhancers]>>
+>;
 
 export type ApiWithInjectedEndpoints<
   ApiDefinition extends Api<any, any, any, any>,

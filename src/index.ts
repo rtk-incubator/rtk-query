@@ -1,12 +1,12 @@
 import type { AnyAction, Reducer } from '@reduxjs/toolkit';
-import type { CombinedState } from './apiState';
+import type { CombinedState } from './core/apiState';
 import { Api, BaseQueryArg, BaseQueryFn } from './apiTypes';
-import { buildActionMaps } from './buildActionMaps';
-import { buildHooks } from './buildHooks';
-import { buildMiddleware } from './buildMiddleware';
-import { buildSelectors } from './buildSelectors';
-import { buildSlice } from './buildSlice';
-import { buildThunks } from './buildThunks';
+import { buildActionMaps } from './core/buildActionMaps';
+import { buildHooks } from './redux-hooks/buildHooks';
+import { buildMiddleware } from './core/buildMiddleware';
+import { buildSelectors } from './core/buildSelectors';
+import { buildSlice } from './core/buildSlice';
+import { buildThunks } from './core/buildThunks';
 import { defaultSerializeQueryArgs, InternalSerializeQueryArgs, SerializeQueryArgs } from './defaultSerializeQueryArgs';
 import {
   AssertEntityTypes,
@@ -18,31 +18,20 @@ import {
 } from './endpointDefinitions';
 import { assertCast } from './tsHelpers';
 import { capitalize, IS_DEV } from './utils';
-import { onFocus, onFocusLost, onOnline, onOffline } from './setupListeners';
 export { ApiProvider } from './ApiProvider';
-export { QueryStatus } from './apiState';
+export { QueryStatus } from './core/apiState';
 export type { Api, ApiWithInjectedEndpoints, BaseQueryEnhancer, BaseQueryFn } from './apiTypes';
 export { fetchBaseQuery } from './fetchBaseQuery';
 export type { FetchBaseQueryError, FetchArgs } from './fetchBaseQuery';
 export { retry } from './retry';
 export { setupListeners } from './setupListeners';
 
-export function createApi<
+export interface CreateApiOptions<
   BaseQuery extends BaseQueryFn,
   Definitions extends EndpointDefinitions,
   ReducerPath extends string = 'api',
   EntityTypes extends string = never
->({
-  baseQuery,
-  entityTypes = [],
-  reducerPath = 'api' as ReducerPath,
-  serializeQueryArgs = defaultSerializeQueryArgs,
-  endpoints,
-  keepUnusedDataFor = 60,
-  refetchOnMountOrArgChange = false,
-  refetchOnFocus = false,
-  refetchOnReconnect = false,
-}: {
+> {
   baseQuery: BaseQuery;
   entityTypes?: readonly EntityTypes[];
   reducerPath?: ReducerPath;
@@ -52,108 +41,32 @@ export function createApi<
   refetchOnMountOrArgChange?: boolean | number;
   refetchOnFocus?: boolean;
   refetchOnReconnect?: boolean;
-}): Api<BaseQuery, Definitions, ReducerPath, EntityTypes> {
-  type State = CombinedState<Definitions, EntityTypes, ReducerPath>;
+}
 
-  type InternalQueryArgs = BaseQueryArg<BaseQuery>;
-
-  assertCast<InternalSerializeQueryArgs<InternalQueryArgs>>(serializeQueryArgs);
+export function createApi<
+  BaseQuery extends BaseQueryFn,
+  Definitions extends EndpointDefinitions,
+  ReducerPath extends string = 'api',
+  EntityTypes extends string = never
+>(
+  options: CreateApiOptions<BaseQuery, Definitions, ReducerPath, EntityTypes>
+): Api<BaseQuery, Definitions, ReducerPath, EntityTypes> {
+  const optionsWithDefaults = {
+    entityTypes: [],
+    reducerPath: 'api' as ReducerPath,
+    serializeQueryArgs: defaultSerializeQueryArgs,
+    keepUnusedDataFor: 60,
+    refetchOnMountOrArgChange: false,
+    refetchOnFocus: false,
+    refetchOnReconnect: false,
+    ...options,
+  };
 
   const endpointDefinitions: EndpointDefinitions = {};
 
-  const assertEntityType: AssertEntityTypes = (entity) => {
-    if (IS_DEV()) {
-      if (!entityTypes.includes(entity.type as any)) {
-        console.error(`Entity type '${entity.type}' was used, but not specified in \`entityTypes\`!`);
-      }
-    }
-    return entity;
-  };
-
-  const uninitialized: any = () => {
-    throw Error('called before initialization');
-  };
-
-  const api: Api<BaseQuery, {}, ReducerPath, EntityTypes> = {
-    reducerPath,
-    endpoints: {},
-    internalActions: {
-      removeQueryResult: uninitialized,
-      unsubscribeMutationResult: uninitialized,
-      unsubscribeQueryResult: uninitialized,
-      updateSubscriptionOptions: uninitialized,
-      queryResultPatched: uninitialized,
-      prefetchThunk: uninitialized,
-      onOnline,
-      onOffline,
-      onFocus,
-      onFocusLost,
-    },
-    util: {
-      patchQueryResult: uninitialized,
-      updateQueryResult: uninitialized,
-    },
-    usePrefetch: () => () => {},
-    reducer: uninitialized,
-    middleware: uninitialized,
+  const api: Api<BaseQuery, {}, ReducerPath, EntityTypes, never> = {
     injectEndpoints,
   };
-
-  const {
-    queryThunk,
-    mutationThunk,
-    patchQueryResult,
-    updateQueryResult,
-    prefetchThunk,
-    buildMatchThunkActions,
-  } = buildThunks({
-    baseQuery,
-    reducerPath,
-    endpointDefinitions,
-    api,
-    serializeQueryArgs,
-  });
-  Object.assign(api.util, { patchQueryResult, updateQueryResult });
-
-  const { reducer, actions: sliceActions } = buildSlice({
-    endpointDefinitions,
-    queryThunk,
-    mutationThunk,
-    reducerPath,
-    assertEntityType,
-    config: { refetchOnFocus, refetchOnReconnect, refetchOnMountOrArgChange, keepUnusedDataFor, reducerPath },
-  });
-  assertCast<Reducer<State, AnyAction>>(reducer);
-  Object.assign(api.internalActions, sliceActions);
-  api.reducer = reducer;
-
-  Object.assign(api.internalActions, sliceActions, { prefetchThunk });
-  api.reducer = reducer;
-
-  const { middleware } = buildMiddleware({
-    reducerPath,
-    endpointDefinitions,
-    queryThunk,
-    mutationThunk,
-    api,
-    assertEntityType,
-  });
-
-  api.middleware = middleware;
-
-  const { buildQuerySelector, buildMutationSelector } = buildSelectors({
-    serializeQueryArgs,
-    reducerPath,
-  });
-
-  const { buildQueryAction, buildMutationAction } = buildActionMaps({
-    queryThunk,
-    mutationThunk,
-    api,
-    serializeQueryArgs,
-  });
-
-  const { buildQueryHooks, buildMutationHook, usePrefetch } = buildHooks({ api });
 
   api.usePrefetch = usePrefetch;
 
@@ -177,21 +90,15 @@ export function createApi<
       if (isQueryDefinition(definition)) {
         const { useQuery, useQueryState, useQuerySubscription } = buildQueryHooks(endpoint);
         api.endpoints[endpoint] = {
-          select: buildQuerySelector(endpoint, definition),
-          initiate: buildQueryAction(endpoint, definition),
           useQuery,
           useQueryState,
           useQuerySubscription,
-          ...buildMatchThunkActions(queryThunk, endpoint),
         };
         (api as any)[`use${capitalize(endpoint)}Query`] = useQuery;
       } else if (isMutationDefinition(definition)) {
         const useMutation = buildMutationHook(endpoint);
         api.endpoints[endpoint] = {
-          select: buildMutationSelector(),
-          initiate: buildMutationAction(endpoint, definition),
           useMutation,
-          ...buildMatchThunkActions(mutationThunk, endpoint),
         };
         (api as any)[`use${capitalize(endpoint)}Mutation`] = useMutation;
       }

@@ -34,7 +34,7 @@ function AddPost() {
 ```
 
 :::tip
-If you need to access the error or success payload immediately after a mutation or `refetch`, you will need to use `unwrapResult` from RTK to access either.
+If you need to access the error or success payload immediately after a mutation, you will need to use `unwrapResult` from RTK to access either.
 
 ```
 addPost({ id: 1, name: 'Example'})

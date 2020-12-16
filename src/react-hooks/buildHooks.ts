@@ -16,7 +16,7 @@ import { QueryActionCreatorResult, MutationActionCreatorResult } from '../core/b
 import { useShallowStableValue } from '../utils';
 import { Api } from '../apiTypes';
 import { Id, NoInfer, Override } from '../tsHelpers';
-import { ApiEndpointMutation, ApiEndpointQuery, CoreModule } from '../core';
+import { ApiEndpointMutation, ApiEndpointQuery, CoreModule } from '../core/module';
 
 export interface QueryHooks<Definition extends QueryDefinition<any, any, any, any, any>> {
   useQuery: UseQuery<Definition>;

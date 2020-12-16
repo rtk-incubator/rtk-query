@@ -9,8 +9,8 @@ import { UnionToIntersection, Id } from './tsHelpers';
 import './buildSelectors';
 import { SliceActions } from './core/buildSlice';
 import { onFocus, onFocusLost, onOffline, onOnline } from './setupListeners';
-import { CoreModule } from './core';
-import { CreateApiOptions } from './';
+import { CoreModule } from './core/module';
+import { CreateApiOptions } from './createApi';
 
 type UnwrapPromise<T> = T extends PromiseLike<infer V> ? V : T;
 type MaybePromise<T> = T | PromiseLike<T>;

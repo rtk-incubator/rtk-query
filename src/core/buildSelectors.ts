@@ -19,7 +19,7 @@ import { InternalSerializeQueryArgs } from '../defaultSerializeQueryArgs';
 
 export const skipSelector = Symbol('skip selector');
 
-declare module '.' {
+declare module './module' {
   export interface ApiEndpointQuery<
     Definition extends QueryDefinition<any, any, any, any, any>,
     Definitions extends EndpointDefinitions

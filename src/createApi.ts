@@ -2,15 +2,6 @@ import { Api, BaseQueryArg, BaseQueryFn, Module, ModuleName } from './apiTypes';
 import { defaultSerializeQueryArgs, SerializeQueryArgs } from './defaultSerializeQueryArgs';
 import { DefinitionType, EndpointBuilder, EndpointDefinitions } from './endpointDefinitions';
 import { IS_DEV } from './utils';
-import { coreModule } from './core';
-import { reactHooksModule } from './react-hooks';
-export { ApiProvider } from './ApiProvider';
-export { QueryStatus } from './core/apiState';
-export type { Api, ApiWithInjectedEndpoints, BaseQueryEnhancer, BaseQueryFn } from './apiTypes';
-export { fetchBaseQuery } from './fetchBaseQuery';
-export type { FetchBaseQueryError, FetchArgs } from './fetchBaseQuery';
-export { retry } from './retry';
-export { setupListeners } from './setupListeners';
 
 export interface CreateApiOptions<
   BaseQuery extends BaseQueryFn,
@@ -90,5 +81,3 @@ export function buildCreateApi<Modules extends [Module<any>, ...Module<any>[]]>(
     return api.injectEndpoints({ endpoints: options.endpoints as any });
   };
 }
-
-export const createApi = buildCreateApi(coreModule, reactHooksModule);

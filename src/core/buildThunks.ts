@@ -17,9 +17,9 @@ import { AnyAction, createAsyncThunk, ThunkAction, ThunkDispatch, AsyncThunk } f
 
 import { PrefetchOptions } from '../react-hooks/buildHooks';
 
-import { ApiEndpointQuery } from '.';
+import { ApiEndpointQuery } from './module';
 
-declare module '.' {
+declare module './module' {
   export interface ApiEndpointQuery<
     Definition extends QueryDefinition<any, any, any, any, any>,
     Definitions extends EndpointDefinitions

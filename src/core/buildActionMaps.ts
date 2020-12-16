@@ -4,9 +4,9 @@ import { AnyAction, AsyncThunk, ThunkAction } from '@reduxjs/toolkit';
 import { MutationSubState, QueryStatus, QuerySubState, SubscriptionOptions } from './apiState';
 import { InternalSerializeQueryArgs } from '../defaultSerializeQueryArgs';
 import { Api } from '../apiTypes';
-import { ApiEndpointMutation, ApiEndpointQuery } from '.';
+import { ApiEndpointMutation, ApiEndpointQuery } from './module';
 
-declare module '.' {
+declare module './module' {
   export interface ApiEndpointQuery<
     Definition extends QueryDefinition<any, any, any, any, any>,
     Definitions extends EndpointDefinitions

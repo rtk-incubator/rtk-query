@@ -3,7 +3,7 @@
  */
 import { QueryApi } from './core/buildThunks';
 import { AnyAction, ThunkAction } from '@reduxjs/toolkit';
-import { PrefetchOptions } from './redux-hooks/buildHooks';
+import { PrefetchOptions } from './react-hooks/buildHooks';
 import { EndpointDefinitions, EndpointBuilder, EndpointDefinition } from './endpointDefinitions';
 import { UnionToIntersection, Id } from './tsHelpers';
 import './buildSelectors';
@@ -62,20 +62,22 @@ export interface ApiModules<
 
 export type ModuleName = keyof ApiModules<any, any, any, any>;
 
-export type Module<Name extends ModuleName> = <
-  BaseQuery extends BaseQueryFn,
-  Definitions extends EndpointDefinitions,
-  ReducerPath extends string,
-  EntityTypes extends string
->(
-  api: Api<BaseQuery, EndpointDefinitions, ReducerPath, EntityTypes, ModuleName>,
-  options: Required<CreateApiOptions<BaseQuery, Definitions, ReducerPath, EntityTypes>>,
-  context: {
-    endpointDefinitions: Definitions;
-  }
-) => {
+export type Module<Name extends ModuleName> = {
   name: Name;
-  injectEndpoint(endpoint: string, definition: EndpointDefinition<any, any, any, any>): void;
+  init<
+    BaseQuery extends BaseQueryFn,
+    Definitions extends EndpointDefinitions,
+    ReducerPath extends string,
+    EntityTypes extends string
+  >(
+    api: Api<BaseQuery, EndpointDefinitions, ReducerPath, EntityTypes, ModuleName>,
+    options: Required<CreateApiOptions<BaseQuery, Definitions, ReducerPath, EntityTypes>>,
+    context: {
+      endpointDefinitions: Definitions;
+    }
+  ): {
+    injectEndpoint(endpoint: string, definition: EndpointDefinition<any, any, any, any>): void;
+  };
 };
 
 export type Api<

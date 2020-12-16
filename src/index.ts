@@ -1,23 +1,9 @@
-import type { AnyAction, Reducer } from '@reduxjs/toolkit';
-import type { CombinedState } from './core/apiState';
-import { Api, BaseQueryArg, BaseQueryFn } from './apiTypes';
-import { buildActionMaps } from './core/buildActionMaps';
-import { buildHooks } from './redux-hooks/buildHooks';
-import { buildMiddleware } from './core/buildMiddleware';
-import { buildSelectors } from './core/buildSelectors';
-import { buildSlice } from './core/buildSlice';
-import { buildThunks } from './core/buildThunks';
-import { defaultSerializeQueryArgs, InternalSerializeQueryArgs, SerializeQueryArgs } from './defaultSerializeQueryArgs';
-import {
-  AssertEntityTypes,
-  DefinitionType,
-  EndpointBuilder,
-  EndpointDefinitions,
-  isMutationDefinition,
-  isQueryDefinition,
-} from './endpointDefinitions';
-import { assertCast } from './tsHelpers';
-import { capitalize, IS_DEV } from './utils';
+import { Api, BaseQueryArg, BaseQueryFn, Module, ModuleName } from './apiTypes';
+import { defaultSerializeQueryArgs, SerializeQueryArgs } from './defaultSerializeQueryArgs';
+import { DefinitionType, EndpointBuilder, EndpointDefinitions } from './endpointDefinitions';
+import { IS_DEV } from './utils';
+import { coreModule } from './core';
+import { reactHooksModule } from './react-hooks';
 export { ApiProvider } from './ApiProvider';
 export { QueryStatus } from './core/apiState';
 export type { Api, ApiWithInjectedEndpoints, BaseQueryEnhancer, BaseQueryFn } from './apiTypes';
@@ -43,69 +29,66 @@ export interface CreateApiOptions<
   refetchOnReconnect?: boolean;
 }
 
-export function createApi<
+export type CreateApi<Modules extends ModuleName> = <
   BaseQuery extends BaseQueryFn,
   Definitions extends EndpointDefinitions,
   ReducerPath extends string = 'api',
   EntityTypes extends string = never
 >(
   options: CreateApiOptions<BaseQuery, Definitions, ReducerPath, EntityTypes>
-): Api<BaseQuery, Definitions, ReducerPath, EntityTypes> {
-  const optionsWithDefaults = {
-    entityTypes: [],
-    reducerPath: 'api' as ReducerPath,
-    serializeQueryArgs: defaultSerializeQueryArgs,
-    keepUnusedDataFor: 60,
-    refetchOnMountOrArgChange: false,
-    refetchOnFocus: false,
-    refetchOnReconnect: false,
-    ...options,
-  };
+) => Api<BaseQuery, Definitions, ReducerPath, EntityTypes, Modules>;
 
-  const endpointDefinitions: EndpointDefinitions = {};
+export function buildCreateApi<Modules extends [Module<any>, ...Module<any>[]]>(
+  ...modules: Modules
+): CreateApi<Modules[number]['name']> {
+  return function baseCreateApi(options) {
+    const optionsWithDefaults = {
+      entityTypes: [],
+      reducerPath: 'api',
+      serializeQueryArgs: defaultSerializeQueryArgs,
+      keepUnusedDataFor: 60,
+      refetchOnMountOrArgChange: false,
+      refetchOnFocus: false,
+      refetchOnReconnect: false,
+      ...options,
+    };
 
-  const api: Api<BaseQuery, {}, ReducerPath, EntityTypes, never> = {
-    injectEndpoints,
-  };
+    const context = {
+      endpointDefinitions: {} as EndpointDefinitions,
+    };
 
-  api.usePrefetch = usePrefetch;
+    const api = {
+      injectEndpoints,
+    } as Api<BaseQueryFn, {}, string, string, Modules[number]['name']>;
 
-  function injectEndpoints(inject: Parameters<typeof api.injectEndpoints>[0]) {
-    const evaluatedEndpoints = inject.endpoints({
-      query: (x) => ({ ...x, type: DefinitionType.query } as any),
-      mutation: (x) => ({ ...x, type: DefinitionType.mutation } as any),
-    });
-    for (const [endpoint, definition] of Object.entries(evaluatedEndpoints)) {
-      if (IS_DEV()) {
-        if (!inject.overrideExisting && endpoint in endpointDefinitions) {
-          console.error(
-            `called \`injectEndpoints\` to override already-existing endpoint ${endpoint} without specifying \`overrideExisting: true\``
-          );
-          return;
+    const initializedModules = modules.map((m) => m.init(api as any, optionsWithDefaults, context));
+
+    function injectEndpoints(inject: Parameters<typeof api.injectEndpoints>[0]) {
+      const evaluatedEndpoints = inject.endpoints({
+        query: (x) => ({ ...x, type: DefinitionType.query } as any),
+        mutation: (x) => ({ ...x, type: DefinitionType.mutation } as any),
+      });
+
+      for (const [endpoint, definition] of Object.entries(evaluatedEndpoints)) {
+        if (IS_DEV()) {
+          if (!inject.overrideExisting && endpoint in context.endpointDefinitions) {
+            console.error(
+              `called \`injectEndpoints\` to override already-existing endpoint ${endpoint} without specifying \`overrideExisting: true\``
+            );
+            continue;
+          }
+        }
+        context.endpointDefinitions[endpoint] = definition;
+        for (const m of initializedModules) {
+          m.injectEndpoint(endpoint, definition);
         }
       }
-      endpointDefinitions[endpoint] = definition;
 
-      assertCast<Api<InternalQueryArgs, Record<string, any>, ReducerPath, EntityTypes>>(api);
-      if (isQueryDefinition(definition)) {
-        const { useQuery, useQueryState, useQuerySubscription } = buildQueryHooks(endpoint);
-        api.endpoints[endpoint] = {
-          useQuery,
-          useQueryState,
-          useQuerySubscription,
-        };
-        (api as any)[`use${capitalize(endpoint)}Query`] = useQuery;
-      } else if (isMutationDefinition(definition)) {
-        const useMutation = buildMutationHook(endpoint);
-        api.endpoints[endpoint] = {
-          useMutation,
-        };
-        (api as any)[`use${capitalize(endpoint)}Mutation`] = useMutation;
-      }
+      return api as any;
     }
 
-    return api as any;
-  }
-
-  return api.injectEndpoints({ endpoints });
+    return api.injectEndpoints({ endpoints: options.endpoints as any });
+  };
 }
+
+export const createApi = buildCreateApi(coreModule, reactHooksModule);

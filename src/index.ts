@@ -1,5 +1,5 @@
 import type { AnyAction, Reducer } from '@reduxjs/toolkit';
-import type { CombinedState, QueryStatePhantomType } from './apiState';
+import type { CombinedState } from './apiState';
 import { Api, BaseQueryArg, BaseQueryFn } from './apiTypes';
 import { buildActionMaps } from './buildActionMaps';
 import { buildHooks } from './buildHooks';
@@ -18,13 +18,14 @@ import {
 } from './endpointDefinitions';
 import { assertCast } from './tsHelpers';
 import { capitalize, IS_DEV } from './utils';
+import { onFocus, onFocusLost, onOnline, onOffline } from './setupListeners';
 export { ApiProvider } from './ApiProvider';
 export { QueryStatus } from './apiState';
 export type { Api, ApiWithInjectedEndpoints, BaseQueryEnhancer, BaseQueryFn } from './apiTypes';
 export { fetchBaseQuery } from './fetchBaseQuery';
-export type { FetchBaseQueryError } from './fetchBaseQuery';
+export type { FetchBaseQueryError, FetchArgs } from './fetchBaseQuery';
 export { retry } from './retry';
-export { unwrap } from './utils/unwrap';
+export { setupListeners } from './setupListeners';
 
 export function createApi<
   BaseQuery extends BaseQueryFn,
@@ -38,6 +39,9 @@ export function createApi<
   serializeQueryArgs = defaultSerializeQueryArgs,
   endpoints,
   keepUnusedDataFor = 60,
+  refetchOnMountOrArgChange = false,
+  refetchOnFocus = false,
+  refetchOnReconnect = false,
 }: {
   baseQuery: BaseQuery;
   entityTypes?: readonly EntityTypes[];
@@ -45,8 +49,11 @@ export function createApi<
   serializeQueryArgs?: SerializeQueryArgs<BaseQueryArg<BaseQuery>>;
   endpoints(build: EndpointBuilder<BaseQuery, EntityTypes, ReducerPath>): Definitions;
   keepUnusedDataFor?: number;
+  refetchOnMountOrArgChange?: boolean | number;
+  refetchOnFocus?: boolean;
+  refetchOnReconnect?: boolean;
 }): Api<BaseQuery, Definitions, ReducerPath, EntityTypes> {
-  type State = CombinedState<Definitions, EntityTypes>;
+  type State = CombinedState<Definitions, EntityTypes, ReducerPath>;
 
   type InternalQueryArgs = BaseQueryArg<BaseQuery>;
 
@@ -77,6 +84,10 @@ export function createApi<
       updateSubscriptionOptions: uninitialized,
       queryResultPatched: uninitialized,
       prefetchThunk: uninitialized,
+      onOnline,
+      onOffline,
+      onFocus,
+      onFocusLost,
     },
     util: {
       patchQueryResult: uninitialized,
@@ -110,8 +121,9 @@ export function createApi<
     mutationThunk,
     reducerPath,
     assertEntityType,
+    config: { refetchOnFocus, refetchOnReconnect, refetchOnMountOrArgChange, keepUnusedDataFor, reducerPath },
   });
-  assertCast<Reducer<State & QueryStatePhantomType<ReducerPath>, AnyAction>>(reducer);
+  assertCast<Reducer<State, AnyAction>>(reducer);
   Object.assign(api.internalActions, sliceActions);
   api.reducer = reducer;
 
@@ -123,7 +135,6 @@ export function createApi<
     endpointDefinitions,
     queryThunk,
     mutationThunk,
-    keepUnusedDataFor,
     api,
     assertEntityType,
   });
@@ -142,7 +153,7 @@ export function createApi<
     serializeQueryArgs,
   });
 
-  const { buildQueryHook, buildMutationHook, usePrefetch } = buildHooks({ api });
+  const { buildQueryHooks, buildMutationHook, usePrefetch } = buildHooks({ api });
 
   api.usePrefetch = usePrefetch;
 
@@ -164,11 +175,13 @@ export function createApi<
 
       assertCast<Api<InternalQueryArgs, Record<string, any>, ReducerPath, EntityTypes>>(api);
       if (isQueryDefinition(definition)) {
-        const useQuery = buildQueryHook(endpoint);
+        const { useQuery, useQueryState, useQuerySubscription } = buildQueryHooks(endpoint);
         api.endpoints[endpoint] = {
           select: buildQuerySelector(endpoint, definition),
           initiate: buildQueryAction(endpoint, definition),
           useQuery,
+          useQueryState,
+          useQuerySubscription,
           ...buildMatchThunkActions(queryThunk, endpoint),
         };
         (api as any)[`use${capitalize(endpoint)}Query`] = useQuery;

@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { BaseQueryFn, createApi, fetchBaseQuery, unwrap } from '@rtk-incubator/rtk-query';
+import { BaseQueryFn, createApi, fetchBaseQuery } from '@rtk-incubator/rtk-query';
 import { renderHook, act } from '@testing-library/react-hooks';
 import { rest } from 'msw';
 import axios, { AxiosError, AxiosRequestConfig } from 'axios';
@@ -362,15 +362,15 @@ describe('error handling in a component', () => {
           <div data-testid="error">{JSON.stringify(error)}</div>
           <div data-testid="manuallySetError">{JSON.stringify(manualError)}</div>
           <button
-            onClick={() =>
+            onClick={() => {
               update({ name: 'hello' })
-                .then(unwrap)
+                .unwrap()
                 .then((result) => {
                   expectType<typeof mockSuccessResponse>(result);
                   setManualError(undefined);
                 })
-                .catch((error) => setManualError(error))
-            }
+                .catch((error) => setManualError(error));
+            }}
           >
             Update User
           </button>

@@ -15,7 +15,6 @@ import {
   EntityTypesFrom,
   ReducerPathFrom,
 } from './endpointDefinitions';
-import type { InternalState } from './buildSlice';
 import { InternalSerializeQueryArgs } from './defaultSerializeQueryArgs';
 
 export const skipSelector = Symbol('skip selector');
@@ -44,7 +43,11 @@ declare module './apiTypes' {
 
 type QueryResultSelector<Definition extends QueryDefinition<any, any, any, any>, RootState> = (
   queryArg: QueryArgFrom<Definition> | typeof skipSelector
-) => (state: RootState) => QuerySubState<Definition> & RequestStatusFlags;
+) => (state: RootState) => QueryResultSelectorResult<Definition>;
+
+export type QueryResultSelectorResult<
+  Definition extends QueryDefinition<any, any, any, any>
+> = QuerySubState<Definition> & RequestStatusFlags;
 
 type MutationResultSelector<Definition extends MutationDefinition<any, any, any, any>, RootState> = (
   requestId: string | typeof skipSelector
@@ -77,7 +80,7 @@ export function buildSelectors<InternalQueryArgs, Definitions extends EndpointDe
   }
 
   function selectInternalState(rootState: RootState) {
-    return rootState[reducerPath] as InternalState;
+    return rootState[reducerPath];
   }
 
   function buildQuerySelector(

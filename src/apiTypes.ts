@@ -11,11 +11,12 @@ import {
   QueryDefinition,
   MutationDefinition,
 } from './endpointDefinitions';
-import { CombinedState, QueryKeys, QueryStatePhantomType, RootState } from './apiState';
+import { CombinedState, QueryKeys, RootState } from './apiState';
 import { UnionToIntersection } from './tsHelpers';
 import { TS41Hooks } from './ts41Types';
 import './buildSelectors';
 import { SliceActions } from './buildSlice';
+import { onFocus, onFocusLost, onOffline, onOnline } from './setupListeners';
 
 type UnwrapPromise<T> = T extends PromiseLike<infer V> ? V : T;
 type MaybePromise<T> = T | PromiseLike<T>;
@@ -62,7 +63,7 @@ export type Api<
 > = {
   reducerPath: ReducerPath;
   internalActions: InternalActions;
-  reducer: Reducer<CombinedState<Definitions, EntityTypes> & QueryStatePhantomType<ReducerPath>, AnyAction>;
+  reducer: Reducer<CombinedState<Definitions, EntityTypes, ReducerPath>, AnyAction>;
   middleware: Middleware<{}, RootState<Definitions, string, ReducerPath>, ThunkDispatch<any, any, AnyAction>>;
   util: {
     updateQueryResult: UpdateQueryResultThunk<Definitions, RootState<Definitions, string, ReducerPath>>;
@@ -113,4 +114,17 @@ export type ApiWithInjectedEndpoints<
 
 export type InternalActions = SliceActions & {
   prefetchThunk: (endpointName: any, arg: any, options: PrefetchOptions) => ThunkAction<void, any, any, AnyAction>;
+} & {
+  /**
+   * Will cause the RTK Query middleware to trigger any refetchOnReconnect-related behavior
+   * @link https://rtk-query-docs.netlify.app/api/setupListeners
+   */
+  onOnline: typeof onOnline;
+  onOffline: typeof onOffline;
+  /**
+   * Will cause the RTK Query middleware to trigger any refetchOnFocus-related behavior
+   * @link https://rtk-query-docs.netlify.app/api/setupListeners
+   */
+  onFocus: typeof onFocus;
+  onFocusLost: typeof onFocusLost;
 };

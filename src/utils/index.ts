@@ -6,3 +6,4 @@ export * from './shallowEqual';
 export * from './useShallowStableValue';
 export * from './capitalize';
 export * from './isDev';
+export * from './unwrap';

@@ -24,6 +24,7 @@ export type { Api, ApiWithInjectedEndpoints, BaseQueryEnhancer, BaseQueryFn } fr
 export { fetchBaseQuery } from './fetchBaseQuery';
 export type { FetchBaseQueryError } from './fetchBaseQuery';
 export { retry } from './retry';
+export { unwrap } from './utils/unwrap';
 
 export function createApi<
   BaseQuery extends BaseQueryFn,

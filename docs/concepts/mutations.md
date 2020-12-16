@@ -83,16 +83,16 @@ export const PostDetail = () => {
       <EditablePostName
         name={post.name}
         onUpdate={(name) => {
+          // Being that RTK Query uses createAsyncThunk from RTK under the hood,
+          // you need to use `unwrapResult` here if you actually want the payload
+          // or to catch the error.
+          // Example: `updatePost().then(unwrapResult).then(result => console.log(result)).catch(err => console.error(err))
+
           return (
             // highlight-start
             // Execute the trigger with the `id` and updated `name`
             updatePost({ id, name })
-              // highlight-end
-              .then((result) => {
-                // Do something with the result
-                console.log('Update Result', result);
-              })
-              .catch((error) => console.error('Update Error', error))
+            // highlight-end
           );
         }}
         isLoading={isUpdating}

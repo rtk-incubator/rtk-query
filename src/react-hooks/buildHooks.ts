@@ -250,7 +250,7 @@ export function buildHooks<Definitions extends EndpointDefinitions>({
   }
 
   function buildMutationHook(name: string): MutationHook<any> {
-    return (): any /* TODO */ => {
+    return () => {
       const { select, initiate } = api.endpoints[name] as ApiEndpointMutation<
         MutationDefinition<any, any, any, any, any>,
         Definitions

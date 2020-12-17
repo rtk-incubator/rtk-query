@@ -1,4 +1,4 @@
-export { ApiProvider } from './ApiProvider';
+export { ApiProvider } from './react-hooks/ApiProvider';
 export { QueryStatus } from './core/apiState';
 export type { Api, ApiWithInjectedEndpoints } from './apiTypes';
 export type { BaseQueryEnhancer, BaseQueryFn } from './baseQueryTypes';

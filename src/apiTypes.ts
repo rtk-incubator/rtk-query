@@ -42,12 +42,12 @@ export type Api<
   EntityTypes extends string,
   Enhancers extends ModuleName = CoreModule
 > = Id<
-  {
+  Id<UnionToIntersection<ApiModules<BaseQuery, Definitions, ReducerPath, EntityTypes>[Enhancers]>> & {
     injectEndpoints<NewDefinitions extends EndpointDefinitions>(_: {
       endpoints: (build: EndpointBuilder<BaseQuery, EntityTypes, ReducerPath>) => NewDefinitions;
       overrideExisting?: boolean;
     }): Api<BaseQuery, Definitions & NewDefinitions, ReducerPath, EntityTypes, Enhancers>;
-  } & Id<UnionToIntersection<ApiModules<BaseQuery, Definitions, ReducerPath, EntityTypes>[Enhancers]>>
+  }
 >;
 
 export type ApiWithInjectedEndpoints<

@@ -21,7 +21,7 @@ import { buildSlice } from './buildSlice';
 import { buildMiddleware } from './buildMiddleware';
 import { buildSelectors } from './buildSelectors';
 import { buildInitiate } from './buildInitiate';
-import { assertCast, safeAssign } from '../tsHelpers';
+import { assertCast, Id, safeAssign } from '../tsHelpers';
 import { IS_DEV } from '../utils';
 import { InternalSerializeQueryArgs } from '../defaultSerializeQueryArgs';
 import { SliceActions } from './buildSlice';
@@ -54,9 +54,9 @@ declare module '../apiTypes' {
       ): (arg: QueryArgFrom<Definitions[EndpointName]>, options?: PrefetchOptions) => void;
       endpoints: {
         [K in keyof Definitions]: Definitions[K] extends QueryDefinition<any, any, any, any, any>
-          ? ApiEndpointQuery<Definitions[K], Definitions>
+          ? Id<ApiEndpointQuery<Definitions[K], Definitions>>
           : Definitions[K] extends MutationDefinition<any, any, any, any, any>
-          ? ApiEndpointMutation<Definitions[K], Definitions>
+          ? Id<ApiEndpointMutation<Definitions[K], Definitions>>
           : never;
       };
     };

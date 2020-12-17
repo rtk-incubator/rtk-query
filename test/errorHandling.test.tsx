@@ -3,7 +3,7 @@ import { BaseQueryFn, createApi, fetchBaseQuery } from '@rtk-incubator/rtk-query
 import { renderHook, act } from '@testing-library/react-hooks';
 import { rest } from 'msw';
 import axios, { AxiosError, AxiosRequestConfig } from 'axios';
-import { expectType, hookWaitFor, setupApiStore } from './helpers';
+import { expectExactType, hookWaitFor, setupApiStore } from './helpers';
 import { server } from './mocks/server';
 import { fireEvent, render, waitFor } from '@testing-library/react';
 
@@ -366,7 +366,7 @@ describe('error handling in a component', () => {
               update({ name: 'hello' })
                 .unwrap()
                 .then((result) => {
-                  expectType<typeof mockSuccessResponse>(result);
+                  expectExactType(mockSuccessResponse)(result);
                   setManualError(undefined);
                 })
                 .catch((error) => setManualError(error));

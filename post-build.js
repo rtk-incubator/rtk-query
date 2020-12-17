@@ -1,12 +1,11 @@
 const fs = require('fs');
-const { cp, mkdir, rm } = require('shelljs');
+const { cp, rm } = require('shelljs');
 
 if (fs.existsSync('dist/ts-4.1')) {
   rm('-r', 'dist/ts-4.1');
 }
-mkdir('-p', 'dist/ts-4.1');
 
-cp('-r', 'dist/ts', 'dist/ts-4.1/');
+cp('-r', 'dist/ts/', 'dist/ts-4.1');
 
 const stubTs41Types = `
 import { EndpointDefinitions } from './endpointDefinitions';

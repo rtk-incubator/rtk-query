@@ -6,7 +6,7 @@ import replace from '@rollup/plugin-replace';
 /** @type {import("rollup").RollupOptions} */
 const defaultConfig = {
   input: 'src/index.ts',
-  external: [/@babel\/runtime/, /@reduxjs\/toolkit/, /react/, /react-redux/, /immer/, /tslib/],
+  external: [/@babel\/runtime/, /@reduxjs\/toolkit/, /react$/, /react-redux/, /immer/, /tslib/],
   treeshake: {
     propertyReadSideEffects: false,
   },

@@ -67,6 +67,11 @@
       "limit": "15 KB"
     },
     {
+      "name": "createPureApi + setupListeners",
+      "path": "dist/esm/index.js",
+      "import": "{ createPureApi, setupListeners }"
+    },
+    {
       "name": "createApi + setupListeners",
       "path": "dist/esm/index.js",
       "import": "{ createApi, setupListeners }"

@@ -9,7 +9,7 @@ import {
   EndpointDefinitions,
   FullEntityDescription,
 } from '../endpointDefinitions';
-import { onFocus, onOnline } from '../setupListeners';
+import { onFocus, onOnline } from './setupListeners';
 import { flatten } from '../utils';
 
 const batch = typeof reactBatch !== 'undefined' ? reactBatch : (fn: Function) => fn();

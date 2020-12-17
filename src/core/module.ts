@@ -2,7 +2,7 @@
  * Note: this file should import all other files for type discovery and declaration merging
  */
 import { buildThunks, PatchQueryResultThunk, UpdateQueryResultThunk } from './buildThunks';
-import { AnyAction, Middleware, Reducer, ThunkDispatch } from '@reduxjs/toolkit';
+import { AnyAction, Middleware, Reducer, ThunkAction, ThunkDispatch } from '@reduxjs/toolkit';
 import { PrefetchOptions } from '../react-hooks/buildHooks';
 import {
   EndpointDefinitions,
@@ -16,14 +16,16 @@ import {
 import { CombinedState, QueryKeys, RootState } from './apiState';
 import './buildSelectors';
 import { Api, Module } from '../apiTypes';
-import { onFocus, onFocusLost, onOnline, onOffline } from '../setupListeners';
+import { onFocus, onFocusLost, onOnline, onOffline } from './setupListeners';
 import { buildSlice } from './buildSlice';
 import { buildMiddleware } from './buildMiddleware';
 import { buildSelectors } from './buildSelectors';
-import { buildActionMaps } from './buildActionMaps';
+import { buildInitiate } from './buildInitiate';
 import { assertCast, safeAssign } from '../tsHelpers';
 import { IS_DEV } from '../utils';
 import { InternalSerializeQueryArgs } from '../defaultSerializeQueryArgs';
+import { SliceActions } from './buildSlice';
+import { BaseQueryFn } from '../baseQueryTypes';
 
 export const coreModuleName = Symbol();
 export type CoreModule = typeof coreModuleName;
@@ -76,6 +78,23 @@ export interface ApiEndpointMutation<
   Definitions extends EndpointDefinitions
 > {}
 
+export type InternalActions = SliceActions & {
+  prefetchThunk: (endpointName: any, arg: any, options: PrefetchOptions) => ThunkAction<void, any, any, AnyAction>;
+} & {
+  /**
+   * Will cause the RTK Query middleware to trigger any refetchOnReconnect-related behavior
+   * @link https://rtk-query-docs.netlify.app/api/setupListeners
+   */
+  onOnline: typeof onOnline;
+  onOffline: typeof onOffline;
+  /**
+   * Will cause the RTK Query middleware to trigger any refetchOnFocus-related behavior
+   * @link https://rtk-query-docs.netlify.app/api/setupListeners
+   */
+  onFocus: typeof onFocus;
+  onFocusLost: typeof onFocusLost;
+};
+
 export const coreModule: Module<CoreModule> = {
   name: coreModuleName,
   init(
@@ -103,32 +122,16 @@ export const coreModule: Module<CoreModule> = {
       return entity;
     };
 
-    const uninitialized: any = () => {
-      throw Error('called before initialization');
-    };
     Object.assign(api, {
       reducerPath,
       endpoints: {},
       internalActions: {
-        /*removeQueryResult: uninitialized,
-        unsubscribeMutationResult: uninitialized,
-        unsubscribeQueryResult: uninitialized,
-        updateSubscriptionOptions: uninitialized,
-        queryResultPatched: uninitialized,
-        prefetchThunk: uninitialized,
-        */
         onOnline,
         onOffline,
         onFocus,
         onFocusLost,
       },
-      util: {
-        patchQueryResult: uninitialized,
-        updateQueryResult: uninitialized,
-      },
-      usePrefetch: () => () => {},
-      reducer: uninitialized,
-      middleware: uninitialized,
+      util: {},
     });
 
     const {
@@ -174,7 +177,7 @@ export const coreModule: Module<CoreModule> = {
       reducerPath,
     });
 
-    const { buildQueryAction, buildMutationAction } = buildActionMaps({
+    const { buildInitiateQuery, buildInitiateMutation } = buildInitiate({
       queryThunk,
       mutationThunk,
       api,
@@ -191,7 +194,7 @@ export const coreModule: Module<CoreModule> = {
             anyApi.endpoints[endpoint],
             {
               select: buildQuerySelector(endpoint, definition),
-              initiate: buildQueryAction(endpoint, definition),
+              initiate: buildInitiateQuery(endpoint, definition),
             },
             buildMatchThunkActions(queryThunk, endpoint)
           );
@@ -200,7 +203,7 @@ export const coreModule: Module<CoreModule> = {
             anyApi.endpoints[endpoint],
             {
               select: buildMutationSelector(),
-              initiate: buildMutationAction(endpoint, definition),
+              initiate: buildInitiateMutation(endpoint, definition),
             },
             buildMatchThunkActions(mutationThunk, endpoint)
           );

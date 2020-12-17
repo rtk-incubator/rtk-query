@@ -10,6 +10,7 @@ import { TS41Hooks } from '../ts41Types';
 import { Api, Module } from '../apiTypes';
 import { capitalize } from '../utils';
 import { safeAssign } from '../tsHelpers';
+import { BaseQueryFn } from '../baseQueryTypes';
 
 export const reactHooksModuleName = Symbol();
 export type ReactHooksModule = typeof reactHooksModuleName;

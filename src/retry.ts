@@ -1,4 +1,4 @@
-import { BaseQueryEnhancer } from './apiTypes';
+import { BaseQueryEnhancer } from './baseQueryTypes';
 import { HandledError } from './core/buildThunks';
 
 async function defaultBackoff(attempt: number = 0, maxRetries: number = 5) {

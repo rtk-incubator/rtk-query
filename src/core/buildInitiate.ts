@@ -64,7 +64,7 @@ export type MutationActionCreatorResult<D extends MutationDefinition<any, any, a
   unsubscribe(): void;
 };
 
-export function buildActionMaps<InternalQueryArgs>({
+export function buildInitiate<InternalQueryArgs>({
   serializeQueryArgs,
   queryThunk,
   mutationThunk,
@@ -76,9 +76,9 @@ export function buildActionMaps<InternalQueryArgs>({
   api: Api<any, EndpointDefinitions, any, string>;
 }) {
   const { unsubscribeQueryResult, unsubscribeMutationResult, updateSubscriptionOptions } = api.internalActions;
-  return { buildQueryAction, buildMutationAction };
+  return { buildInitiateQuery, buildInitiateMutation };
 
-  function buildQueryAction(endpoint: string, definition: QueryDefinition<any, any, any, any>) {
+  function buildInitiateQuery(endpoint: string, definition: QueryDefinition<any, any, any, any>) {
     const queryAction: StartQueryActionCreator<any> = (
       arg,
       { subscribe = true, forceRefetch, subscriptionOptions } = {}
@@ -124,7 +124,7 @@ export function buildActionMaps<InternalQueryArgs>({
     return queryAction;
   }
 
-  function buildMutationAction(
+  function buildInitiateMutation(
     endpoint: string,
     definition: MutationDefinition<any, any, any, any>
   ): StartMutationActionCreator<any> {

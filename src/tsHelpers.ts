@@ -19,3 +19,7 @@ export type HasRequiredProps<T, True, False> = NonOptionalKeys<T> extends never 
 export type OptionalIfAllPropsOptional<T> = HasRequiredProps<T, T, T | never>;
 
 export type NoInfer<T> = [T][T extends any ? 0 : never];
+
+export type UnwrapPromise<T> = T extends PromiseLike<infer V> ? V : T;
+
+export type MaybePromise<T> = T | PromiseLike<T>;

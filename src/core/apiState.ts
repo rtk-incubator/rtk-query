@@ -1,5 +1,5 @@
 import { SerializedError } from '@reduxjs/toolkit';
-import { BaseQueryError } from '../apiTypes';
+import { BaseQueryError } from '../baseQueryTypes';
 import {
   QueryDefinition,
   MutationDefinition,

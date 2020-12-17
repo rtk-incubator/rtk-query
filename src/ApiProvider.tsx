@@ -1,7 +1,7 @@
 import { configureStore } from '@reduxjs/toolkit';
 import React from 'react';
 import { Provider } from 'react-redux';
-import { setupListeners } from './setupListeners';
+import { setupListeners } from './core/setupListeners';
 import { Api } from './apiTypes';
 
 /**

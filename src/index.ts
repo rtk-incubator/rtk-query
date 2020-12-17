@@ -1,10 +1,11 @@
 export { ApiProvider } from './ApiProvider';
 export { QueryStatus } from './core/apiState';
-export type { Api, ApiWithInjectedEndpoints, BaseQueryEnhancer, BaseQueryFn } from './apiTypes';
+export type { Api, ApiWithInjectedEndpoints } from './apiTypes';
+export type { BaseQueryEnhancer, BaseQueryFn } from './baseQueryTypes';
 export { fetchBaseQuery } from './fetchBaseQuery';
 export type { FetchBaseQueryError, FetchArgs } from './fetchBaseQuery';
 export { retry } from './retry';
-export { setupListeners } from './setupListeners';
+export { setupListeners } from './core/setupListeners';
 export type { CreateApi, CreateApiOptions } from './createApi';
 export { buildCreateApi } from './createApi';
 

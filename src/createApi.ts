@@ -1,4 +1,5 @@
-import { Api, BaseQueryArg, BaseQueryFn, Module, ModuleName } from './apiTypes';
+import type { Api, Module, ModuleName } from './apiTypes';
+import type { BaseQueryArg, BaseQueryFn } from './baseQueryTypes';
 import { defaultSerializeQueryArgs, SerializeQueryArgs } from './defaultSerializeQueryArgs';
 import { DefinitionType, EndpointBuilder, EndpointDefinitions } from './endpointDefinitions';
 import { IS_DEV } from './utils';

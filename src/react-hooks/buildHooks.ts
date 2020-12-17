@@ -12,7 +12,7 @@ import {
 } from '../core/apiState';
 import { EndpointDefinitions, MutationDefinition, QueryDefinition, QueryArgFrom } from '../endpointDefinitions';
 import { QueryResultSelectorResult, skipSelector } from '../core/buildSelectors';
-import { QueryActionCreatorResult, MutationActionCreatorResult } from '../core/buildActionMaps';
+import { QueryActionCreatorResult, MutationActionCreatorResult } from '../core/buildInitiate';
 import { useShallowStableValue } from '../utils';
 import { Api } from '../apiTypes';
 import { Id, NoInfer, Override } from '../tsHelpers';

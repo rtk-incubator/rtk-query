@@ -83,10 +83,9 @@ export const PostDetail = () => {
       <EditablePostName
         name={post.name}
         onUpdate={(name) => {
-          // Since RTK Query uses createAsyncThunk from RTK under the hood,
-          // you need to use `unwrapResult` here if you actually want the payload
-          // or to catch the error.
-          // Example: `updatePost().then(unwrapResult).then(result => console.log(result)).catch(err => console.error(err))
+          // If you want to immediately access the result of a mutation, you need to chain `.unwrap()`
+          // if you actually want the payload or to catch the error.
+          // Example: `updatePost().unwrap().then(fulfilled => console.log(fulfilled)).catch(rejected => console.error(rejected))
 
           return (
             // highlight-start

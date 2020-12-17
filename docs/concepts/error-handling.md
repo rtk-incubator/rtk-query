@@ -34,13 +34,13 @@ function AddPost() {
 ```
 
 :::tip
-If you need to access the error or success payload immediately after a mutation, you will need to use `unwrapResult` from RTK to access either.
+If you need to access the error or success payload immediately after a mutation, you can chain `.unwrap()`.
 
-```
-addPost({ id: 1, name: 'Example'})
-.then(unwrapResult)
-.then(payload => console.log('fulfilled', payload))
-.catch(error => console.error('rejected', error))
+```ts title="Using .unwrap"
+addPost({ id: 1, name: 'Example' })
+  .unwrap()
+  .then((payload) => console.log('fulfilled', payload))
+  .catch((error) => console.error('rejected', error));
 ```
 
 :::

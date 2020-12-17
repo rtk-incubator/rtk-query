@@ -71,15 +71,14 @@ export const PostDetail = () => {
         <EditablePostName
           name={post.name}
           onUpdate={(name) => {
-            // Since RTK Query uses createAsyncThunk from RTK under the hood,
-
-            // you need to use `unwrapResult` here if you actually want the payload
-            // or to catch the error.
-            // Example: `updatePost().then(unwrapResult).then(result => console.log(result)).catch(err => console.error(err))
-            return updatePost({ id, name }).then((result) => {
-              console.log('Update Result', result);
-              setIsEditing(false);
-            });
+            // If you want to immediately access the result of a mutation, you need to chain `.unwrap()`
+            // if you actually want the payload or to catch the error.
+            // Example: `updatePost().unwrap().then(fulfilled => console.log(fulfilled)).catch(rejected => console.error(rejected))
+            return updatePost({ id, name })
+              .unwrap()
+              .finally(() => {
+                setIsEditing(false);
+              });
           }}
           onCancel={() => setIsEditing(false)}
           loading={isUpdating}
@@ -95,7 +94,14 @@ export const PostDetail = () => {
             <button onClick={() => setIsEditing(true)} disabled={isDeleting || isUpdating}>
               {isUpdating ? 'Updating...' : 'Edit'}
             </button>
-            <button onClick={() => deletePost(id).then(() => push('/posts'))} disabled={isDeleting}>
+            <button
+              onClick={() =>
+                deletePost(id)
+                  .unwrap()
+                  .then(() => push('/posts'))
+              }
+              disabled={isDeleting}
+            >
               {isDeleting ? 'Deleting...' : 'Delete'}
             </button>
           </div>

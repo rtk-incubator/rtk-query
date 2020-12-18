@@ -24,9 +24,7 @@ Hooks are automatically generated based on the name of the `endpoint` in the ser
 There are 3 query-related hooks:
 
 1. `useQuery`
-
    - Composes `useQuerySubscription` and `useQueryState` and is the primary hook.
-
 2. `useQuerySubscription`
    - Returns a `refetch` function and accepts all hook options
 3. `useQueryState`

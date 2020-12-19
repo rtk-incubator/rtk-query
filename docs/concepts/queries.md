@@ -11,11 +11,11 @@ This is the most basic feature of RTK Query. A query operation can be performed 
 
 By default, RTK Query ships with [`fetchBaseQuery`](../api/fetchBaseQuery), which is a lightweight [`fetch`](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API) wrapper that automatically handles request headers and response parsing in a manner similar to common libraries like `axios`.
 
-> Depending on your environment, you may need to polyfill `fetch` with `node-fetch` or `cross-fetch` if you choose to use `fetchBaseQuery` or `fetch` on it's own.
+> Depending on your environment, you may need to polyfill `fetch` with `node-fetch` or `cross-fetch` if you choose to use `fetchBaseQuery` or `fetch` on its own.
 
 ### Performing queries with React Hooks
 
-If you're using React Hooks, RTK Query does a few additional things for you. The primary benefit is that you get a render-optimized hook that allows you to have 'background fetching' as well as derived booleans for convenience.
+If you're using React Hooks, RTK Query does a few additional things for you. The primary benefit is that you get a render-optimized hook that allows you to have 'background fetching' as well as [derived booleans](#query-hook-return-types) for convenience.
 
 Hooks are automatically generated based on the name of the `endpoint` in the service definition. An endpoint field with `getPost: builder.query()` will generate a hook named `useGetPostQuery`.
 
@@ -55,7 +55,7 @@ endpoint?: string; // The name of the given endpoint for the query
 startedTimeStamp?: number; // Timestamp for when the query was initiatied
 fulfilledTimeStamp?: number; // Timestamp for when the query was completed
 
-isUninitialized: false;// Query has not started yet.
+isUninitialized: false; // Query has not started yet.
 isLoading: false; // Query is currently loading for the first time. No data yet.
 isFetching: false; // Query is currently fetching, but might have data from an earlier request.
 isSuccess: false; // Query has data from a successful load.
@@ -96,20 +96,18 @@ The way that this component is setup would have some nice traits:
 
 ### Selecting data from a query result
 
-Sometimes you may have a parent component that is subscribed to a query, and then in a child you may want to pick an item from that result without performing an additional query for a `getItemById` when you already have the result from a `getItems` query. `selectFromResult` allows you to select a specific segment from a result in a performant manner. When using `selectFromResult`, the hook will not rerender unless the underlying data of the selected item has changed and will ignore changes to other elements in a collection.
+Sometimes you may have a parent component that is subscribed to a query, and then in a child component you want to pick an item from that query. In most cases you don't want to perform an additional request for a `getItemById`-type query when you know that you already have the result. `selectFromResult` allows you to get a specific segment from a query result in a performant manner. When using this feature, the component will not rerender unless the underlying data of the selected item has changed. If the selected item is one elemnt in a larger collection, it will disregard changes to elements in the same collection.
 
 ```ts title="Using selectFromResult to extract a single result"
 function PostsList() {
   const { data: posts } = api.useGetPostsQuery();
 
   return (
-    <div>
-      <ul>
-        {posts?.data?.map((post) => (
-          <PostById id={post.id} />
-        ))}
-      </ul>
-    </div>
+    <ul>
+      {posts?.data?.map((post) => (
+        <PostById key={post.id} id={post.id} />
+      ))}
+    </ul>
   );
 }
 

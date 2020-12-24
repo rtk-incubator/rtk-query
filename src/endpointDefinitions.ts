@@ -1,6 +1,7 @@
 import { AnyAction, ThunkDispatch } from '@reduxjs/toolkit';
 import { RootState } from './apiState';
 import { BaseQueryExtraOptions, BaseQueryFn, BaseQueryResult, BaseQueryArg } from './apiTypes';
+import { QueryApi } from './buildThunks';
 import { fetchBaseQuery } from './fetchBaseQuery';
 import { HasRequiredProps } from './tsHelpers';
 
@@ -40,11 +41,15 @@ export type QueryDefinition<
   BaseQuery extends BaseQueryFn,
   EntityTypes extends string,
   ResultType,
-  _ReducerPath extends string = string
+  ReducerPath extends string = string,
+  Context = Record<string, any>
 > = BaseEndpointDefinition<QueryArg, BaseQuery, ResultType> & {
   type: DefinitionType.query;
   provides?: ResultDescription<EntityTypes, ResultType, QueryArg>;
   invalidates?: never;
+  onStart?(arg: QueryArg, queryApi: QueryApi<ReducerPath, Context>): void;
+  onError?(arg: QueryArg, queryApi: QueryApi<ReducerPath, Context>, error: unknown): void;
+  onSuccess?(arg: QueryArg, queryApi: QueryApi<ReducerPath, Context>, result: ResultType): void;
 };
 
 export interface MutationApi<ReducerPath extends string, Context extends {}> {

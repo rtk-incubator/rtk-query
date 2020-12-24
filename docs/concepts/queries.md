@@ -19,6 +19,8 @@ const api = createApi({
   endpoints: (build) => ({
     getPost: build.query({
       query: (id) => ({ url: `post/${id}` }),
+      // Pick out data and prevent nested properties in a hook or selector
+      transformResponse: (response) => response.data,
       // The 2nd parameter is the destructured `queryApi`
       onStart(id, { dispatch, getState, extra, requestId, context }) {},
       // `result` is the server response

@@ -36,8 +36,8 @@ type ResultDescription<EntityTypes extends string, ResultType, QueryArg> =
   | GetResultDescriptionFn<EntityTypes, ResultType, QueryArg>;
 
 export interface QueryApi<ReducerPath extends string, Context extends {}> {
-  dispatch: ThunkDispatch<any, any, any>;
-  getState: () => RootState<any, any, ReducerPath>;
+  dispatch: ThunkDispatch<RootState<any, any, ReducerPath>, unknown, AnyAction>;
+  getState(): RootState<any, any, ReducerPath>;
   extra: unknown;
   requestId: string;
   context: Context;

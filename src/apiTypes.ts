@@ -1,4 +1,4 @@
-import { EndpointDefinitions, EndpointBuilder, EndpointDefinition } from './endpointDefinitions';
+import { EndpointDefinitions, EndpointBuilder, EndpointDefinition, ReplaceEntityTypes } from './endpointDefinitions';
 import { UnionToIntersection, Id } from './tsHelpers';
 import { CoreModule } from './core/module';
 import { CreateApiOptions } from './createApi';
@@ -47,11 +47,14 @@ export type Api<
       endpoints: (build: EndpointBuilder<BaseQuery, EntityTypes, ReducerPath>) => NewDefinitions;
       overrideExisting?: boolean;
     }): Api<BaseQuery, Definitions & NewDefinitions, ReducerPath, EntityTypes, Enhancers>;
-    enhanceEndpoints(
-      partialDefinitions: {
-        [K in keyof Definitions]?: Partial<Definitions[K]> | ((definition: Definitions[K]) => void);
-      }
-    ): void;
+    enhanceEndpoints<NewEntityTypes extends string = EntityTypes>(_: {
+      entityTypes?: (oldEntityTypes: EntityTypes[]) => readonly NewEntityTypes[];
+      endpoints?: ReplaceEntityTypes<Definitions, NewEntityTypes> extends infer NewDefinitions
+        ? {
+            [K in keyof NewDefinitions]?: Partial<NewDefinitions[K]> | ((definition: NewDefinitions[K]) => void);
+          }
+        : never;
+    }): Api<BaseQuery, ReplaceEntityTypes<Definitions, NewEntityTypes>, ReducerPath, NewEntityTypes, Enhancers>;
   }
 >;
 

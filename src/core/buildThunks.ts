@@ -8,6 +8,7 @@ import {
   EndpointDefinitions,
   MutationApi,
   MutationDefinition,
+  QueryApi,
   QueryArgFrom,
   QueryDefinition,
   ResultTypeFrom,
@@ -93,15 +94,6 @@ export interface ThunkResult {
 
 export type QueryThunk = AsyncThunk<ThunkResult, QueryThunkArg<any>, {}>;
 export type MutationThunk = AsyncThunk<ThunkResult, MutationThunkArg<any>, {}>;
-
-export interface QueryApi<ReducerPath extends string, Context extends {}> {
-  signal?: AbortSignal;
-  dispatch: ThunkDispatch<any, any, any>;
-  getState: () => RootState<any, any, ReducerPath>;
-  extra: unknown;
-  requestId: string;
-  context: Context;
-}
 
 function defaultTransformResponse(baseQueryReturnValue: unknown) {
   return baseQueryReturnValue;
@@ -223,7 +215,7 @@ export function buildThunks<
         if (endpoint.onSuccess) endpoint.onSuccess(arg.originalArgs, queryApi, result.data);
         return {
           fulfilledTimeStamp: Date.now(),
-          result: (endpoint.transformResponse ?? defaultTransformResponse)(result.data),
+          result: await (endpoint.transformResponse ?? defaultTransformResponse)(result.data),
         };
       } catch (error) {
         if (endpoint.onError)
@@ -286,7 +278,7 @@ export function buildThunks<
       if (endpoint.onSuccess) endpoint.onSuccess(arg.originalArgs, mutationApi, result.data);
       return {
         fulfilledTimeStamp: Date.now(),
-        result: (endpoint.transformResponse ?? defaultTransformResponse)(result.data),
+        result: await (endpoint.transformResponse ?? defaultTransformResponse)(result.data),
       };
     } catch (error) {
       if (endpoint.onError)

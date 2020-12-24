@@ -3,7 +3,6 @@ import { RootState } from './core/apiState';
 import { BaseQueryExtraOptions, BaseQueryFn, BaseQueryResult, BaseQueryArg } from './baseQueryTypes';
 import { fetchBaseQuery } from './fetchBaseQuery';
 import { HasRequiredProps } from './tsHelpers';
-import { QueryApi } from './core/buildThunks';
 
 const resultType = Symbol();
 
@@ -35,6 +34,15 @@ type EntityDescription<EntityType> = EntityType | FullEntityDescription<EntityTy
 type ResultDescription<EntityTypes extends string, ResultType, QueryArg> =
   | ReadonlyArray<EntityDescription<EntityTypes>>
   | GetResultDescriptionFn<EntityTypes, ResultType, QueryArg>;
+
+export interface QueryApi<ReducerPath extends string, Context extends {}> {
+  signal?: AbortSignal;
+  dispatch: ThunkDispatch<any, any, any>;
+  getState: () => RootState<any, any, ReducerPath>;
+  extra: unknown;
+  requestId: string;
+  context: Context;
+}
 
 export type QueryDefinition<
   QueryArg,

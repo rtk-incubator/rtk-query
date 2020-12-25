@@ -3,6 +3,21 @@ import { Api, createApi, fetchBaseQuery } from '@rtk-incubator/rtk-query';
 import { QueryDefinition, MutationDefinition } from '@internal/endpointDefinitions';
 import { ANY, expectType, expectExactType, setupApiStore, waitMs } from './helpers';
 
+const originalEnv = process.env.NODE_ENV;
+beforeAll(() => void (process.env.NODE_ENV = 'development'));
+afterAll(() => void (process.env.NODE_ENV = originalEnv));
+
+let spy: jest.SpyInstance;
+beforeAll(() => {
+  spy = jest.spyOn(console, 'error').mockImplementation(() => {});
+});
+afterEach(() => {
+  spy.mockReset();
+});
+afterAll(() => {
+  spy.mockRestore();
+});
+
 test('sensible defaults', () => {
   const api = createApi({
     baseQuery: fetchBaseQuery(),
@@ -105,23 +120,8 @@ describe('wrong entityTypes log errors', () => {
     middleware: (gDM) => gDM().concat(api.middleware),
   });
 
-  const originalEnv = process.env.NODE_ENV;
-  beforeAll(() => void (process.env.NODE_ENV = 'development'));
-  afterAll(() => void (process.env.NODE_ENV = originalEnv));
-
   beforeEach(() => {
     baseQuery.mockResolvedValue({});
-  });
-
-  let spy: jest.SpyInstance;
-  beforeAll(() => {
-    spy = jest.spyOn(console, 'error').mockImplementation(() => {});
-  });
-  afterEach(() => {
-    spy.mockReset();
-  });
-  afterAll(() => {
-    spy.mockRestore();
   });
 
   test.each<[keyof typeof api.endpoints, boolean?]>([
@@ -285,7 +285,7 @@ describe('endpoint definition typings', () => {
   });
 
   describe('enhancing endpoint definitions', () => {
-    const baseQuery = jest.fn(fetchBaseQuery({ baseUrl: 'https://example.com' }));
+    const baseQuery = jest.fn((x: string) => ({ data: 'success' }));
     const baseQueryApiMatcher = {
       dispatch: expect.any(Function),
       getState: expect.any(Function),
@@ -294,17 +294,24 @@ describe('endpoint definition typings', () => {
     beforeEach(() => {
       baseQuery.mockClear();
     });
-    const api = createApi({
-      baseQuery,
-      entityTypes: ['old'],
-      endpoints: (build) => ({
-        query1: build.query<'out1', 'in1'>({ query: (id) => `${id}` }),
-        query2: build.query<'out2', 'in2'>({ query: (id) => `${id}` }),
-        mutation1: build.mutation<'out1', 'in1'>({ query: (id) => `${id}` }),
-        mutation2: build.mutation<'out2', 'in2'>({ query: (id) => `${id}` }),
-      }),
+    function getNewApi() {
+      return createApi({
+        baseQuery,
+        entityTypes: ['old'],
+        endpoints: (build) => ({
+          query1: build.query<'out1', 'in1'>({ query: (id) => `${id}` }),
+          query2: build.query<'out2', 'in2'>({ query: (id) => `${id}` }),
+          mutation1: build.mutation<'out1', 'in1'>({ query: (id) => `${id}` }),
+          mutation2: build.mutation<'out2', 'in2'>({ query: (id) => `${id}` }),
+        }),
+      });
+    }
+    let api = getNewApi();
+    let storeRef = setupApiStore(api);
+    beforeEach(() => {
+      api = getNewApi();
+      storeRef = setupApiStore(api);
     });
-    const storeRef = setupApiStore(api);
 
     test('pre-modification behaviour', async () => {
       storeRef.store.dispatch(api.endpoints.query1.initiate('in1'));
@@ -319,13 +326,64 @@ describe('endpoint definition typings', () => {
       ]);
     });
 
-    test('modify', () => {
-      api.enhanceEndpoints<'new'>({
-        entityTypes: (eT) => {
-          expect(eT).toEqual(['old']);
-          return ['new'] as const;
-        },
+    test('warn on wrong entityType', async () => {
+      // only type-test this part
+      if (2 > 1) {
+        api.enhanceEndpoints({
+          endpoints: {
+            query1: {
+              // @ts-expect-error
+              provides: ['new'],
+            },
+            query2: {
+              // @ts-expect-error
+              provides: ['missing'],
+            },
+          },
+        });
+      }
 
+      const enhanced = api.enhanceEndpoints({
+        addEntityTypes: ['new'],
+        endpoints: {
+          query1: {
+            provides: ['new'],
+          },
+          query2: {
+            // @ts-expect-error
+            provides: ['missing'],
+          },
+        },
+      });
+
+      storeRef.store.dispatch(api.endpoints.query1.initiate('in1'));
+      await waitMs(1);
+      expect(spy).not.toHaveBeenCalled();
+
+      storeRef.store.dispatch(api.endpoints.query2.initiate('in2'));
+      await waitMs(1);
+      debugger;
+      expect(spy).toHaveBeenCalledWith("Entity type 'missing' was used, but not specified in `entityTypes`!");
+
+      // only type-test this part
+      if (2 > 1) {
+        enhanced.enhanceEndpoints({
+          endpoints: {
+            query1: {
+              // returned `enhanced` api contains "new" enitityType
+              provides: ['new'],
+            },
+            query2: {
+              // @ts-expect-error
+              provides: ['missing'],
+            },
+          },
+        });
+      }
+    });
+
+    test('modify', () => {
+      api.enhanceEndpoints({
         endpoints: {
           query1: {
             query: (x) => {

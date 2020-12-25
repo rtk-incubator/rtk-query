@@ -51,13 +51,13 @@ export function buildCreateApi<Modules extends [Module<any>, ...Module<any>[]]>(
 
     const api = {
       injectEndpoints,
-      enhanceEndpoints({ entityTypes, endpoints }) {
-        if (entityTypes) {
-          optionsWithDefaults.entityTypes.splice(
-            0,
-            optionsWithDefaults.entityTypes.length,
-            ...(entityTypes(optionsWithDefaults.entityTypes as string[]) as any[])
-          );
+      enhanceEndpoints({ addEntityTypes, endpoints }) {
+        if (addEntityTypes) {
+          for (const eT of addEntityTypes) {
+            if (!optionsWithDefaults.entityTypes.includes(eT as any)) {
+              optionsWithDefaults.entityTypes.push(eT as any);
+            }
+          }
         }
         if (endpoints) {
           for (const [endpoint, partialDefinition] of Object.entries(endpoints)) {

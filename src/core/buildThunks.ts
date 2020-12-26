@@ -8,6 +8,7 @@ import {
   EndpointDefinitions,
   MutationApi,
   MutationDefinition,
+  QueryApi,
   QueryArgFrom,
   QueryDefinition,
   ResultTypeFrom,
@@ -17,6 +18,7 @@ import { Patch, isDraftable, produceWithPatches, enablePatches } from 'immer';
 import { AnyAction, createAsyncThunk, ThunkAction, ThunkDispatch, AsyncThunk } from '@reduxjs/toolkit';
 
 import { PrefetchOptions } from '../react-hooks/buildHooks';
+import { HandledError } from '../HandledError';
 
 import { ApiEndpointQuery } from './module';
 
@@ -94,12 +96,6 @@ export interface ThunkResult {
 export type QueryThunk = AsyncThunk<ThunkResult, QueryThunkArg<any>, {}>;
 export type MutationThunk = AsyncThunk<ThunkResult, MutationThunkArg<any>, {}>;
 
-export interface QueryApi {
-  signal?: AbortSignal;
-  dispatch: ThunkDispatch<any, any, any>;
-  getState: () => unknown;
-}
-
 function defaultTransformResponse(baseQueryReturnValue: unknown) {
   return baseQueryReturnValue;
 }
@@ -124,10 +120,6 @@ export type UpdateQueryResultThunk<Definitions extends EndpointDefinitions, Part
 ) => ThunkAction<PatchCollection, PartialState, any, AnyAction>;
 
 type PatchCollection = { patches: Patch[]; inversePatches: Patch[] };
-
-export class HandledError {
-  constructor(public readonly value: any) {}
-}
 
 export function buildThunks<
   BaseQuery extends BaseQueryFn,
@@ -199,18 +191,37 @@ export function buildThunks<
     { state: RootState<any, string, ReducerPath> }
   >(
     `${reducerPath}/executeQuery`,
-    async (arg, { signal, rejectWithValue, dispatch, getState }) => {
-      const result = await baseQuery(
-        arg.internalQueryArgs,
-        { signal, dispatch, getState },
-        endpointDefinitions[arg.endpoint].extraOptions as any
-      );
-      if (result.error) return rejectWithValue(result.error);
+    async (arg, { signal, rejectWithValue, ...api }) => {
+      const endpoint = endpointDefinitions[arg.endpoint] as QueryDefinition<any, any, any, any>;
 
-      return {
-        fulfilledTimeStamp: Date.now(),
-        result: await (endpointDefinitions[arg.endpoint].transformResponse ?? defaultTransformResponse)(result.data),
+      const context: Record<string, any> = {};
+      const queryApi: QueryApi<ReducerPath, any> = {
+        ...api,
+        context,
       };
+
+      if (endpoint.onStart) endpoint.onStart(arg.originalArgs, queryApi);
+
+      try {
+        const result = await baseQuery(
+          arg.internalQueryArgs,
+          { signal, dispatch: api.dispatch, getState: api.getState },
+          endpoint.extraOptions as any
+        );
+        if (result.error) throw new HandledError(result.error);
+        if (endpoint.onSuccess) endpoint.onSuccess(arg.originalArgs, queryApi, result.data);
+        return {
+          fulfilledTimeStamp: Date.now(),
+          result: await (endpoint.transformResponse ?? defaultTransformResponse)(result.data),
+        };
+      } catch (error) {
+        if (endpoint.onError)
+          endpoint.onError(arg.originalArgs, queryApi, error instanceof HandledError ? error.value : error);
+        if (error instanceof HandledError) {
+          return rejectWithValue(error.value);
+        }
+        throw error;
+      }
     },
     {
       condition(arg, { getState }) {
@@ -248,23 +259,23 @@ export function buildThunks<
     const endpoint = endpointDefinitions[arg.endpoint] as MutationDefinition<any, any, any, any>;
 
     const context: Record<string, any> = {};
-    const mutationApi = {
+    const mutationApi: MutationApi<ReducerPath, any> = {
       ...api,
       context,
-    } as MutationApi<ReducerPath, any>;
+    };
 
     if (endpoint.onStart) endpoint.onStart(arg.originalArgs, mutationApi);
     try {
       const result = await baseQuery(
         arg.internalQueryArgs,
         { signal, dispatch: api.dispatch, getState: api.getState },
-        endpointDefinitions[arg.endpoint].extraOptions as any
+        endpoint.extraOptions as any
       );
       if (result.error) throw new HandledError(result.error);
       if (endpoint.onSuccess) endpoint.onSuccess(arg.originalArgs, mutationApi, result.data);
       return {
         fulfilledTimeStamp: Date.now(),
-        result: (endpointDefinitions[arg.endpoint].transformResponse ?? defaultTransformResponse)(result.data),
+        result: await (endpoint.transformResponse ?? defaultTransformResponse)(result.data),
       };
     } catch (error) {
       if (endpoint.onError)

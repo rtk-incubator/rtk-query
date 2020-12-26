@@ -120,12 +120,17 @@ Endpoints are just a set of operations that you want to perform against your ser
   - Used by `mutations` for [cache invalidation](../concepts/mutations#advanced-mutations-with-revalidation) purposes.
   - Expects the same shapes as `provides`
 
-- `onStart`, `onError` and `onSuccess` _(optional)_
+- `onStart`, `onError` and `onSuccess` _(optional)_ - Available to both [queries](../concepts/queries) and [mutations](../concepts/mutations)
   - Can be used in `mutations` for [optimistic updates](../concepts/optimistic-updates).
-  - ```ts title="signatures"
+  - ```ts title="Mutation lifecycle signatures"
     function onStart(arg: QueryArg, mutationApi: MutationApi<ReducerPath, Context>): void;
     function onError(arg: QueryArg, mutationApi: MutationApi<ReducerPath, Context>, error: unknown): void;
     function onSuccess(arg: QueryArg, mutationApi: MutationApi<ReducerPath, Context>, result: ResultType): void;
+    ```
+  - ```ts title="Query lifecycle signatures"
+    function onStart(arg: QueryArg, queryApi: QueryApi<ReducerPath, Context>): void;
+    function onError(arg: QueryArg, queryApi: QueryApi<ReducerPath, Context>, error: unknown): void;
+    function onSuccess(arg: QueryArg, queryApi: QueryApi<ReducerPath, Context>, result: ResultType): void;
     ```
 
 #### How endpoints get used
@@ -380,31 +385,12 @@ These may change at any given time and are not part of the public API for now
 - `removeQueryResult: ActionCreatorWithPayload<{ queryCacheKey: QueryCacheKey }, string>`
 - `unsubscribeQueryResult: ActionCreatorWithPayload<{ queryCacheKey: QueryCacheKey, requestId: string }, string>`,
 - `unsubscribeMutationResult: ActionCreatorWithPayload<MutationSubstateIdentifier, string>`,
-- `prefetchThunk(endpointName, args, options: PrefetchOptions) => ThunkAction<void, any, any, AnyAction>`
 
 ### `util`
 
-Both of these utils are currently used for [optimistic updates](../concepts/optimistic-updates).
-
-- **patchQueryResult**
-
-  ```ts
-  <EndpointName extends QueryKeys<Definitions>>(
-    endpointName: EndpointName,
-    args: QueryArgFrom<Definitions[EndpointName]>,
-    patches: Patch[]
-  ) => ThunkAction<void, PartialState, any, AnyAction>
-  ```
-
-- **updateQueryResult**
-
-  ```ts
-  <EndpointName extends QueryKeys<Definitions>>(
-    endpointName: EndpointName,
-    args: QueryArgFrom<Definitions[EndpointName]>,
-    updateRecicpe: Recipe<ResultTypeFrom<Definitions[EndpointName]>>
-  ) => ThunkAction<PatchCollection, PartialState, any, AnyAction>
-  ```
+- **prefetchThunk** - used for [prefetching](../concepts/prefetching).
+- **patchQueryResult** - used for [optimistic updates](../concepts/optimistic-updates).
+- **updateQueryResult** - used for [optimistic updates](../concepts/optimistic-updates).
 
 ### `injectEndpoints`
 

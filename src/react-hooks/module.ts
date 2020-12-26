@@ -11,7 +11,13 @@ import { Api, Module } from '../apiTypes';
 import { capitalize } from '../utils';
 import { safeAssign } from '../tsHelpers';
 import { BaseQueryFn } from '../baseQueryTypes';
-import { batch } from 'react-redux';
+
+import {
+  useDispatch as rrUseDispatch,
+  useSelector as rrUseSelector,
+  useStore as rrUseStore,
+  batch as rrBatch,
+} from 'react-redux';
 
 export const reactHooksModuleName = Symbol();
 export type ReactHooksModule = typeof reactHooksModuleName;
@@ -36,10 +42,25 @@ declare module '../apiTypes' {
   }
 }
 
-export const reactHooksModule: Module<ReactHooksModule> = {
+export interface ReactHooksModuleOptions {
+  batch?: typeof import('react-redux').batch;
+  useDispatch?: typeof import('react-redux').useDispatch;
+  useSelector?: typeof import('react-redux').useSelector;
+  useStore?: typeof import('react-redux').useStore;
+}
+
+export const reactHooksModule = ({
+  batch = rrBatch,
+  useDispatch = rrUseDispatch,
+  useSelector = rrUseSelector,
+  useStore = rrUseStore,
+}: ReactHooksModuleOptions = {}): Module<ReactHooksModule> => ({
   name: reactHooksModuleName,
   init(api, options, context) {
-    const { buildQueryHooks, buildMutationHook, usePrefetch } = buildHooks({ api });
+    const { buildQueryHooks, buildMutationHook, usePrefetch } = buildHooks({
+      api,
+      moduleOptions: { batch, useDispatch, useSelector, useStore },
+    });
     safeAssign(api, { usePrefetch });
     safeAssign(context, { batch });
 
@@ -64,4 +85,4 @@ export const reactHooksModule: Module<ReactHooksModule> = {
       },
     };
   },
-};
+});

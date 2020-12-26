@@ -94,7 +94,7 @@ export type InternalActions = SliceActions & {
   onFocusLost: typeof onFocusLost;
 };
 
-export const coreModule: Module<CoreModule> = {
+export const coreModule = (): Module<CoreModule> => ({
   name: coreModuleName,
   init(
     api,
@@ -210,4 +210,4 @@ export const coreModule: Module<CoreModule> = {
       },
     };
   },
-};
+});

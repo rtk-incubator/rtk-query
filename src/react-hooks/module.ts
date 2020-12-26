@@ -11,6 +11,7 @@ import { Api, Module } from '../apiTypes';
 import { capitalize } from '../utils';
 import { safeAssign } from '../tsHelpers';
 import { BaseQueryFn } from '../baseQueryTypes';
+import { batch } from 'react-redux';
 
 export const reactHooksModuleName = Symbol();
 export type ReactHooksModule = typeof reactHooksModuleName;
@@ -40,6 +41,7 @@ export const reactHooksModule: Module<ReactHooksModule> = {
   init(api, options, context) {
     const { buildQueryHooks, buildMutationHook, usePrefetch } = buildHooks({ api });
     safeAssign(api, { usePrefetch });
+    safeAssign(context, { batch });
 
     return {
       injectEndpoint(endpoint, definition) {

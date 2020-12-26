@@ -108,7 +108,7 @@ export const coreModule: Module<CoreModule> = {
       refetchOnFocus,
       refetchOnReconnect,
     },
-    { endpointDefinitions }
+    context
   ) {
     assertCast<InternalSerializeQueryArgs<any>>(serializeQueryArgs);
 
@@ -143,13 +143,13 @@ export const coreModule: Module<CoreModule> = {
     } = buildThunks({
       baseQuery,
       reducerPath,
-      endpointDefinitions,
+      context,
       api,
       serializeQueryArgs,
     });
 
     const { reducer, actions: sliceActions } = buildSlice({
-      endpointDefinitions,
+      context,
       queryThunk,
       mutationThunk,
       reducerPath,
@@ -162,7 +162,7 @@ export const coreModule: Module<CoreModule> = {
 
     const { middleware } = buildMiddleware({
       reducerPath,
-      endpointDefinitions,
+      context,
       queryThunk,
       mutationThunk,
       api,

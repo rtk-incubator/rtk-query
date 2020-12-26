@@ -7,17 +7,16 @@ hide_title: true
 
 # Customizing `createApi`
 
-Right now, we are shipping `createApi` in two flavors:
+Currently, RTK Query includes two variants of `createApi`:
 
 - `createPureApi` which contains only the basic redux logic (the core module)
-- `createApi` which contains the core module and additionally the react-hooks module
+- `createApi` which contains both the core and react-hooks modules
 
-You can create your own versions of `createApi` by either specifying non-default options for the modules, or add your own modules.
+You can create your own versions of `createApi` by either specifying non-default options for the modules or by adding your own modules.
 
 ## Customizing the React-Redux Hooks
 
 If you want the hooks to use different versions of `useSelector` or `useDispatch`, for example if you are using a custom context, you can pass these in at module creation:
-If you have created a module
 
 ```ts
 import * as React from 'react';
@@ -30,7 +29,7 @@ const customCreateApi = buildCreateApi(coreModule(), reactHooksModule({ useDispa
 
 ## Creating your own module
 
-If you want to create your own module, best take a lookt at [the react-hooks module](https://github.com/rtk-incubator/rtk-query/blob/next/src/react-hooks/module.ts) as what such an implementation would look like.
+If you want to create your own module, you should review [the react-hooks module](https://github.com/rtk-incubator/rtk-query/blob/next/src/react-hooks/module.ts) to see what an implementation would look like.
 
 Here is a very stripped down version:
 
@@ -44,7 +43,7 @@ export type CustomModule = typeof customModuleName;
 declare module '@rtk-incubator/rtk-query' {
   export interface ApiModules<
     BaseQuery extends BaseQueryFn,
-    Definitions extends If you have created a moduleEndpointDefinitions,
+    Definitions extends EndpointDefinitions,
     ReducerPath extends string,
     EntityTypes extends string
   > {

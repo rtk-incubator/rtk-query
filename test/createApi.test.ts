@@ -20,7 +20,6 @@ afterAll(() => {
   spy.mockRestore();
 });
 
-
 test('sensible defaults', () => {
   const api = createApi({
     baseQuery: fetchBaseQuery(),

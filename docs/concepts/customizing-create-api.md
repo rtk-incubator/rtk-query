@@ -29,7 +29,7 @@ const customCreateApi = buildCreateApi(coreModule(), reactHooksModule({ useDispa
 
 ## Creating your own module
 
-If you want to create your own module, you should review [the react-hooks module](https://github.com/rtk-incubator/rtk-query/blob/next/src/react-hooks/module.ts) to see what an implementation would look like.
+If you want to create your own module, you should review [the react-hooks module](https://github.com/rtk-incubator/rtk-query/blob/main/src/react-hooks/module.ts) to see what an implementation would look like.
 
 Here is a very stripped down version:
 

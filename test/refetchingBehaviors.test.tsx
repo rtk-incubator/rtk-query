@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { createApi, setupListeners } from '@rtk-incubator/rtk-query';
+import { createApi, setupListeners } from '@rtk-incubator/rtk-query/react';
 import { act, fireEvent, render, waitFor } from '@testing-library/react';
 import { setupApiStore, waitMs } from './helpers';
 import { AnyAction } from '@reduxjs/toolkit';

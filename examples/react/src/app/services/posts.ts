@@ -1,4 +1,4 @@
-import { createApi, fetchBaseQuery, retry } from '@rtk-incubator/rtk-query';
+import { createApi, fetchBaseQuery, retry } from '@rtk-incubator/rtk-query/react';
 import { RootState } from '../store';
 
 export interface Post {

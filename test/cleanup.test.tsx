@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import { createApi, QueryStatus } from '@rtk-incubator/rtk-query';
+import { createApi, QueryStatus } from '@rtk-incubator/rtk-query/react';
 import { render, waitFor } from '@testing-library/react';
 import { setupApiStore } from './helpers';
 

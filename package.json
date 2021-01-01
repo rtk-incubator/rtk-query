@@ -8,20 +8,21 @@
   "main": "dist/index.js",
   "module": "dist/esm/index.js",
   "sideEffects": false,
-  "types": "dist/ts/index.d.ts",
+  "types": "dist/esm/ts/index.d.ts",
   "typesVersions": {
     ">=4.1": {
       "dist": [
-        "dist/ts-4.1/index.d.ts"
+        "dist/esm/ts-4.1/index.d.ts"
       ],
-      "dist/ts/*": [
-        "dist/ts-4.1/*"
+      "dist/esm/ts/*": [
+        "dist/esm/ts-4.1/*"
       ]
     }
   },
   "files": [
     "dist",
-    "src"
+    "src",
+    "react"
   ],
   "publishConfig": {
     "access": "public"
@@ -31,7 +32,7 @@
   },
   "scripts": {
     "start": "tsdx watch",
-    "build": "rollup -c && node post-build.js",
+    "build": "rm -r dist; rollup -c && node post-build.js",
     "test": "tsdx test",
     "lint": "tsdx lint",
     "prepare": "yarn build",
@@ -67,13 +68,18 @@
       "limit": "15 KB"
     },
     {
-      "name": "createBaseApi + setupListeners",
-      "path": "dist/esm/index.js",
-      "import": "{ createBaseApi, setupListeners }"
+      "name": "ESM full (React)",
+      "path": "dist/esm/react.js",
+      "limit": "15 KB"
     },
     {
       "name": "createApi + setupListeners",
       "path": "dist/esm/index.js",
+      "import": "{ createApi, setupListeners }"
+    },
+    {
+      "name": "createApi (React) + setupListeners",
+      "path": "dist/esm/react.js",
       "import": "{ createApi, setupListeners }"
     },
     {
@@ -88,12 +94,17 @@
     },
     {
       "name": "ApiProvider",
-      "path": "dist/esm/index.js",
+      "path": "dist/esm/react.js",
       "import": "{ ApiProvider }"
     },
     {
       "name": "CJS minfied",
       "path": "dist/index.cjs.production.min.js",
+      "limit": "25 KB"
+    },
+    {
+      "name": "CJS React minfied",
+      "path": "dist/react.cjs.production.min.js",
       "limit": "25 KB"
     }
   ],

@@ -1,5 +1,5 @@
 import { AnyAction, createSlice, SerializedError } from '@reduxjs/toolkit';
-import { createApi, fetchBaseQuery } from '@rtk-incubator/rtk-query';
+import { createApi, fetchBaseQuery } from '@rtk-incubator/rtk-query/react';
 import { renderHook, act } from '@testing-library/react-hooks';
 import { expectExactType, hookWaitFor, setupApiStore } from './helpers';
 

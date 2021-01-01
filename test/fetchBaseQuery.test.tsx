@@ -259,7 +259,6 @@ describe('fetchBaseQuery', () => {
         {}
       ));
 
-      expect(request.headers['content-type']).toBe('application/json');
       expect(request.headers['fake']).toBe(defaultHeaders['fake']);
       expect(request.headers['delete']).toBe(defaultHeaders['delete']);
       expect(request.headers['delete2']).toBe(defaultHeaders['delete2']);
@@ -278,7 +277,6 @@ describe('fetchBaseQuery', () => {
       ));
 
       expect(request.headers['authorization']).toBe('Bearer banana');
-      expect(request.headers['content-type']).toBe('application/json');
       expect(request.headers['fake']).toBe(defaultHeaders['fake']);
       expect(request.headers['delete']).toBe(defaultHeaders['delete']);
       expect(request.headers['delete2']).toBe(defaultHeaders['delete2']);
@@ -391,7 +389,6 @@ describe('fetchBaseQuery', () => {
       {}
     ));
 
-    expect(request.headers['content-type']).toBe('application/json');
     expect(request.headers['fake']).toBe(defaultHeaders['fake']);
     expect(request.headers['delete']).toBe(defaultHeaders['delete']);
     expect(request.headers['delete2']).toBe(defaultHeaders['delete2']);
@@ -410,7 +407,6 @@ describe('fetchBaseQuery', () => {
       {}
     ));
 
-    expect(request.headers['content-type']).toBe('application/json');
     expect(request.headers['banana']).toBe('1');
     expect(request.headers['fake']).toBe(defaultHeaders['fake']);
     expect(request.headers['delete']).toBe(defaultHeaders['delete']);
@@ -430,7 +426,6 @@ describe('fetchBaseQuery', () => {
       {}
     ));
 
-    expect(request.headers['content-type']).toBe('application/json');
     expect(request.headers['banana']).toBeUndefined();
     expect(request.headers['fake']).toBe(defaultHeaders['fake']);
     expect(request.headers['delete']).toBe(defaultHeaders['delete']);
@@ -460,5 +455,25 @@ describe('fetchFn', () => {
     ));
 
     expect(request.url).toEqual(`${baseUrl}/echo?apple=fruit`);
+  });
+});
+
+describe('FormData', () => {
+  test('sets the right headers when sending FormData', async () => {
+    let request: any;
+    const body = new FormData();
+    body.append('username', 'test');
+    body.append('file', new Blob([JSON.stringify({ hello: 'there' }, null, 2)], { type: 'application/json' }));
+
+    ({ data: request } = await baseQuery(
+      { url: '/echo', method: 'POST', body },
+      {
+        signal: undefined,
+        dispatch: storeRef.store.dispatch,
+        getState: storeRef.store.getState,
+      },
+      {}
+    ));
+    expect(request.headers['content-type']).not.toContain('application/json');
   });
 });

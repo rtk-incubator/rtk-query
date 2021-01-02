@@ -3,7 +3,6 @@
  */
 import { buildThunks, PatchQueryResultThunk, UpdateQueryResultThunk } from './buildThunks';
 import { AnyAction, Middleware, Reducer, ThunkAction, ThunkDispatch } from '@reduxjs/toolkit';
-import { PrefetchOptions } from '../react-hooks/buildHooks';
 import {
   EndpointDefinitions,
   QueryArgFrom,
@@ -25,6 +24,12 @@ import { assertCast, Id, safeAssign } from '../tsHelpers';
 import { InternalSerializeQueryArgs } from '../defaultSerializeQueryArgs';
 import { SliceActions } from './buildSlice';
 import { BaseQueryFn } from '../baseQueryTypes';
+
+export type PrefetchOptions =
+  | { force?: boolean }
+  | {
+      ifOlderThan?: false | number;
+    };
 
 export const coreModuleName = Symbol();
 export type CoreModule = typeof coreModuleName;

@@ -42,7 +42,6 @@ declare module '../apiTypes' {
   }
 }
 
-/** @ts-ignore */
 type RR = typeof import('react-redux');
 
 export interface ReactHooksModuleOptions {

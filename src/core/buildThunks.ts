@@ -17,10 +17,9 @@ import { Draft, isAllOf, isFulfilled, isPending, isRejected } from '@reduxjs/too
 import { Patch, isDraftable, produceWithPatches, enablePatches } from 'immer';
 import { AnyAction, createAsyncThunk, ThunkAction, ThunkDispatch, AsyncThunk } from '@reduxjs/toolkit';
 
-import { PrefetchOptions } from '../react-hooks/buildHooks';
 import { HandledError } from '../HandledError';
 
-import { ApiEndpointQuery } from './module';
+import { ApiEndpointQuery, PrefetchOptions } from './module';
 
 declare module './module' {
   export interface ApiEndpointQuery<

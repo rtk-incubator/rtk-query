@@ -10,7 +10,6 @@ const baseQuery = retry(
     }),
 );
 
-// We use createBaseApi here as it is only the core and does not include any React-related code (such as hooks)
 export const counterApi = createApi({
     reducerPath: 'counterApi',
     baseQuery,

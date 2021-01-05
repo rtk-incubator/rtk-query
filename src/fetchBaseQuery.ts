@@ -53,6 +53,12 @@ function cleanUndefinedHeaders(headers: any) {
   return copy;
 }
 
+export type FetchBaseQueryArgs = {
+  baseUrl?: string;
+  prepareHeaders?: (headers: Headers, api: { getState: () => unknown }) => MaybePromise<Headers>;
+  fetchFn?: (input: RequestInfo, init?: RequestInit | undefined) => Promise<Response>;
+} & RequestInit;
+
 /**
  * This is a very small wrapper around fetch that aims to simplify requests.
  *
@@ -77,11 +83,7 @@ export function fetchBaseQuery({
   prepareHeaders = (x) => x,
   fetchFn = fetch,
   ...baseFetchOptions
-}: {
-  baseUrl?: string;
-  prepareHeaders?: (headers: Headers, api: { getState: () => unknown }) => MaybePromise<Headers>;
-  fetchFn?: (input: RequestInfo, init?: RequestInit | undefined) => Promise<Response>;
-} & RequestInit = {}): BaseQueryFn<string | FetchArgs, unknown, FetchBaseQueryError, {}> {
+}: FetchBaseQueryArgs = {}): BaseQueryFn<string | FetchArgs, unknown, FetchBaseQueryError, {}> {
   return async (arg, { signal, getState }) => {
     let {
       url,

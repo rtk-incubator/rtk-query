@@ -4,7 +4,7 @@ import { MaybePromise, UnwrapPromise } from './tsHelpers';
 export interface BaseQueryApi {
   signal?: AbortSignal;
   dispatch: ThunkDispatch<any, any, any>;
-  getState: () => unknown;
+  getState: () => import('react-redux').DefaultRootState;
 }
 
 export type BaseQueryFn<Args = any, Result = unknown, Error = unknown, DefinitionExtraOptions = {}> = (

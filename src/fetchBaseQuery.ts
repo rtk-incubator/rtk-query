@@ -42,11 +42,11 @@ export interface FetchBaseQueryError {
   data: unknown;
 }
 
-function excludeUndefined(headers: any) {
-  if (!isPlainObject(headers)) {
-    return headers;
+function stripUndefined(obj: any) {
+  if (!isPlainObject(obj)) {
+    return obj;
   }
-  const copy: Record<string, any> = { ...headers };
+  const copy: Record<string, any> = { ...obj };
   for (const [k, v] of Object.entries(copy)) {
     if (typeof v === 'undefined') delete copy[k];
   }
@@ -101,7 +101,7 @@ export function fetchBaseQuery({
       ...rest,
     };
 
-    config.headers = await prepareHeaders(new Headers(excludeUndefined(headers)), { getState });
+    config.headers = await prepareHeaders(new Headers(stripUndefined(headers)), { getState });
 
     if (!config.headers.has('content-type')) {
       config.headers.set('content-type', 'application/json');
@@ -113,7 +113,7 @@ export function fetchBaseQuery({
 
     if (params) {
       const divider = ~url.indexOf('?') ? '&' : '?';
-      const query = new URLSearchParams(excludeUndefined(params));
+      const query = new URLSearchParams(stripUndefined(params));
       url += divider + query;
     }
 

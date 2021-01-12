@@ -221,6 +221,23 @@ describe('fetchBaseQuery', () => {
 
       expect(request.url).toEqual(`${baseUrl}/echo?apple=fruit`);
     });
+
+    it('should strip undefined values from the end params', async () => {
+      const params = { apple: 'fruit', banana: undefined, randy: null };
+
+      let request: any;
+      ({ data: request } = await baseQuery(
+        { url: '/echo', params },
+        {
+          signal: undefined,
+          dispatch: storeRef.store.dispatch,
+          getState: storeRef.store.getState,
+        },
+        {}
+      ));
+
+      expect(request.url).toEqual(`${baseUrl}/echo?apple=fruit&randy=null`);
+    });
   });
 
   describe('validateStatus', () => {

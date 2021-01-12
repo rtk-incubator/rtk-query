@@ -103,7 +103,8 @@ export function fetchBaseQuery({
 
     config.headers = await prepareHeaders(new Headers(cleanUndefinedHeaders(headers)), { getState });
 
-    if (!config.headers.has('content-type')) {
+    // Only set the content-type to json if there is an object that is not FormData()
+    if (!config.headers.has('content-type') && body && typeof body === 'object' && typeof body.append !== 'function') {
       config.headers.set('content-type', 'application/json');
     }
 

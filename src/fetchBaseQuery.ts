@@ -42,7 +42,7 @@ export interface FetchBaseQueryError {
   data: unknown;
 }
 
-function cleanUndefinedHeaders(headers: any) {
+function excludeUndefined(headers: any) {
   if (!isPlainObject(headers)) {
     return headers;
   }
@@ -101,7 +101,7 @@ export function fetchBaseQuery({
       ...rest,
     };
 
-    config.headers = await prepareHeaders(new Headers(cleanUndefinedHeaders(headers)), { getState });
+    config.headers = await prepareHeaders(new Headers(excludeUndefined(headers)), { getState });
 
     if (!config.headers.has('content-type')) {
       config.headers.set('content-type', 'application/json');
@@ -113,7 +113,7 @@ export function fetchBaseQuery({
 
     if (params) {
       const divider = ~url.indexOf('?') ? '&' : '?';
-      const query = new URLSearchParams(params);
+      const query = new URLSearchParams(excludeUndefined(params));
       url += divider + query;
     }
 

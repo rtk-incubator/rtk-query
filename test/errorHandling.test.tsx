@@ -148,7 +148,6 @@ describe('query error handling', () => {
         isError: false,
         isSuccess: true,
         data: { value: 'success' },
-        error: undefined,
       })
     );
   });

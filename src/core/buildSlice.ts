@@ -98,7 +98,7 @@ export function buildSlice({
             if (substate.requestId !== meta.requestId) return;
             substate.status = QueryStatus.fulfilled;
             substate.data = copyWithStructuralSharing(substate.data, payload.result);
-            substate.error = undefined;
+            delete substate.error;
             substate.fulfilledTimeStamp = payload.fulfilledTimeStamp;
           });
         })

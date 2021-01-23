@@ -430,6 +430,62 @@ describe('endpoint definition typings', () => {
   });
 });
 
+describe.only('additional responseHandler behaviors', () => {
+  server.use(
+    rest.get('http://example.com/success', (_, res, ctx) =>
+      res.once(ctx.status(200), ctx.set('Total-Count', '42'), ctx.json([1, 2, 3]))
+    )
+  );
+
+  const apiFunc = (transformResponse?: any) =>
+    createApi({
+      baseQuery: fetchBaseQuery({ baseUrl: 'http://example.com' }),
+      endpoints: (build) => ({
+        query: build.query<Response, void>({
+          query: () => ({ url: '/success', responseHandler: 'raw' }),
+          transformResponse,
+        }),
+      }),
+    });
+
+  test.only('responseHandler can return raw Response', async () => {
+    const api = apiFunc();
+
+    const storeRef = setupApiStore(api);
+
+    const result = await storeRef.store.dispatch(api.endpoints.query.initiate());
+
+    const totalCount = result.data.headers.get('Total-Count');
+    const items = await result.data.json();
+
+    expect(totalCount).toEqual('42');
+    expect(items).toEqual([1, 2, 3]);
+  });
+
+  test('transformResponse handles raw Response returned by responseHandler', async () => {
+    const transformResponse = async (response: Response): Promise<any> => {
+      const totalCount = response.headers.get('Total-Count');
+      const items = await response.json();
+
+      return {
+        totalCount,
+        items,
+      };
+    };
+
+    const api = apiFunc(transformResponse);
+
+    const storeRef = setupApiStore(api);
+
+    const {
+      data: { totalCount, items },
+    } = await storeRef.store.dispatch(api.endpoints.query.initiate());
+
+    expect(totalCount).toEqual('42');
+    expect(items).toEqual([1, 2, 3]);
+  });
+});
+
 describe('additional transformResponse behaviors', () => {
   type SuccessResponse = { value: 'success' };
   type EchoResponseData = { banana: 'bread' };

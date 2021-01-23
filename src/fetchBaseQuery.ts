@@ -3,7 +3,7 @@ import { isPlainObject } from '@reduxjs/toolkit';
 import { BaseQueryFn } from './baseQueryTypes';
 import { MaybePromise, Override } from './tsHelpers';
 
-export type ResponseHandler = 'json' | 'text' | ((response: Response) => Promise<any>);
+export type ResponseHandler = 'json' | 'text' | 'raw';
 
 type CustomRequestInit = Override<
   RequestInit,
@@ -23,8 +23,8 @@ const defaultValidateStatus = (response: Response) => response.status >= 200 && 
 const isJsonContentType = (headers: Headers) => headers.get('content-type')?.trim()?.startsWith('application/json');
 
 const handleResponse = async (response: Response, responseHandler: ResponseHandler) => {
-  if (typeof responseHandler === 'function') {
-    return responseHandler(response);
+  if (responseHandler === 'raw') {
+    return response;
   }
 
   if (responseHandler === 'text') {

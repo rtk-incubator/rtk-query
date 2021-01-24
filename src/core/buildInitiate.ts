@@ -91,7 +91,7 @@ export function buildInitiate<InternalQueryArgs>({
       arg,
       { subscribe = true, forceRefetch, subscriptionOptions } = {}
     ) => (dispatch, getState) => {
-      const queryCacheKey = serializeQueryArgs({ queryArgs: arg, endpointDefinition, endpointName: endpointName });
+      const queryCacheKey = serializeQueryArgs({ queryArgs: arg, endpointDefinition, endpointName });
       const thunk = queryThunk({
         subscribe,
         forceRefetch,

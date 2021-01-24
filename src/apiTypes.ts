@@ -29,7 +29,7 @@ export type Module<Name extends ModuleName> = {
     options: Required<CreateApiOptions<BaseQuery, Definitions, ReducerPath, EntityTypes>>,
     context: ApiContext<Definitions>
   ): {
-    injectEndpoint(endpoint: string, definition: EndpointDefinition<any, any, any, any>): void;
+    injectEndpoint(endpointName: string, definition: EndpointDefinition<any, any, any, any>): void;
   };
 };
 

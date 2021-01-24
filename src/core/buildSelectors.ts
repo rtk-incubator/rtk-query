@@ -84,18 +84,17 @@ export function buildSelectors<InternalQueryArgs, Definitions extends EndpointDe
   }
 
   function buildQuerySelector(
-    endpoint: string,
-    definition: QueryDefinition<any, any, any, any>
+    endpointName: string,
+    endpointDefinition: QueryDefinition<any, any, any, any>
   ): QueryResultSelector<any, RootState> {
-    return (arg?) => {
+    return (queryArgs) => {
       const selectQuerySubState = createSelector(
         selectInternalState,
         (internalState) =>
-          (arg === skipSelector
+          (queryArgs === skipSelector
             ? undefined
-            : internalState.queries[
-                serializeQueryArgs({ queryArgs: arg, internalQueryArgs: definition.query(arg), endpoint })
-              ]) ?? defaultQuerySubState
+            : internalState.queries[serializeQueryArgs({ queryArgs, endpointDefinition, endpointName })]) ??
+          defaultQuerySubState
       );
       return createSelector(selectQuerySubState, withRequestFlags);
     };

@@ -82,13 +82,12 @@ export type MutationKeys<Definitions extends EndpointDefinitions> = {
 
 type BaseQuerySubState<D extends BaseEndpointDefinition<any, any, any>> = {
   originalArgs: QueryArgFrom<D>;
-  internalQueryArgs: unknown;
   requestId: string;
   data?: ResultTypeFrom<D>;
   error?:
     | SerializedError
     | (D extends QueryDefinition<any, infer BaseQuery, any, any> ? BaseQueryError<BaseQuery> : never);
-  endpoint: string;
+  endpointName: string;
   startedTimeStamp: number;
   fulfilledTimeStamp?: number;
 };
@@ -106,11 +105,10 @@ export type QuerySubState<D extends BaseEndpointDefinition<any, any, any>> = Id<
   | {
       status: QueryStatus.uninitialized;
       originalArgs?: undefined;
-      internalQueryArgs?: undefined;
       data?: undefined;
       error?: undefined;
       requestId?: undefined;
-      endpoint?: string;
+      endpointName?: string;
       startedTimeStamp?: undefined;
       fulfilledTimeStamp?: undefined;
     }
@@ -118,12 +116,11 @@ export type QuerySubState<D extends BaseEndpointDefinition<any, any, any>> = Id<
 
 type BaseMutationSubState<D extends BaseEndpointDefinition<any, any, any>> = {
   originalArgs?: QueryArgFrom<D>;
-  internalQueryArgs: unknown;
   data?: ResultTypeFrom<D>;
   error?:
     | SerializedError
     | (D extends MutationDefinition<any, infer BaseQuery, any, any> ? BaseQueryError<BaseQuery> : never);
-  endpoint: string;
+  endpointName: string;
   startedTimeStamp: number;
   fulfilledTimeStamp?: number;
 };
@@ -141,10 +138,9 @@ export type MutationSubState<D extends BaseEndpointDefinition<any, any, any>> =
   | {
       status: QueryStatus.uninitialized;
       originalArgs?: undefined;
-      internalQueryArgs?: undefined;
       data?: undefined;
       error?: undefined;
-      endpoint?: string;
+      endpointName?: string;
       startedTimeStamp?: undefined;
       fulfilledTimeStamp?: undefined;
     };

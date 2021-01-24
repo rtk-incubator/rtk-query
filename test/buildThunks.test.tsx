@@ -36,10 +36,7 @@ test('handles a non-async baseQuery without error', async () => {
     data: {
       url: 'user/1',
     },
-    endpoint: 'getUser',
-    internalQueryArgs: {
-      url: 'user/1',
-    },
+    endpointName: 'getUser',
     isError: false,
     isLoading: false,
     isSuccess: true,

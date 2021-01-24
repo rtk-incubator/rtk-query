@@ -86,27 +86,25 @@ export function buildInitiate<InternalQueryArgs>({
   const { unsubscribeQueryResult, unsubscribeMutationResult, updateSubscriptionOptions } = api.internalActions;
   return { buildInitiateQuery, buildInitiateMutation };
 
-  function buildInitiateQuery(endpoint: string, definition: QueryDefinition<any, any, any, any>) {
+  function buildInitiateQuery(endpointName: string, endpointDefinition: QueryDefinition<any, any, any, any>) {
     const queryAction: StartQueryActionCreator<any> = (
       arg,
       { subscribe = true, forceRefetch, subscriptionOptions } = {}
     ) => (dispatch, getState) => {
-      const internalQueryArgs = definition.query(arg);
-      const queryCacheKey = serializeQueryArgs({ queryArgs: arg, internalQueryArgs, endpoint });
+      const queryCacheKey = serializeQueryArgs({ queryArgs: arg, endpointDefinition, endpointName: endpointName });
       const thunk = queryThunk({
         subscribe,
         forceRefetch,
         subscriptionOptions,
-        endpoint,
+        endpointName,
         originalArgs: arg,
-        internalQueryArgs,
         queryCacheKey,
         startedTimeStamp: Date.now(),
       });
       const thunkResult = dispatch(thunk);
       const { requestId, abort } = thunkResult;
       const statePromise = thunkResult.then(() =>
-        (api.endpoints[endpoint] as ApiEndpointQuery<any, any>).select(arg)(getState())
+        (api.endpoints[endpointName] as ApiEndpointQuery<any, any>).select(arg)(getState())
       );
       return Object.assign(statePromise, {
         arg,
@@ -125,7 +123,7 @@ export function buildInitiate<InternalQueryArgs>({
             );
         },
         updateSubscriptionOptions(options: SubscriptionOptions) {
-          dispatch(updateSubscriptionOptions({ endpoint, requestId, queryCacheKey, options }));
+          dispatch(updateSubscriptionOptions({ endpointName, requestId, queryCacheKey, options }));
         },
       });
     };
@@ -133,14 +131,12 @@ export function buildInitiate<InternalQueryArgs>({
   }
 
   function buildInitiateMutation(
-    endpoint: string,
+    endpointName: string,
     definition: MutationDefinition<any, any, any, any>
   ): StartMutationActionCreator<any> {
     return (arg, { track = true } = {}) => (dispatch, getState) => {
-      const internalQueryArgs = definition.query(arg);
       const thunk = mutationThunk({
-        endpoint,
-        internalQueryArgs,
+        endpointName,
         originalArgs: arg,
         track,
         startedTimeStamp: Date.now(),

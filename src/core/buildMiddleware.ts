@@ -44,7 +44,7 @@ export function buildMiddleware<Definitions extends EndpointDefinitions, Reducer
     if (mutationThunk.fulfilled.match(action)) {
       invalidateEntities(
         calculateProvidedBy(
-          endpointDefinitions[action.meta.arg.endpoint].invalidates,
+          endpointDefinitions[action.meta.arg.endpointName].invalidates,
           action.payload.result,
           action.meta.arg.originalArgs,
           assertEntityType
@@ -85,9 +85,8 @@ export function buildMiddleware<Definitions extends EndpointDefinitions, Reducer
     override: Partial<QueryThunkArg<any>> = {}
   ) {
     return queryThunk({
-      endpoint: querySubState.endpoint,
+      endpointName: querySubState.endpointName,
       originalArgs: querySubState.originalArgs,
-      internalQueryArgs: querySubState.internalQueryArgs,
       subscribe: false,
       forceRefetch: true,
       startedTimeStamp: Date.now(),

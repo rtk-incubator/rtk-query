@@ -81,14 +81,13 @@ export function buildSlice({
             // only initialize substate if we want to subscribe to it
             draft[arg.queryCacheKey] ??= {
               status: QueryStatus.uninitialized,
-              endpoint: arg.endpoint,
+              endpointName: arg.endpointName,
             };
           }
 
           updateQuerySubstateIfExists(draft, arg.queryCacheKey, (substate) => {
             substate.status = QueryStatus.pending;
             substate.requestId = requestId;
-            substate.internalQueryArgs = arg.internalQueryArgs;
             substate.originalArgs = arg.originalArgs;
             substate.startedTimeStamp = arg.startedTimeStamp;
           });
@@ -133,9 +132,8 @@ export function buildSlice({
 
           draft[requestId] = {
             status: QueryStatus.pending,
-            internalQueryArgs: arg.internalQueryArgs,
             originalArgs: arg.originalArgs,
-            endpoint: arg.endpoint,
+            endpointName: arg.endpointName,
             startedTimeStamp: arg.startedTimeStamp,
           };
         })
@@ -166,9 +164,9 @@ export function buildSlice({
     extraReducers(builder) {
       builder
         .addCase(queryThunk.fulfilled, (draft, { payload, meta: { arg } }) => {
-          const { endpoint, queryCacheKey } = arg;
+          const { endpointName, queryCacheKey } = arg;
           const providedEntities = calculateProvidedBy(
-            definitions[endpoint].provides,
+            definitions[endpointName].provides,
             payload.result,
             arg.originalArgs,
             assertEntityType
@@ -203,7 +201,7 @@ export function buildSlice({
         {
           payload: { queryCacheKey, requestId, options },
         }: PayloadAction<
-          { endpoint: string; requestId: string; options: Subscribers[number] } & QuerySubstateIdentifier
+          { endpointName: string; requestId: string; options: Subscribers[number] } & QuerySubstateIdentifier
         >
       ) {
         if (draft?.[queryCacheKey]?.[requestId]) {

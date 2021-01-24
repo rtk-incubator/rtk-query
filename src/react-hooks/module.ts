@@ -65,22 +65,22 @@ export const reactHooksModule = ({
     safeAssign(context, { batch });
 
     return {
-      injectEndpoint(endpoint, definition) {
+      injectEndpoint(endpointName, definition) {
         const anyApi = (api as any) as Api<any, Record<string, any>, string, string, ReactHooksModule>;
         if (isQueryDefinition(definition)) {
-          const { useQuery, useQueryState, useQuerySubscription } = buildQueryHooks(endpoint);
-          safeAssign(anyApi.endpoints[endpoint], {
+          const { useQuery, useQueryState, useQuerySubscription } = buildQueryHooks(endpointName);
+          safeAssign(anyApi.endpoints[endpointName], {
             useQuery,
             useQueryState,
             useQuerySubscription,
           });
-          (api as any)[`use${capitalize(endpoint)}Query`] = useQuery;
+          (api as any)[`use${capitalize(endpointName)}Query`] = useQuery;
         } else if (isMutationDefinition(definition)) {
-          const useMutation = buildMutationHook(endpoint);
-          safeAssign(anyApi.endpoints[endpoint], {
+          const useMutation = buildMutationHook(endpointName);
+          safeAssign(anyApi.endpoints[endpointName], {
             useMutation,
           });
-          (api as any)[`use${capitalize(endpoint)}Mutation`] = useMutation;
+          (api as any)[`use${capitalize(endpointName)}Mutation`] = useMutation;
         }
       },
     };

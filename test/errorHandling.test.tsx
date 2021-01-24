@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { BaseQueryFn, createApi, fetchBaseQuery } from '@rtk-incubator/rtk-query';
+import { BaseQueryFn, createApi, fetchBaseQuery } from '@rtk-incubator/rtk-query/react';
 import { renderHook, act } from '@testing-library/react-hooks';
 import { rest } from 'msw';
 import axios, { AxiosError, AxiosRequestConfig } from 'axios';

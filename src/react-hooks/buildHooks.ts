@@ -18,11 +18,12 @@ import {
 } from '../endpointDefinitions';
 import { QueryResultSelectorResult, skipSelector } from '../core/buildSelectors';
 import { QueryActionCreatorResult, MutationActionCreatorResult } from '../core/buildInitiate';
-import { shallowEqual, useShallowStableValue } from '../utils';
+import { shallowEqual } from '../utils';
 import { Api } from '../apiTypes';
 import { Id, NoInfer, Override } from '../tsHelpers';
-import { ApiEndpointMutation, ApiEndpointQuery, CoreModule } from '../core/module';
+import { ApiEndpointMutation, ApiEndpointQuery, CoreModule, PrefetchOptions } from '../core/module';
 import { ReactHooksModuleOptions } from './module';
+import { useShallowStableValue } from './useShallowStableValue';
 
 export interface QueryHooks<Definition extends QueryDefinition<any, any, any, any, any>> {
   useQuery: UseQuery<Definition>;
@@ -122,12 +123,6 @@ export type MutationHook<D extends MutationDefinition<any, any, any, any>> = () 
   },
   MutationSubState<D> & RequestStatusFlags
 ];
-
-export type PrefetchOptions =
-  | { force?: boolean }
-  | {
-      ifOlderThan?: false | number;
-    };
 
 const defaultQueryStateSelector: DefaultQueryStateSelector<any> = (currentState, lastResult) => {
   // data is the last known good request result we have tracked - or if none has been tracked yet the last good result for the current args

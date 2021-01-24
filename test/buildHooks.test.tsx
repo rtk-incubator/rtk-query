@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { createApi, fetchBaseQuery, QueryStatus } from '@rtk-incubator/rtk-query';
+import { createApi, fetchBaseQuery, QueryStatus } from '@rtk-incubator/rtk-query/react';
 import { act, fireEvent, render, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { setupApiStore, waitMs } from './helpers';

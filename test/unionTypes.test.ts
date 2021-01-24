@@ -1,5 +1,5 @@
 import { SerializedError } from '@reduxjs/toolkit';
-import { createApi, fetchBaseQuery, FetchBaseQueryError } from '@rtk-incubator/rtk-query';
+import { createApi, fetchBaseQuery, FetchBaseQueryError } from '@rtk-incubator/rtk-query/react';
 import { expectExactType, expectType } from './helpers';
 
 const api = createApi({

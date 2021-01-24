@@ -1,5 +1,5 @@
 import { AnyAction } from '@reduxjs/toolkit';
-import { createApi } from '@rtk-incubator/rtk-query';
+import { createApi } from '@rtk-incubator/rtk-query/react';
 import { renderHook, act } from '@testing-library/react-hooks';
 import { hookWaitFor, setupApiStore, waitMs } from './helpers';
 import { Patch } from 'immer';

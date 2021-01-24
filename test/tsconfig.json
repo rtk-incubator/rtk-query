@@ -8,10 +8,11 @@
     "noEmit": true,
     "target": "es2018",
     "jsx": "react",
-    "baseUrl": "..",
+    "baseUrl": ".",
     "paths": {
-      "@rtk-incubator/rtk-query": ["./src"],
-      "@internal/*": ["./src/*"]
+      "@rtk-incubator/rtk-query": ["../src"],
+      "@rtk-incubator/rtk-query/react": ["../src/react"],
+      "@internal/*": ["../src/*"]
     }
   }
 }

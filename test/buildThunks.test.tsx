@@ -1,5 +1,5 @@
 import { configureStore } from '@reduxjs/toolkit';
-import { createApi } from '@rtk-incubator/rtk-query';
+import { createApi } from '@rtk-incubator/rtk-query/react';
 
 import { renderHook } from '@testing-library/react-hooks';
 import { withProvider } from './helpers';

@@ -42,11 +42,13 @@ declare module '../apiTypes' {
   }
 }
 
+type RR = typeof import('react-redux');
+
 export interface ReactHooksModuleOptions {
-  batch?: typeof import('react-redux').batch;
-  useDispatch?: typeof import('react-redux').useDispatch;
-  useSelector?: typeof import('react-redux').useSelector;
-  useStore?: typeof import('react-redux').useStore;
+  batch?: RR['batch'];
+  useDispatch?: RR['useDispatch'];
+  useSelector?: RR['useSelector'];
+  useStore?: RR['useStore'];
 }
 
 export const reactHooksModule = ({

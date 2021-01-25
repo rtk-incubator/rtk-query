@@ -7,11 +7,21 @@ export interface BaseQueryApi {
   getState: () => unknown;
 }
 
+export type QueryReturnValue<T = unknown, E = unknown> =
+  | {
+      error: E;
+      data?: undefined;
+    }
+  | {
+      error?: undefined;
+      data?: T;
+    };
+
 export type BaseQueryFn<Args = any, Result = unknown, Error = unknown, DefinitionExtraOptions = {}> = (
   args: Args,
   api: BaseQueryApi,
   extraOptions: DefinitionExtraOptions
-) => MaybePromise<{ error: Error; data?: undefined } | { error?: undefined; data?: Result }>;
+) => MaybePromise<QueryReturnValue<Result, Error>>;
 
 export type BaseQueryEnhancer<AdditionalArgs = unknown, AdditionalDefinitionExtraOptions = unknown, Config = void> = <
   BaseQuery extends BaseQueryFn

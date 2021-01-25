@@ -72,17 +72,15 @@ export interface Matchers<
   matchRejected: Matcher<RejectedAction<Thunk, Definition>>;
 }
 
-export interface QueryThunkArg<InternalQueryArgs> extends QuerySubstateIdentifier, StartQueryActionCreatorOptions {
+export interface QueryThunkArg<_InternalQueryArgs> extends QuerySubstateIdentifier, StartQueryActionCreatorOptions {
   originalArgs: unknown;
-  endpoint: string;
-  internalQueryArgs: InternalQueryArgs;
+  endpointName: string;
   startedTimeStamp: number;
 }
 
-export interface MutationThunkArg<InternalQueryArgs> {
+export interface MutationThunkArg<_InternalQueryArgs> {
   originalArgs: unknown;
-  endpoint: string;
-  internalQueryArgs: InternalQueryArgs;
+  endpointName: string;
   track?: boolean;
   startedTimeStamp: number;
 }
@@ -143,13 +141,13 @@ export function buildThunks<
   const patchQueryResult: PatchQueryResultThunk<EndpointDefinitions, State> = (endpointName, args, patches) => (
     dispatch
   ) => {
-    const endpoint = endpointDefinitions[endpointName];
+    const endpointDefinition = endpointDefinitions[endpointName];
     dispatch(
       api.internalActions.queryResultPatched({
         queryCacheKey: serializeQueryArgs({
           queryArgs: args,
-          internalQueryArgs: endpoint.query(args),
-          endpoint: endpointName,
+          endpointDefinition,
+          endpointName,
         }),
         patches,
       })
@@ -191,7 +189,7 @@ export function buildThunks<
   >(
     `${reducerPath}/executeQuery`,
     async (arg, { signal, rejectWithValue, ...api }) => {
-      const endpoint = endpointDefinitions[arg.endpoint] as QueryDefinition<any, any, any, any>;
+      const endpointDefinition = endpointDefinitions[arg.endpointName] as QueryDefinition<any, any, any, any>;
 
       const context: Record<string, any> = {};
       const queryApi: QueryApi<ReducerPath, any> = {
@@ -199,23 +197,23 @@ export function buildThunks<
         context,
       };
 
-      if (endpoint.onStart) endpoint.onStart(arg.originalArgs, queryApi);
+      if (endpointDefinition.onStart) endpointDefinition.onStart(arg.originalArgs, queryApi);
 
       try {
         const result = await baseQuery(
-          arg.internalQueryArgs,
+          endpointDefinition.query(arg.originalArgs),
           { signal, dispatch: api.dispatch, getState: api.getState },
-          endpoint.extraOptions as any
+          endpointDefinition.extraOptions as any
         );
         if (result.error) throw new HandledError(result.error);
-        if (endpoint.onSuccess) endpoint.onSuccess(arg.originalArgs, queryApi, result.data);
+        if (endpointDefinition.onSuccess) endpointDefinition.onSuccess(arg.originalArgs, queryApi, result.data);
         return {
           fulfilledTimeStamp: Date.now(),
-          result: await (endpoint.transformResponse ?? defaultTransformResponse)(result.data),
+          result: await (endpointDefinition.transformResponse ?? defaultTransformResponse)(result.data),
         };
       } catch (error) {
-        if (endpoint.onError)
-          endpoint.onError(arg.originalArgs, queryApi, error instanceof HandledError ? error.value : error);
+        if (endpointDefinition.onError)
+          endpointDefinition.onError(arg.originalArgs, queryApi, error instanceof HandledError ? error.value : error);
         if (error instanceof HandledError) {
           return rejectWithValue(error.value);
         }
@@ -255,7 +253,7 @@ export function buildThunks<
     MutationThunkArg<InternalQueryArgs>,
     { state: RootState<any, string, ReducerPath> }
   >(`${reducerPath}/executeMutation`, async (arg, { signal, rejectWithValue, ...api }) => {
-    const endpoint = endpointDefinitions[arg.endpoint] as MutationDefinition<any, any, any, any>;
+    const endpointDefinition = endpointDefinitions[arg.endpointName] as MutationDefinition<any, any, any, any>;
 
     const context: Record<string, any> = {};
     const mutationApi: MutationApi<ReducerPath, any> = {
@@ -263,22 +261,22 @@ export function buildThunks<
       context,
     };
 
-    if (endpoint.onStart) endpoint.onStart(arg.originalArgs, mutationApi);
+    if (endpointDefinition.onStart) endpointDefinition.onStart(arg.originalArgs, mutationApi);
     try {
       const result = await baseQuery(
-        arg.internalQueryArgs,
+        endpointDefinition.query(arg.originalArgs),
         { signal, dispatch: api.dispatch, getState: api.getState },
-        endpoint.extraOptions as any
+        endpointDefinition.extraOptions as any
       );
       if (result.error) throw new HandledError(result.error);
-      if (endpoint.onSuccess) endpoint.onSuccess(arg.originalArgs, mutationApi, result.data);
+      if (endpointDefinition.onSuccess) endpointDefinition.onSuccess(arg.originalArgs, mutationApi, result.data);
       return {
         fulfilledTimeStamp: Date.now(),
-        result: await (endpoint.transformResponse ?? defaultTransformResponse)(result.data),
+        result: await (endpointDefinition.transformResponse ?? defaultTransformResponse)(result.data),
       };
     } catch (error) {
-      if (endpoint.onError)
-        endpoint.onError(arg.originalArgs, mutationApi, error instanceof HandledError ? error.value : error);
+      if (endpointDefinition.onError)
+        endpointDefinition.onError(arg.originalArgs, mutationApi, error instanceof HandledError ? error.value : error);
       if (error instanceof HandledError) {
         return rejectWithValue(error.value);
       }
@@ -319,17 +317,17 @@ export function buildThunks<
     }
   };
 
-  function matchesEndpoint(endpoint: string) {
-    return (action: any): action is AnyAction => action?.meta?.arg?.endpoint === endpoint;
+  function matchesEndpoint(endpointName: string) {
+    return (action: any): action is AnyAction => action?.meta?.arg?.endpointName === endpointName;
   }
 
   function buildMatchThunkActions<
     Thunk extends AsyncThunk<any, QueryThunkArg<any>, any> | AsyncThunk<any, MutationThunkArg<any>, any>
-  >(thunk: Thunk, endpoint: string) {
+  >(thunk: Thunk, endpointName: string) {
     return {
-      matchPending: isAllOf(isPending(thunk), matchesEndpoint(endpoint)),
-      matchFulfilled: isAllOf(isFulfilled(thunk), matchesEndpoint(endpoint)),
-      matchRejected: isAllOf(isRejected(thunk), matchesEndpoint(endpoint)),
+      matchPending: isAllOf(isPending(thunk), matchesEndpoint(endpointName)),
+      matchFulfilled: isAllOf(isFulfilled(thunk), matchesEndpoint(endpointName)),
+      matchRejected: isAllOf(isRejected(thunk), matchesEndpoint(endpointName)),
     } as Matchers<Thunk, any>;
   }
 

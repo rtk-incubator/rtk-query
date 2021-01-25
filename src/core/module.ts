@@ -193,26 +193,26 @@ export const coreModule = (): Module<CoreModule> => ({
 
     return {
       name: coreModuleName,
-      injectEndpoint(endpoint, definition) {
+      injectEndpoint(endpointName, definition) {
         const anyApi = (api as any) as Api<any, Record<string, any>, string, string, CoreModule>;
-        anyApi.endpoints[endpoint] ??= {} as any;
+        anyApi.endpoints[endpointName] ??= {} as any;
         if (isQueryDefinition(definition)) {
           safeAssign(
-            anyApi.endpoints[endpoint],
+            anyApi.endpoints[endpointName],
             {
-              select: buildQuerySelector(endpoint, definition),
-              initiate: buildInitiateQuery(endpoint, definition),
+              select: buildQuerySelector(endpointName, definition),
+              initiate: buildInitiateQuery(endpointName, definition),
             },
-            buildMatchThunkActions(queryThunk, endpoint)
+            buildMatchThunkActions(queryThunk, endpointName)
           );
         } else if (isMutationDefinition(definition)) {
           safeAssign(
-            anyApi.endpoints[endpoint],
+            anyApi.endpoints[endpointName],
             {
               select: buildMutationSelector(),
-              initiate: buildInitiateMutation(endpoint, definition),
+              initiate: buildInitiateMutation(endpointName, definition),
             },
-            buildMatchThunkActions(mutationThunk, endpoint)
+            buildMatchThunkActions(mutationThunk, endpointName)
           );
         }
       },

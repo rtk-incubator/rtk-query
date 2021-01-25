@@ -63,11 +63,11 @@ export function buildCreateApi<Modules extends [Module<any>, ...Module<any>[]]>(
           }
         }
         if (endpoints) {
-          for (const [endpoint, partialDefinition] of Object.entries(endpoints)) {
+          for (const [endpointName, partialDefinition] of Object.entries(endpoints)) {
             if (typeof partialDefinition === 'function') {
-              partialDefinition(context.endpointDefinitions[endpoint]);
+              partialDefinition(context.endpointDefinitions[endpointName]);
             }
-            Object.assign(context.endpointDefinitions[endpoint] || {}, partialDefinition);
+            Object.assign(context.endpointDefinitions[endpointName] || {}, partialDefinition);
           }
         }
         return api;
@@ -82,18 +82,18 @@ export function buildCreateApi<Modules extends [Module<any>, ...Module<any>[]]>(
         mutation: (x) => ({ ...x, type: DefinitionType.mutation } as any),
       });
 
-      for (const [endpoint, definition] of Object.entries(evaluatedEndpoints)) {
+      for (const [endpointName, definition] of Object.entries(evaluatedEndpoints)) {
         if (typeof process !== 'undefined' && process.env.NODE_ENV === 'development') {
-          if (!inject.overrideExisting && endpoint in context.endpointDefinitions) {
+          if (!inject.overrideExisting && endpointName in context.endpointDefinitions) {
             console.error(
-              `called \`injectEndpoints\` to override already-existing endpoint ${endpoint} without specifying \`overrideExisting: true\``
+              `called \`injectEndpoints\` to override already-existing endpointName ${endpointName} without specifying \`overrideExisting: true\``
             );
             continue;
           }
         }
-        context.endpointDefinitions[endpoint] = definition;
+        context.endpointDefinitions[endpointName] = definition;
         for (const m of initializedModules) {
-          m.injectEndpoint(endpoint, definition);
+          m.injectEndpoint(endpointName, definition);
         }
       }
 

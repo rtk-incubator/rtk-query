@@ -422,10 +422,9 @@ describe('hooks tests', () => {
     userEvent.hover(getByTestId('highPriority'));
     expect(api.endpoints.getUser.select(USER_ID)(storeRef.store.getState())).toEqual({
       data: undefined,
-      endpoint: 'getUser',
+      endpointName: 'getUser',
       error: undefined,
       fulfilledTimeStamp: expect.any(Number),
-      internalQueryArgs: USER_ID,
       isError: false,
       isLoading: true,
       isSuccess: false,
@@ -440,9 +439,8 @@ describe('hooks tests', () => {
 
     expect(api.endpoints.getUser.select(USER_ID)(storeRef.store.getState())).toEqual({
       data: undefined,
-      endpoint: 'getUser',
+      endpointName: 'getUser',
       fulfilledTimeStamp: expect.any(Number),
-      internalQueryArgs: USER_ID,
       isError: false,
       isLoading: false,
       isSuccess: true,
@@ -482,9 +480,8 @@ describe('hooks tests', () => {
 
     expect(api.endpoints.getUser.select(USER_ID)(storeRef.store.getState())).toEqual({
       data: undefined,
-      endpoint: 'getUser',
+      endpointName: 'getUser',
       fulfilledTimeStamp: expect.any(Number),
-      internalQueryArgs: USER_ID,
       isError: false,
       isLoading: false,
       isSuccess: true,
@@ -499,9 +496,8 @@ describe('hooks tests', () => {
 
     expect(api.endpoints.getUser.select(USER_ID)(storeRef.store.getState())).toEqual({
       data: undefined,
-      endpoint: 'getUser',
+      endpointName: 'getUser',
       fulfilledTimeStamp: expect.any(Number),
-      internalQueryArgs: USER_ID,
       isError: false,
       isLoading: false,
       isSuccess: true,
@@ -543,9 +539,8 @@ describe('hooks tests', () => {
     userEvent.hover(getByTestId('lowPriority'));
     expect(api.endpoints.getUser.select(USER_ID)(storeRef.store.getState())).toEqual({
       data: undefined,
-      endpoint: 'getUser',
+      endpointName: 'getUser',
       fulfilledTimeStamp: expect.any(Number),
-      internalQueryArgs: USER_ID,
       isError: false,
       isLoading: true,
       isSuccess: false,
@@ -560,9 +555,8 @@ describe('hooks tests', () => {
 
     expect(api.endpoints.getUser.select(USER_ID)(storeRef.store.getState())).toEqual({
       data: undefined,
-      endpoint: 'getUser',
+      endpointName: 'getUser',
       fulfilledTimeStamp: expect.any(Number),
-      internalQueryArgs: USER_ID,
       isError: false,
       isLoading: false,
       isSuccess: true,
@@ -627,8 +621,7 @@ describe('hooks tests', () => {
     userEvent.hover(getByTestId('lowPriority'));
 
     expect(api.endpoints.getUser.select(USER_ID)(storeRef.store.getState())).toEqual({
-      endpoint: 'getUser',
-      internalQueryArgs: USER_ID,
+      endpointName: 'getUser',
       isError: false,
       isLoading: true,
       isSuccess: false,

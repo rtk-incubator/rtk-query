@@ -30,18 +30,22 @@ The main point where you will define a service to use in your application.
 ```ts title="Simulating axios-like interceptors with a custom base query"
 const baseQuery = fetchBaseQuery({ baseUrl: '/' });
 
-function baseQueryWithReauth(arg, api) {
-  let result = baseQuery(arg, api);
+const baseQueryWithReauth: BaseQueryFn<
+  string | FetchArgs,
+  unknown,
+  FetchBaseQueryError
+> = async (args, api, extraOptions) => {
+  let result = await baseQuery(args, api, extraOptions);
   if (result.error && result.error.status === '401') {
     // try to get a new token
-    const refreshResult = baseQuery('/refreshToken');
+    const refreshResult = await baseQuery('/refreshToken', api, extraOptions);
     if (refreshResult.data) {
       // store the new token
-      dispatch(setToken(refreshResult.data));
+      api.dispatch(setToken(refreshResult.data));
       // retry the initial query
-      result = baseQuery(arg, api);
+      result = await baseQuery(args, api, extraOptions);
     } else {
-      dispatch(loggedOut());
+      api.dispatch(loggedOut());
     }
   }
   return result;

@@ -196,7 +196,7 @@ export const api = createApi({
           body,
         };
       },
-      invalidates: [{ type: 'Posts', id: 'LIST'}],
+      invalidates: [{ type: 'Posts', id: 'LIST' }],
     }),
     getPost: build.query<Post, number>({
       query: (id) => `posts/${id}`,
@@ -272,7 +272,7 @@ export const postApi = createApi({
       },
       // Invalidates all Post-type queries providing the `LIST` id - after all, depending of the sort order,
       // that newly created post could show up in any lists.
-      invalidates: [{ type: 'Posts', id: 'LIST'}],
+      invalidates: [{ type: 'Posts', id: 'LIST' }],
     }),
     getPost: build.query<Post, number>({
       query: (id) => `posts/${id}`,

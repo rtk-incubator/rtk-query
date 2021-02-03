@@ -203,7 +203,7 @@ export function buildThunks<
       let transformResponse: (baseQueryReturnValue: any) => any = defaultTransformResponse;
       let result: QueryReturnValue;
       const baseQueryApi = { signal, dispatch: api.dispatch, getState: api.getState };
-      if ('query' in endpointDefinition) {
+      if (endpointDefinition.query) {
         result = await baseQuery(
           endpointDefinition.query(arg.originalArgs),
           baseQueryApi,

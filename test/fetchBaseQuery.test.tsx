@@ -134,6 +134,24 @@ describe('fetchBaseQuery', () => {
       expect(request.body).toEqual(data);
     });
 
+    test('an array provided to body will be serialized when content-type is json', async () => {
+      const data = ['test', 'value'];
+
+      let request: any;
+      ({ data: request } = await baseQuery(
+        { url: '/echo', body: data, method: 'POST' },
+        {
+          signal: undefined,
+          dispatch: storeRef.store.dispatch,
+          getState: storeRef.store.getState,
+        },
+        {}
+      ));
+
+      expect(request.headers['content-type']).toBe('application/json');
+      expect(request.body).toEqual(data);
+    });
+
     test('an object provided to body will not be serialized when content-type is not json', async () => {
       const data = {
         test: 'value',
@@ -152,6 +170,24 @@ describe('fetchBaseQuery', () => {
 
       expect(request.headers['content-type']).toBe('text/html');
       expect(request.body).toEqual('[object Object]');
+    });
+
+    test('an array provided to body will not be serialized when content-type is not json', async () => {
+      const data = ['test', 'value'];
+
+      let request: any;
+      ({ data: request } = await baseQuery(
+        { url: '/echo', body: data, method: 'POST', headers: { 'content-type': 'text/html' } },
+        {
+          signal: undefined,
+          dispatch: storeRef.store.dispatch,
+          getState: storeRef.store.getState,
+        },
+        {}
+      ));
+
+      expect(request.headers['content-type']).toBe('text/html');
+      expect(request.body).toEqual(data.join(','));
     });
   });
 

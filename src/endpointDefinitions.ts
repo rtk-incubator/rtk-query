@@ -8,7 +8,7 @@ import {
   BaseQueryApi,
   QueryReturnValue,
 } from './baseQueryTypes';
-import { HasRequiredProps, MaybePromise } from './tsHelpers';
+import { HasRequiredProps, MaybePromise, OmitFromUnion } from './tsHelpers';
 
 const resultType = Symbol();
 const baseQuery = Symbol();
@@ -127,10 +127,13 @@ export function isMutationDefinition(
 
 export type EndpointBuilder<BaseQuery extends BaseQueryFn, EntityTypes extends string, ReducerPath extends string> = {
   query<ResultType, QueryArg>(
-    definition: Omit<QueryDefinition<QueryArg, BaseQuery, EntityTypes, ResultType>, 'type'>
+    definition: OmitFromUnion<QueryDefinition<QueryArg, BaseQuery, EntityTypes, ResultType>, 'type'>
   ): QueryDefinition<QueryArg, BaseQuery, EntityTypes, ResultType>;
   mutation<ResultType, QueryArg, Context = Record<string, any>>(
-    definition: Omit<MutationDefinition<QueryArg, BaseQuery, EntityTypes, ResultType, ReducerPath, Context>, 'type'>
+    definition: OmitFromUnion<
+      MutationDefinition<QueryArg, BaseQuery, EntityTypes, ResultType, ReducerPath, Context>,
+      'type'
+    >
   ): MutationDefinition<QueryArg, BaseQuery, EntityTypes, ResultType, ReducerPath, Context>;
 };
 

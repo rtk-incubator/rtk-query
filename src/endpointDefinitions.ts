@@ -9,17 +9,20 @@ import {
   QueryReturnValue,
   BaseQueryError,
 } from './baseQueryTypes';
-import { HasRequiredProps, MaybePromise, OmitFromUnion } from './tsHelpers';
+import { HasRequiredProps, MaybePromise, OmitFromUnion, CastAny } from './tsHelpers';
+import { NEVER } from './dummyBaseQuery';
 
 const resultType = Symbol();
 const baseQuery = Symbol();
 
 export type BaseEndpointDefinition<QueryArg, BaseQuery extends BaseQueryFn, ResultType> = (
-  | {
-      query(arg: QueryArg): BaseQueryArg<BaseQuery>;
-      queryFn?: never;
-      transformResponse?(baseQueryReturnValue: BaseQueryResult<BaseQuery>): ResultType | Promise<ResultType>;
-    }
+  | ([CastAny<BaseQueryResult<BaseQuery>, {}>] extends [NEVER]
+      ? never
+      : {
+          query(arg: QueryArg): BaseQueryArg<BaseQuery>;
+          queryFn?: never;
+          transformResponse?(baseQueryReturnValue: BaseQueryResult<BaseQuery>): ResultType | Promise<ResultType>;
+        })
   | {
       queryFn(
         arg: QueryArg,

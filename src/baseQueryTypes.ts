@@ -35,15 +35,19 @@ export type BaseQueryEnhancer<AdditionalArgs = unknown, AdditionalDefinitionExtr
   BaseQueryExtraOptions<BaseQuery> & AdditionalDefinitionExtraOptions
 >;
 
-export type BaseQueryResult<BaseQuery extends BaseQueryFn> = Exclude<
-  UnwrapPromise<ReturnType<BaseQuery>>,
-  { data?: undefined }
->['data'];
+export type BaseQueryResult<BaseQuery extends BaseQueryFn> = UnwrapPromise<
+  ReturnType<BaseQuery>
+> extends infer Unwrapped
+  ? Unwrapped extends { data: any }
+    ? Unwrapped['data']
+    : never
+  : never;
 
-export type BaseQueryError<BaseQuery extends BaseQueryFn> = Exclude<
-  UnwrapPromise<ReturnType<BaseQuery>>,
-  { error?: undefined }
->['error'];
+export type BaseQueryError<BaseQuery extends BaseQueryFn> = UnwrapPromise<ReturnType<BaseQuery>> extends infer Unwrapped
+  ? Unwrapped extends { error: any }
+    ? Unwrapped['error']
+    : never
+  : never;
 
 export type BaseQueryArg<T extends (arg: any, ...args: any[]) => any> = T extends (arg: infer A, ...args: any[]) => any
   ? A

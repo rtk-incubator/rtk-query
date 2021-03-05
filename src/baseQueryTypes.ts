@@ -14,7 +14,7 @@ export type QueryReturnValue<T = unknown, E = unknown> =
     }
   | {
       error?: undefined;
-      data?: T;
+      data: T;
     };
 
 export type BaseQueryFn<Args = any, Result = unknown, Error = unknown, DefinitionExtraOptions = {}> = (
@@ -37,12 +37,12 @@ export type BaseQueryEnhancer<AdditionalArgs = unknown, AdditionalDefinitionExtr
 
 export type BaseQueryResult<BaseQuery extends BaseQueryFn> = Exclude<
   UnwrapPromise<ReturnType<BaseQuery>>,
-  { data: undefined }
+  { data?: undefined }
 >['data'];
 
 export type BaseQueryError<BaseQuery extends BaseQueryFn> = Exclude<
   UnwrapPromise<ReturnType<BaseQuery>>,
-  { error: undefined }
+  { error?: undefined }
 >['error'];
 
 export type BaseQueryArg<T extends (arg: any, ...args: any[]) => any> = T extends (arg: infer A, ...args: any[]) => any

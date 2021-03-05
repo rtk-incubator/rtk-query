@@ -1,80 +1,133 @@
 import { configureStore } from '@reduxjs/toolkit';
-import { createApi } from '@rtk-incubator/rtk-query';
+import { BaseQueryFn, createApi } from '@rtk-incubator/rtk-query';
 
-const baseQuery = jest.fn((arg: string) => ({ data: arg }));
+const baseQuery: BaseQueryFn<string, { wrappedByBaseQuery: string }, string> = jest.fn((arg: string) => ({
+  data: { wrappedByBaseQuery: arg },
+}));
 
 const api = createApi({
   baseQuery,
   endpoints: (build) => ({
-    withQuery: build.query({
+    withQuery: build.query<string, string>({
       query(arg: string) {
         return `resultFrom(${arg})`;
       },
+      transformResponse(response) {
+        return response.wrappedByBaseQuery;
+      },
     }),
-    withQueryFn: build.query({
+    withQueryFn: build.query<string, string>({
       queryFn(arg: string) {
         return { data: `resultFrom(${arg})` };
       },
     }),
-    withErrorQueryFn: build.query({
+    withInvalidDataQueryFn: build.query<string, string>({
+      // @ts-expect-error
+      queryFn(arg: string) {
+        return { data: 5 };
+      },
+    }),
+    withErrorQueryFn: build.query<string, string>({
       queryFn(arg: string) {
         return { error: `resultFrom(${arg})` };
       },
     }),
-    withThrowingQueryFn: build.query({
+    withInvalidErrorQueryFn: build.query<string, string>({
+      // @ts-expect-error
+      queryFn(arg: string) {
+        return { error: 5 };
+      },
+    }),
+    withThrowingQueryFn: build.query<string, string>({
       queryFn(arg: string) {
         throw new Error(`resultFrom(${arg})`);
       },
     }),
-    withAsyncQueryFn: build.query({
+    withAsyncQueryFn: build.query<string, string>({
       async queryFn(arg: string) {
         return { data: `resultFrom(${arg})` };
       },
     }),
-    withAsyncErrorQueryFn: build.query({
+    withInvalidDataAsyncQueryFn: build.query<string, string>({
+      // @ts-expect-error
+      async queryFn(arg: string) {
+        return { data: 5 };
+      },
+    }),
+    withAsyncErrorQueryFn: build.query<string, string>({
       async queryFn(arg: string) {
         return { error: `resultFrom(${arg})` };
       },
     }),
-    withAsyncThrowingQueryFn: build.query({
+    withInvalidAsyncErrorQueryFn: build.query<string, string>({
+      // @ts-expect-error
+      async queryFn(arg: string) {
+        return { error: 5 };
+      },
+    }),
+    withAsyncThrowingQueryFn: build.query<string, string>({
       async queryFn(arg: string) {
         throw new Error(`resultFrom(${arg})`);
       },
     }),
-    mutationWithQueryFn: build.mutation({
+    mutationWithQueryFn: build.mutation<string, string>({
       queryFn(arg: string) {
         return { data: `resultFrom(${arg})` };
       },
     }),
-    mutationWithErrorQueryFn: build.mutation({
+    mutationWithInvalidDataQueryFn: build.mutation<string, string>({
+      // @ts-expect-error
+      queryFn(arg: string) {
+        return { data: 5 };
+      },
+    }),
+    mutationWithErrorQueryFn: build.mutation<string, string>({
       queryFn(arg: string) {
         return { error: `resultFrom(${arg})` };
       },
     }),
-    mutationWithThrowingQueryFn: build.mutation({
+    mutationWithInvalidErrorQueryFn: build.mutation<string, string>({
+      // @ts-expect-error
+      queryFn(arg: string) {
+        return { error: 5 };
+      },
+    }),
+    mutationWithThrowingQueryFn: build.mutation<string, string>({
       queryFn(arg: string) {
         throw new Error(`resultFrom(${arg})`);
       },
     }),
-    mutationWithAsyncQueryFn: build.mutation({
+    mutationWithAsyncQueryFn: build.mutation<string, string>({
       async queryFn(arg: string) {
         return { data: `resultFrom(${arg})` };
       },
     }),
-    mutationWithAsyncErrorQueryFn: build.mutation({
+    mutationWithInvalidAsyncQueryFn: build.mutation<string, string>({
+      // @ts-expect-error
+      async queryFn(arg: string) {
+        return { data: 5 };
+      },
+    }),
+    mutationWithAsyncErrorQueryFn: build.mutation<string, string>({
       async queryFn(arg: string) {
         return { error: `resultFrom(${arg})` };
       },
     }),
-    mutationWithAsyncThrowingQueryFn: build.mutation({
+    mutationWithInvalidAsyncErrorQueryFn: build.mutation<string, string>({
+      // @ts-expect-error
+      async queryFn(arg: string) {
+        return { error: 5 };
+      },
+    }),
+    mutationWithAsyncThrowingQueryFn: build.mutation<string, string>({
       async queryFn(arg: string) {
         throw new Error(`resultFrom(${arg})`);
       },
     }),
     // @ts-expect-error
-    withNeither: build.query({}),
+    withNeither: build.query<string, string>({}),
     // @ts-expect-error
-    mutationWithNeither: build.mutation({}),
+    mutationWithNeither: build.mutation<string, string>({}),
   }),
 });
 

@@ -7,6 +7,7 @@ import {
   BaseQueryArg,
   BaseQueryApi,
   QueryReturnValue,
+  BaseQueryError,
 } from './baseQueryTypes';
 import { HasRequiredProps, MaybePromise, OmitFromUnion } from './tsHelpers';
 
@@ -24,7 +25,7 @@ export type BaseEndpointDefinition<QueryArg, BaseQuery extends BaseQueryFn, Resu
         arg: QueryArg,
         api: BaseQueryApi,
         extraOptions: BaseQueryExtraOptions<BaseQuery>
-      ): MaybePromise<QueryReturnValue<ResultType, Error>>;
+      ): MaybePromise<QueryReturnValue<ResultType, BaseQueryError<BaseQuery>>>;
       query?: never;
       transformResponse?: never;
     }

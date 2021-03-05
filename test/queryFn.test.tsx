@@ -18,7 +18,7 @@ const api = createApi({
     }),
     withErrorQueryFn: build.query({
       queryFn(arg: string) {
-        return { error: new Error(`resultFrom(${arg})`) };
+        return { error: `resultFrom(${arg})` };
       },
     }),
     withThrowingQueryFn: build.query({
@@ -33,7 +33,7 @@ const api = createApi({
     }),
     withAsyncErrorQueryFn: build.query({
       async queryFn(arg: string) {
-        return { error: new Error(`resultFrom(${arg})`) };
+        return { error: `resultFrom(${arg})` };
       },
     }),
     withAsyncThrowingQueryFn: build.query({
@@ -48,7 +48,7 @@ const api = createApi({
     }),
     mutationWithErrorQueryFn: build.mutation({
       queryFn(arg: string) {
-        return { error: new Error(`resultFrom(${arg})`) };
+        return { error: `resultFrom(${arg})` };
       },
     }),
     mutationWithThrowingQueryFn: build.mutation({
@@ -63,7 +63,7 @@ const api = createApi({
     }),
     mutationWithAsyncErrorQueryFn: build.mutation({
       async queryFn(arg: string) {
-        return { error: new Error(`resultFrom(${arg})`) };
+        return { error: `resultFrom(${arg})` };
       },
     }),
     mutationWithAsyncThrowingQueryFn: build.mutation({
@@ -100,21 +100,17 @@ const store = configureStore({
   reducer: {
     [api.reducerPath]: api.reducer,
   },
-  middleware: (gDM) =>
-    gDM({
-      // still a TODO: returned error needs to be serialized - for now this will warn
-      serializableCheck: true,
-    }).concat(api.middleware),
+  middleware: (gDM) => gDM({}).concat(api.middleware),
 });
 
 test.each([
   ['withQuery', withQuery, 'data'],
   ['withQueryFn', withQueryFn, 'data'],
   ['withErrorQueryFn', withErrorQueryFn, 'error'],
-  ['withThrowingQueryFn', withThrowingQueryFn, 'error'],
+  ['withThrowingQueryFn', withThrowingQueryFn, 'throw'],
   ['withAsyncQueryFn', withAsyncQueryFn, 'data'],
   ['withAsyncErrorQueryFn', withAsyncErrorQueryFn, 'error'],
-  ['withAsyncThrowingQueryFn', withAsyncThrowingQueryFn, 'error'],
+  ['withAsyncThrowingQueryFn', withAsyncThrowingQueryFn, 'throw'],
 ])('%s1', async (endpointName, endpoint, expectedResult) => {
   const thunk = endpoint.initiate(endpointName);
   const result = await store.dispatch(thunk);
@@ -122,6 +118,12 @@ test.each([
     expect(result).toEqual(
       expect.objectContaining({
         data: `resultFrom(${endpointName})`,
+      })
+    );
+  } else if (expectedResult === 'error') {
+    expect(result).toEqual(
+      expect.objectContaining({
+        error: `resultFrom(${endpointName})`,
       })
     );
   } else {
@@ -136,10 +138,10 @@ test.each([
 test.each([
   ['mutationWithQueryFn', mutationWithQueryFn, 'data'],
   ['mutationWithErrorQueryFn', mutationWithErrorQueryFn, 'error'],
-  ['mutationWithThrowingQueryFn', mutationWithThrowingQueryFn, 'error'],
+  ['mutationWithThrowingQueryFn', mutationWithThrowingQueryFn, 'throw'],
   ['mutationWithAsyncQueryFn', mutationWithAsyncQueryFn, 'data'],
   ['mutationWithAsyncErrorQueryFn', mutationWithAsyncErrorQueryFn, 'error'],
-  ['mutationWithAsyncThrowingQueryFn', mutationWithAsyncThrowingQueryFn, 'error'],
+  ['mutationWithAsyncThrowingQueryFn', mutationWithAsyncThrowingQueryFn, 'throw'],
 ])('%s', async (endpointName, endpoint, expectedResult) => {
   const thunk = endpoint.initiate(endpointName);
   const result = await store.dispatch(thunk);
@@ -147,6 +149,12 @@ test.each([
     expect(result).toEqual(
       expect.objectContaining({
         data: `resultFrom(${endpointName})`,
+      })
+    );
+  } else if (expectedResult === 'error') {
+    expect(result).toEqual(
+      expect.objectContaining({
+        error: `resultFrom(${endpointName})`,
       })
     );
   } else {

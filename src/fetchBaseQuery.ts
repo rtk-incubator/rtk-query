@@ -105,8 +105,11 @@ export function fetchBaseQuery({
 
     config.headers = await prepareHeaders(new Headers(stripUndefined(headers)), { getState });
 
-    // Only set the content-type to json if there is an object that is not FormData()
-    if (!config.headers.has('content-type') && body && typeof body === 'object' && typeof body.append !== 'function') {
+    // Only set the content-type to json if appropriate. Will not be true for FormData, ArrayBuffer, Blob, etc.
+    const isJsonifiable = (body: any) =>
+      typeof body === 'object' && (isPlainObject(body) || Array.isArray(body) || typeof body.toJSON === 'function');
+
+    if (!config.headers.has('content-type') && isJsonifiable(body)) {
       config.headers.set('content-type', 'application/json');
     }
 

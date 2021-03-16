@@ -284,7 +284,13 @@ export function buildHooks<Definitions extends EndpointDefinitions>({
 
       const promiseRef = useRef<MutationActionCreatorResult<any>>();
 
-      useEffect(() => () => void promiseRef.current?.unsubscribe(), []);
+      useEffect(() => {
+        return () => {
+          // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+          promiseRef.current?.unsubscribe();
+          promiseRef.current = undefined;
+        };
+      }, []);
 
       const triggerMutation = useCallback(
         function (args) {

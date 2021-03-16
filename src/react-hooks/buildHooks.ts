@@ -214,7 +214,11 @@ export function buildHooks<Definitions extends EndpointDefinitions>({
       ]);
 
       useEffect(() => {
-        return () => void promiseRef.current?.unsubscribe();
+        return () => {
+          // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+          promiseRef.current?.unsubscribe();
+          promiseRef.current = undefined;
+        };
       }, []);
 
       return useMemo(

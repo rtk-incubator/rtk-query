@@ -58,6 +58,12 @@ export function buildMiddleware<Definitions extends EndpointDefinitions, Reducer
     }
 
     if (updateSubscriptionOptions.match(action)) {
+      // It shouldn't be possible to update a subscription after it's scheduled to be removed via unsubscribe
+      // but this happens with fast refresh / hot reload. Let's clear the timeout to keep it around.
+      const currentTimeout = currentRemovalTimeouts[action.payload.queryCacheKey];
+      if (currentTimeout) {
+        clearInterval(currentTimeout);
+      }
       updatePollingInterval(action.payload, mwApi);
     }
     if (queryThunk.pending.match(action) || (queryThunk.rejected.match(action) && action.meta.condition)) {

@@ -27,6 +27,7 @@ import { useShallowStableValue } from './useShallowStableValue';
 
 export interface QueryHooks<Definition extends QueryDefinition<any, any, any, any, any>> {
   useQuery: UseQuery<Definition>;
+  useLazyQuery: UseLazyQuery<Definition>;
   useQuerySubscription: UseQuerySubscription<Definition>;
   useQueryState: UseQueryState<Definition>;
 }
@@ -39,6 +40,11 @@ export type UseQuery<D extends QueryDefinition<any, any, any, any>> = <R = UseQu
   arg: QueryArgFrom<D>,
   options?: UseQuerySubscriptionOptions & UseQueryStateOptions<D, R>
 ) => UseQueryStateResult<D, R> & ReturnType<UseQuerySubscription<D>>;
+
+export type UseLazyQuery<D extends QueryDefinition<any, any, any, any>> = <R = UseQueryStateDefaultResult<D>>(
+  arg: QueryArgFrom<D>,
+  options?: UseQuerySubscriptionOptions & UseQueryStateOptions<D, R>
+) => [() => void, UseQueryStateResult<D, R> & ReturnType<UseQuerySubscription<D>>];
 
 interface UseQuerySubscriptionOptions extends SubscriptionOptions {
   skip?: boolean;
@@ -262,6 +268,23 @@ export function buildHooks<Definitions extends EndpointDefinitions>({
     return {
       useQueryState,
       useQuerySubscription,
+      useLazyQuery(arg, options) {
+        const queryStateResults = useQueryState(arg, options);
+        const [isTriggered, setTriggered] = useState((queryStateResults as any).isSuccess);
+        const { refetch, ...querySubscriptionResults } = useQuerySubscription(arg, {
+          ...options,
+          ...(isTriggered ? {} : { skip: !isTriggered }),
+        });
+
+        const triggerQuery = useCallback(() => (!isTriggered ? setTriggered(true) : refetch()), [refetch, isTriggered]);
+
+        return useMemo(() => [triggerQuery, { refetch, ...queryStateResults, ...querySubscriptionResults }], [
+          queryStateResults,
+          querySubscriptionResults,
+          refetch,
+          triggerQuery,
+        ]);
+      },
       useQuery(arg, options) {
         const querySubscriptionResults = useQuerySubscription(arg, options);
         const queryStateResults = useQueryState(arg, options);

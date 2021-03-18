@@ -70,13 +70,15 @@ export const reactHooksModule = ({
       injectEndpoint(endpointName, definition) {
         const anyApi = (api as any) as Api<any, Record<string, any>, string, string, ReactHooksModule>;
         if (isQueryDefinition(definition)) {
-          const { useQuery, useQueryState, useQuerySubscription } = buildQueryHooks(endpointName);
+          const { useQuery, useLazyQuery, useQueryState, useQuerySubscription } = buildQueryHooks(endpointName);
           safeAssign(anyApi.endpoints[endpointName], {
             useQuery,
+            useLazyQuery,
             useQueryState,
             useQuerySubscription,
           });
           (api as any)[`use${capitalize(endpointName)}Query`] = useQuery;
+          (api as any)[`useLazy${capitalize(endpointName)}Query`] = useLazyQuery;
         } else if (isMutationDefinition(definition)) {
           const useMutation = buildMutationHook(endpointName);
           safeAssign(anyApi.endpoints[endpointName], {

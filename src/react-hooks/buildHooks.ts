@@ -271,9 +271,11 @@ export function buildHooks<Definitions extends EndpointDefinitions>({
       useLazyQuery(arg, options) {
         const queryStateResults = useQueryState(arg, options);
         const [isTriggered, setTriggered] = useState((queryStateResults as any).isSuccess);
+
+        // `skip` gets overridden because it doesn't make sense to use a query lazily, then skip it's result
         const { refetch, ...querySubscriptionResults } = useQuerySubscription(arg, {
           ...options,
-          ...(isTriggered ? {} : { skip: !isTriggered }),
+          skip: !isTriggered,
         });
 
         const triggerQuery = useCallback(() => (!isTriggered ? setTriggered(true) : refetch()), [refetch, isTriggered]);

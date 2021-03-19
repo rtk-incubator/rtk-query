@@ -55,8 +55,7 @@ describe('fetchBaseQuery', () => {
 describe('query error handling', () => {
   test('success', async () => {
     server.use(rest.get('http://example.com/query', (_, res, ctx) => res(ctx.json({ value: 'success' }))));
-
-    const { result } = renderHook(() => api.useQueryQuery({}), { wrapper: storeRef.wrapper });
+    const { result } = renderHook(() => api.endpoints.query.useQuery({}), { wrapper: storeRef.wrapper });
 
     await hookWaitFor(() => expect(result.current.isFetching).toBeFalsy());
     expect(result.current).toEqual(
@@ -73,8 +72,7 @@ describe('query error handling', () => {
     server.use(
       rest.get('http://example.com/query', (_, res, ctx) => res(ctx.status(500), ctx.json({ value: 'error' })))
     );
-
-    const { result } = renderHook(() => api.useQueryQuery({}), { wrapper: storeRef.wrapper });
+    const { result } = renderHook(() => api.endpoints.query.useQuery({}), { wrapper: storeRef.wrapper });
 
     await hookWaitFor(() => expect(result.current.isFetching).toBeFalsy());
     expect(result.current).toEqual(
@@ -89,8 +87,7 @@ describe('query error handling', () => {
 
   test('success -> error', async () => {
     server.use(rest.get('http://example.com/query', (_, res, ctx) => res(ctx.json({ value: 'success' }))));
-
-    const { result } = renderHook(() => api.useQueryQuery({}), { wrapper: storeRef.wrapper });
+    const { result } = renderHook(() => api.endpoints.query.useQuery({}), { wrapper: storeRef.wrapper });
 
     await hookWaitFor(() => expect(result.current.isFetching).toBeFalsy());
     expect(result.current).toEqual(
@@ -126,8 +123,7 @@ describe('query error handling', () => {
     server.use(
       rest.get('http://example.com/query', (_, res, ctx) => res.once(ctx.status(500), ctx.json({ value: 'error' })))
     );
-
-    const { result } = renderHook(() => api.useQueryQuery({}), { wrapper: storeRef.wrapper });
+    const { result } = renderHook(() => api.endpoints.query.useQuery({}), { wrapper: storeRef.wrapper });
 
     await hookWaitFor(() => expect(result.current.isFetching).toBeFalsy());
     expect(result.current).toEqual(
@@ -156,8 +152,7 @@ describe('query error handling', () => {
 describe('mutation error handling', () => {
   test('success', async () => {
     server.use(rest.post('http://example.com/mutation', (_, res, ctx) => res(ctx.json({ value: 'success' }))));
-
-    const { result } = renderHook(() => api.useMutationMutation(), { wrapper: storeRef.wrapper });
+    const { result } = renderHook(() => api.endpoints.mutation.useMutation(), { wrapper: storeRef.wrapper });
 
     const [trigger] = result.current;
 
@@ -178,8 +173,7 @@ describe('mutation error handling', () => {
     server.use(
       rest.post('http://example.com/mutation', (_, res, ctx) => res(ctx.status(500), ctx.json({ value: 'error' })))
     );
-
-    const { result } = renderHook(() => api.useMutationMutation(), { wrapper: storeRef.wrapper });
+    const { result } = renderHook(() => api.endpoints.mutation.useMutation(), { wrapper: storeRef.wrapper });
 
     const [trigger] = result.current;
 
@@ -198,8 +192,7 @@ describe('mutation error handling', () => {
 
   test('success -> error', async () => {
     server.use(rest.post('http://example.com/mutation', (_, res, ctx) => res(ctx.json({ value: 'success' }))));
-
-    const { result } = renderHook(() => api.useMutationMutation(), { wrapper: storeRef.wrapper });
+    const { result } = renderHook(() => api.endpoints.mutation.useMutation(), { wrapper: storeRef.wrapper });
 
     {
       const [trigger] = result.current;
@@ -245,7 +238,7 @@ describe('mutation error handling', () => {
       rest.post('http://example.com/mutation', (_, res, ctx) => res.once(ctx.status(500), ctx.json({ value: 'error' })))
     );
 
-    const { result } = renderHook(() => api.useMutationMutation(), { wrapper: storeRef.wrapper });
+    const { result } = renderHook(() => api.endpoints.mutation.useMutation(), { wrapper: storeRef.wrapper });
 
     {
       const [trigger] = result.current;
@@ -319,8 +312,7 @@ describe('custom axios baseQuery', () => {
     server.use(
       rest.get('http://example.com/query', (_, res, ctx) => res(ctx.status(500), ctx.json({ value: 'error' })))
     );
-
-    const { result } = renderHook(() => api.useQueryQuery({}), { wrapper: storeRef.wrapper });
+    const { result } = renderHook(() => api.endpoints.query.useQuery({}), { wrapper: storeRef.wrapper });
 
     await hookWaitFor(() => expect(result.current.isFetching).toBeFalsy());
     expect(result.current).toEqual(
@@ -358,7 +350,7 @@ describe('error handling in a component', () => {
 
     function User() {
       const [manualError, setManualError] = React.useState<any>();
-      const [update, { isLoading, data, error }] = api.useUpdateMutation();
+      const [update, { isLoading, data, error }] = api.endpoints.update.useMutation();
 
       return (
         <div>

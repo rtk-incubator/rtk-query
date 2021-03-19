@@ -2,7 +2,12 @@ import { AnyAction } from '@reduxjs/toolkit';
 import { createApi } from '@rtk-incubator/rtk-query/react';
 import { renderHook, act } from '@testing-library/react-hooks';
 import { hookWaitFor, setupApiStore, waitMs } from './helpers';
-import { Patch } from 'immer';
+
+interface Patch {
+  op: 'replace' | 'remove' | 'add';
+  path: (string | number)[];
+  value?: any;
+}
 
 interface Post {
   id: string;
@@ -69,7 +74,7 @@ describe('basic lifecycle', () => {
   });
 
   test('success', async () => {
-    const { result } = renderHook(() => extendedApi.useTestMutation(), {
+    const { result } = renderHook(() => extendedApi.endpoints.test.useMutation(), {
       wrapper: storeRef.wrapper,
     });
 
@@ -89,7 +94,7 @@ describe('basic lifecycle', () => {
   });
 
   test('error', async () => {
-    const { result } = renderHook(() => extendedApi.useTestMutation(), {
+    const { result } = renderHook(() => extendedApi.endpoints.test.useMutation(), {
       wrapper: storeRef.wrapper,
     });
 
@@ -112,8 +117,7 @@ describe('basic lifecycle', () => {
 describe('updateQueryResult', () => {
   test('updates cache values, can apply inverse patch', async () => {
     baseQuery.mockResolvedValueOnce({ id: '3', title: 'All about cheese.', contents: 'TODO' });
-
-    const { result } = renderHook(() => api.usePostQuery('3'), {
+    const { result } = renderHook(() => api.endpoints.post.useQuery('3'), {
       wrapper: storeRef.wrapper,
     });
     await hookWaitFor(() => expect(result.current.isSuccess).toBeTruthy());
@@ -147,8 +151,7 @@ describe('updateQueryResult', () => {
 
   test('does not update non-existing values', async () => {
     baseQuery.mockResolvedValueOnce({ id: '3', title: 'All about cheese.', contents: 'TODO' });
-
-    const { result } = renderHook(() => api.usePostQuery('3'), {
+    const { result } = renderHook(() => api.endpoints.post.useQuery('3'), {
       wrapper: storeRef.wrapper,
     });
     await hookWaitFor(() => expect(result.current.isSuccess).toBeTruthy());
@@ -182,8 +185,8 @@ describe('full integration', () => {
       .mockResolvedValueOnce({ id: '3', title: 'Meanwhile, this changed server-side.', contents: 'Delicious cheese!' });
     const { result } = renderHook(
       () => ({
-        query: api.usePostQuery('3'),
-        mutation: api.useUpdatePostMutation(),
+        query: api.endpoints.post.useQuery('3'),
+        mutation: api.endpoints.updatePost.useMutation(),
       }),
       {
         wrapper: storeRef.wrapper,
@@ -216,8 +219,8 @@ describe('full integration', () => {
 
     const { result } = renderHook(
       () => ({
-        query: api.usePostQuery('3'),
-        mutation: api.useUpdatePostMutation(),
+        query: api.endpoints.post.useQuery('3'),
+        mutation: api.endpoints.updatePost.useMutation(),
       }),
       {
         wrapper: storeRef.wrapper,

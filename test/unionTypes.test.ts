@@ -54,7 +54,7 @@ describe.skip('TS only tests', () => {
     }
   });
   test('useQuery union', () => {
-    const result = api.useTestQuery();
+    const result = api.endpoints.test.useQuery();
 
     if (result.isUninitialized) {
       expectExactType(undefined)(result.data);

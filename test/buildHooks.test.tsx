@@ -798,7 +798,7 @@ describe('hooks with createApi defaults set', () => {
       endpoints: (build) => ({
         getPosts: build.query<PostsResponse, void>({
           query: () => ({ url: 'posts' }),
-          provides: (result) => [...result.map(({ id }) => ({ type: 'Posts', id } as const))],
+          provides: (result) => (result ? result.map(({ id }) => ({ type: 'Posts', id })) : []),
         }),
         updatePost: build.mutation<Post, Partial<Post>>({
           query: ({ id, ...body }) => ({
@@ -806,7 +806,7 @@ describe('hooks with createApi defaults set', () => {
             method: 'PUT',
             body,
           }),
-          invalidates: ({ id }) => [{ type: 'Posts', id }],
+          invalidates: (result) => (result ? [{ type: 'Posts', id: result.id }] : []),
         }),
         addPost: build.mutation<Post, Partial<Post>>({
           query: (body) => ({

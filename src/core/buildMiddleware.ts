@@ -1,13 +1,17 @@
-import { AnyAction, AsyncThunk, Middleware, MiddlewareAPI, ThunkDispatch } from '@reduxjs/toolkit';
+import {
+  AnyAction,
+  AsyncThunk,
+  isAnyOf,
+  isFulfilled,
+  isRejectedWithValue,
+  Middleware,
+  MiddlewareAPI,
+  ThunkDispatch,
+} from '@reduxjs/toolkit';
 import { QueryCacheKey, QueryStatus, QuerySubState, QuerySubstateIdentifier, RootState, Subscribers } from './apiState';
 import { Api, ApiContext } from '../apiTypes';
-import { MutationThunkArg, QueryThunkArg, ThunkResult } from './buildThunks';
-import {
-  AssertEntityTypes,
-  calculateProvidedBy,
-  EndpointDefinitions,
-  FullEntityDescription,
-} from '../endpointDefinitions';
+import { calculateProvidedByThunk, MutationThunkArg, QueryThunkArg, ThunkResult } from './buildThunks';
+import { AssertEntityTypes, EndpointDefinitions, FullEntityDescription } from '../endpointDefinitions';
 import { onFocus, onOnline } from './setupListeners';
 import { flatten } from '../utils';
 
@@ -41,16 +45,8 @@ export function buildMiddleware<Definitions extends EndpointDefinitions, Reducer
   ) => (next) => (action) => {
     const result = next(action);
 
-    if (mutationThunk.fulfilled.match(action)) {
-      invalidateEntities(
-        calculateProvidedBy(
-          endpointDefinitions[action.meta.arg.endpointName].invalidates,
-          action.payload.result,
-          action.meta.arg.originalArgs,
-          assertEntityType
-        ),
-        mwApi
-      );
+    if (isAnyOf(isFulfilled(mutationThunk), isRejectedWithValue(mutationThunk))(action)) {
+      invalidateEntities(calculateProvidedByThunk(action, 'invalidates', endpointDefinitions, assertEntityType), mwApi);
     }
 
     if (unsubscribeQueryResult.match(action)) {

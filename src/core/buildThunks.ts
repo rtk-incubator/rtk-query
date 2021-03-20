@@ -4,6 +4,8 @@ import { BaseQueryFn, BaseQueryArg, BaseQueryError } from '../baseQueryTypes';
 import { RootState, QueryKeys, QueryStatus, QuerySubstateIdentifier } from './apiState';
 import { StartQueryActionCreatorOptions } from './buildInitiate';
 import {
+  AssertEntityTypes,
+  calculateProvidedBy,
   EndpointDefinition,
   EndpointDefinitions,
   MutationApi,
@@ -13,13 +15,14 @@ import {
   QueryDefinition,
   ResultTypeFrom,
 } from '../endpointDefinitions';
-import { Draft, isAllOf, isFulfilled, isPending, isRejected } from '@reduxjs/toolkit';
+import { Draft, isAllOf, isFulfilled, isPending, isRejected, isRejectedWithValue } from '@reduxjs/toolkit';
 import { Patch, isDraftable, produceWithPatches, enablePatches } from 'immer';
 import { AnyAction, createAsyncThunk, ThunkAction, ThunkDispatch, AsyncThunk } from '@reduxjs/toolkit';
 
 import { HandledError } from '../HandledError';
 
 import { ApiEndpointQuery, PrefetchOptions } from './module';
+import { UnwrapPromise } from '../tsHelpers';
 
 declare module './module' {
   export interface ApiEndpointQuery<
@@ -332,4 +335,19 @@ export function buildThunks<
   }
 
   return { queryThunk, mutationThunk, prefetchThunk, updateQueryResult, patchQueryResult, buildMatchThunkActions };
+}
+
+export function calculateProvidedByThunk(
+  action: UnwrapPromise<ReturnType<ReturnType<QueryThunk>> | ReturnType<ReturnType<MutationThunk>>>,
+  type: 'provides' | 'invalidates',
+  endpointDefinitions: EndpointDefinitions,
+  assertEntityType: AssertEntityTypes
+) {
+  return calculateProvidedBy(
+    endpointDefinitions[action.meta.arg.endpointName][type],
+    isFulfilled(action) ? action.payload.result : undefined,
+    isRejectedWithValue(action) ? action.payload : undefined,
+    action.meta.arg.originalArgs,
+    assertEntityType
+  );
 }

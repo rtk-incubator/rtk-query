@@ -5,6 +5,8 @@ import userEvent from '@testing-library/user-event';
 import { rest } from 'msw';
 import { setupApiStore, waitMs } from './helpers';
 import { server } from './mocks/server';
+import { AnyAction } from 'redux';
+import { SubscriptionOptions } from '@internal/core/apiState';
 
 // Just setup a temporary in-memory counter for tests that `getIncrementedAmount`.
 // This can be used to test how many renders happen due to data changes or
@@ -40,7 +42,11 @@ const api = createApi({
   }),
 });
 
-const storeRef = setupApiStore(api);
+const storeRef = setupApiStore(api, {
+  actions(state: AnyAction[] = [], action: AnyAction) {
+    return [...state, action];
+  },
+});
 
 afterEach(() => {
   amount = 0;
@@ -360,8 +366,13 @@ describe('hooks tests', () => {
   });
 
   describe('useLazyQuery', () => {
+    let data: any;
+
+    afterEach(() => {
+      data = undefined;
+    });
+
     test('useLazyQuery does not automatically fetch when mounted and has undefined data', async () => {
-      let data: any;
       function User() {
         const [fetchUser, { data: hookData, isFetching, isUninitialized }] = api.endpoints.getUser.useLazyQuery();
 
@@ -391,13 +402,70 @@ describe('hooks tests', () => {
         expect(screen.getByTestId('isFetching').textContent).toBe('true');
       });
       await waitFor(() => expect(screen.getByTestId('isFetching').textContent).toBe('false'));
-
-      console.error('hookdata', data);
     });
 
-    test.todo('shows existing data for a query if available');
-    test.todo('handles arg changes and basic useQuery opts');
-    test.todo('deals with any skip oddities assuming we keep partial skip functionality?');
+    test('useLazyQuery accepts updated subscription options and only dispatches `updateSubscriptionOptions` when values are updated', async () => {
+      let interval = 1000;
+      function User() {
+        const [options, setOptions] = React.useState<SubscriptionOptions>();
+        const [fetchUser, { data: hookData, isFetching, isUninitialized }] = api.endpoints.getUser.useLazyQuery(
+          options
+        );
+
+        data = hookData;
+
+        return (
+          <div>
+            <div data-testid="isUninitialized">{String(isUninitialized)}</div>
+            <div data-testid="isFetching">{String(isFetching)}</div>
+
+            <button data-testid="fetchButton" onClick={() => fetchUser(1)}>
+              fetchUser
+            </button>
+            <button
+              data-testid="updateOptions"
+              onClick={() =>
+                setOptions({
+                  pollingInterval: interval,
+                })
+              }
+            >
+              updateOptions
+            </button>
+          </div>
+        );
+      }
+
+      render(<User />, { wrapper: storeRef.wrapper });
+
+      await waitFor(() => expect(screen.getByTestId('isUninitialized').textContent).toBe('true'));
+      await waitFor(() => expect(data).toBeUndefined());
+
+      fireEvent.click(screen.getByTestId('fetchButton'));
+
+      await waitFor(() => expect(screen.getByTestId('isFetching').textContent).toBe('true'));
+      await waitFor(() => expect(screen.getByTestId('isFetching').textContent).toBe('false'));
+
+      fireEvent.click(screen.getByTestId('updateOptions'));
+      fireEvent.click(screen.getByTestId('fetchButton'));
+
+      await waitFor(() => expect(screen.getByTestId('isFetching').textContent).toBe('true'));
+      await waitFor(() => expect(screen.getByTestId('isFetching').textContent).toBe('false'));
+
+      interval = 1000;
+
+      fireEvent.click(screen.getByTestId('updateOptions'));
+      fireEvent.click(screen.getByTestId('fetchButton'));
+
+      await waitFor(() => {
+        expect(screen.getByTestId('isFetching').textContent).toBe('true');
+      });
+      await waitFor(() => expect(screen.getByTestId('isFetching').textContent).toBe('false'));
+
+      expect(
+        storeRef.store.getState().actions.filter(api.internalActions.updateSubscriptionOptions.match)
+      ).toHaveLength(1);
+    });
   });
 
   describe('useMutation', () => {
@@ -466,7 +534,7 @@ describe('hooks tests', () => {
       await waitFor(() => expect(screen.getByTestId('isFetching').textContent).toBe('false'));
 
       userEvent.hover(screen.getByTestId('highPriority'));
-      expect(api.endpoints.getUser.select(USER_ID)(storeRef.store.getState())).toEqual({
+      expect(api.endpoints.getUser.select(USER_ID)(storeRef.store.getState() as any)).toEqual({
         data: undefined,
         endpointName: 'getUser',
         error: undefined,
@@ -483,7 +551,7 @@ describe('hooks tests', () => {
 
       await waitFor(() => expect(screen.getByTestId('isFetching').textContent).toBe('false'));
 
-      expect(api.endpoints.getUser.select(USER_ID)(storeRef.store.getState())).toEqual({
+      expect(api.endpoints.getUser.select(USER_ID)(storeRef.store.getState() as any)).toEqual({
         data: undefined,
         endpointName: 'getUser',
         fulfilledTimeStamp: expect.any(Number),
@@ -524,7 +592,7 @@ describe('hooks tests', () => {
       // Try to prefetch what we just loaded
       userEvent.hover(screen.getByTestId('lowPriority'));
 
-      expect(api.endpoints.getUser.select(USER_ID)(storeRef.store.getState())).toEqual({
+      expect(api.endpoints.getUser.select(USER_ID)(storeRef.store.getState() as any)).toEqual({
         data: undefined,
         endpointName: 'getUser',
         fulfilledTimeStamp: expect.any(Number),
@@ -540,7 +608,7 @@ describe('hooks tests', () => {
 
       await waitMs();
 
-      expect(api.endpoints.getUser.select(USER_ID)(storeRef.store.getState())).toEqual({
+      expect(api.endpoints.getUser.select(USER_ID)(storeRef.store.getState() as any)).toEqual({
         data: undefined,
         endpointName: 'getUser',
         fulfilledTimeStamp: expect.any(Number),
@@ -583,7 +651,7 @@ describe('hooks tests', () => {
 
       // This should run the query being that we're past the threshold
       userEvent.hover(screen.getByTestId('lowPriority'));
-      expect(api.endpoints.getUser.select(USER_ID)(storeRef.store.getState())).toEqual({
+      expect(api.endpoints.getUser.select(USER_ID)(storeRef.store.getState() as any)).toEqual({
         data: undefined,
         endpointName: 'getUser',
         fulfilledTimeStamp: expect.any(Number),
@@ -599,7 +667,7 @@ describe('hooks tests', () => {
 
       await waitFor(() => expect(screen.getByTestId('isFetching').textContent).toBe('false'));
 
-      expect(api.endpoints.getUser.select(USER_ID)(storeRef.store.getState())).toEqual({
+      expect(api.endpoints.getUser.select(USER_ID)(storeRef.store.getState() as any)).toEqual({
         data: undefined,
         endpointName: 'getUser',
         fulfilledTimeStamp: expect.any(Number),
@@ -639,11 +707,11 @@ describe('hooks tests', () => {
       await waitMs();
 
       // Get a snapshot of the last result
-      const latestQueryData = api.endpoints.getUser.select(USER_ID)(storeRef.store.getState());
+      const latestQueryData = api.endpoints.getUser.select(USER_ID)(storeRef.store.getState() as any);
 
       userEvent.hover(screen.getByTestId('lowPriority'));
       //  Serve up the result from the cache being that the condition wasn't met
-      expect(api.endpoints.getUser.select(USER_ID)(storeRef.store.getState())).toEqual(latestQueryData);
+      expect(api.endpoints.getUser.select(USER_ID)(storeRef.store.getState() as any)).toEqual(latestQueryData);
     });
 
     test('usePrefetch executes a query even if conditions fail when the cache is empty', async () => {
@@ -666,7 +734,7 @@ describe('hooks tests', () => {
 
       userEvent.hover(screen.getByTestId('lowPriority'));
 
-      expect(api.endpoints.getUser.select(USER_ID)(storeRef.store.getState())).toEqual({
+      expect(api.endpoints.getUser.select(USER_ID)(storeRef.store.getState() as any)).toEqual({
         endpointName: 'getUser',
         isError: false,
         isLoading: true,

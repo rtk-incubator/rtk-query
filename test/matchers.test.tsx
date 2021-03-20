@@ -64,7 +64,7 @@ const otherEndpointMatchers = [
   querySuccess2.matchRejected,
 ];
 
-test('matches query pending & fulfilled actions for the own endpoint', async () => {
+test('matches query pending & fulfilled actions for the given endpoint', async () => {
   const endpoint = querySuccess;
   const { result } = renderHook(() => endpoint.useQuery({} as any), { wrapper: storeRef.wrapper });
   await hookWaitFor(() => expect(result.current.isLoading).toBeFalsy());
@@ -76,7 +76,7 @@ test('matches query pending & fulfilled actions for the own endpoint', async () 
     [endpoint.matchPending, endpoint.matchRejected, ...otherEndpointMatchers]
   );
 });
-test('matches query pending & rejected actions for the own endpoint', async () => {
+test('matches query pending & rejected actions for the given endpoint', async () => {
   const endpoint = queryFail;
   const { result } = renderHook(() => endpoint.useQuery({}), { wrapper: storeRef.wrapper });
   await hookWaitFor(() => expect(result.current.isLoading).toBeFalsy());
@@ -88,7 +88,36 @@ test('matches query pending & rejected actions for the own endpoint', async () =
     [endpoint.matchPending, endpoint.matchFulfilled, ...otherEndpointMatchers]
   );
 });
-test('matches mutation pending & fulfilled actions for the own endpoint', async () => {
+
+test('matches lazy query pending & fulfilled actions for given endpoint', async () => {
+  const endpoint = querySuccess;
+  const { result } = renderHook(() => endpoint.useLazyQuery(), { wrapper: storeRef.wrapper });
+  act(() => void result.current[0]({} as any));
+  await hookWaitFor(() => expect(result.current[1].isLoading).toBeFalsy());
+
+  matchSequence(storeRef.store.getState().actions, endpoint.matchPending, endpoint.matchFulfilled);
+  notMatchSequence(
+    storeRef.store.getState().actions,
+    [endpoint.matchFulfilled, endpoint.matchRejected, ...otherEndpointMatchers],
+    [endpoint.matchPending, endpoint.matchRejected, ...otherEndpointMatchers]
+  );
+});
+
+test('matches lazy query pending & rejected actions for given endpoint', async () => {
+  const endpoint = queryFail;
+  const { result } = renderHook(() => endpoint.useLazyQuery(), { wrapper: storeRef.wrapper });
+  act(() => void result.current[0]({}));
+  await hookWaitFor(() => expect(result.current[1].isLoading).toBeFalsy());
+
+  matchSequence(storeRef.store.getState().actions, endpoint.matchPending, endpoint.matchRejected);
+  notMatchSequence(
+    storeRef.store.getState().actions,
+    [endpoint.matchFulfilled, endpoint.matchRejected, ...otherEndpointMatchers],
+    [endpoint.matchPending, endpoint.matchFulfilled, ...otherEndpointMatchers]
+  );
+});
+
+test('matches mutation pending & fulfilled actions for the given endpoint', async () => {
   const endpoint = mutationSuccess;
   const { result } = renderHook(() => endpoint.useMutation(), { wrapper: storeRef.wrapper });
   act(() => void result.current[0]({}));
@@ -101,7 +130,7 @@ test('matches mutation pending & fulfilled actions for the own endpoint', async 
     [endpoint.matchPending, endpoint.matchRejected, ...otherEndpointMatchers]
   );
 });
-test('matches mutation pending & rejected actions for the own endpoint', async () => {
+test('matches mutation pending & rejected actions for the given endpoint', async () => {
   const endpoint = mutationFail;
   const { result } = renderHook(() => endpoint.useMutation(), { wrapper: storeRef.wrapper });
   act(() => void result.current[0]({}));

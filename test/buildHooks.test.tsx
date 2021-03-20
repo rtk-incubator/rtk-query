@@ -360,16 +360,19 @@ describe('hooks tests', () => {
   });
 
   describe('useLazyQuery', () => {
-    test('useLazyQuery does not automatically fetch when mounted', async () => {
+    test('useLazyQuery does not automatically fetch when mounted and has undefined data', async () => {
+      let data: any;
       function User() {
-        const [fetchUser, { isFetching, isUninitialized }] = api.endpoints.getUser.useLazyQuery(1);
+        const [fetchUser, { data: hookData, isFetching, isUninitialized }] = api.endpoints.getUser.useLazyQuery();
+
+        data = hookData;
 
         return (
           <div>
             <div data-testid="isUninitialized">{String(isUninitialized)}</div>
             <div data-testid="isFetching">{String(isFetching)}</div>
 
-            <button data-testid="fetchButton" onClick={fetchUser}>
+            <button data-testid="fetchButton" onClick={() => fetchUser(1)}>
               fetchUser
             </button>
           </div>
@@ -379,6 +382,7 @@ describe('hooks tests', () => {
       render(<User />, { wrapper: storeRef.wrapper });
 
       await waitFor(() => expect(screen.getByTestId('isUninitialized').textContent).toBe('true'));
+      await waitFor(() => expect(data).toBeUndefined());
 
       fireEvent.click(screen.getByTestId('fetchButton'));
 
@@ -387,6 +391,8 @@ describe('hooks tests', () => {
         expect(screen.getByTestId('isFetching').textContent).toBe('true');
       });
       await waitFor(() => expect(screen.getByTestId('isFetching').textContent).toBe('false'));
+
+      console.error('hookdata', data);
     });
 
     test.todo('shows existing data for a query if available');

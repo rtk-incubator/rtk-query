@@ -69,7 +69,7 @@ const PostList = () => {
     return (
       <div>
         No posts :({' '}
-        <button onClick={getPosts} disabled={isFetching}>
+        <button onClick={() => getPosts()} disabled={isFetching}>
           {isFetching ? 'Fetching...' : 'Fetch them'}
         </button>
       </div>
@@ -78,7 +78,7 @@ const PostList = () => {
 
   return (
     <div>
-      <button onClick={getPosts}> {isFetching ? 'Fetching...' : 'Refetch posts'}</button>
+      <button onClick={() => getPosts()}> {isFetching ? 'Fetching...' : 'Refetch posts'}</button>
       {posts.map((post) => (
         <PostListItem key={post.id} data={post} onSelect={(id) => push(`/posts/${id}`)} />
       ))}

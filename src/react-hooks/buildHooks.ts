@@ -29,6 +29,7 @@ export interface QueryHooks<Definition extends QueryDefinition<any, any, any, an
   useQuery: UseQuery<Definition>;
   useLazyQuery: UseLazyQuery<Definition>;
   useQuerySubscription: UseQuerySubscription<Definition>;
+  useLazyQuerySubscription: UseLazyQuerySubscription<Definition>;
   useQueryState: UseQueryState<Definition>;
 }
 
@@ -40,12 +41,6 @@ export type UseQuery<D extends QueryDefinition<any, any, any, any>> = <R = UseQu
   arg: QueryArgFrom<D>,
   options?: UseQuerySubscriptionOptions & UseQueryStateOptions<D, R>
 ) => UseQueryStateResult<D, R> & ReturnType<UseQuerySubscription<D>>;
-
-export type UseLazyQuery<D extends QueryDefinition<any, any, any, any>> = <R = UseQueryStateDefaultResult<D>>(
-  arg: QueryArgFrom<D>,
-  options?: UseQuerySubscriptionOptions & UseQueryStateOptions<D, R>
-) => [() => void, UseQueryStateResult<D, R> & ReturnType<UseQuerySubscription<D>>];
-
 interface UseQuerySubscriptionOptions extends SubscriptionOptions {
   skip?: boolean;
   refetchOnMountOrArgChange?: boolean | number;
@@ -55,6 +50,14 @@ export type UseQuerySubscription<D extends QueryDefinition<any, any, any, any>> 
   arg: QueryArgFrom<D>,
   options?: UseQuerySubscriptionOptions
 ) => Pick<QueryActionCreatorResult<D>, 'refetch'>;
+
+export type UseLazyQuery<D extends QueryDefinition<any, any, any, any>> = <R = UseQueryStateDefaultResult<D>>(
+  options?: SubscriptionOptions & Omit<UseQueryStateOptions<D, R>, 'skip'>
+) => [(arg: QueryArgFrom<D>) => void, UseQueryStateResult<D, R>];
+
+export type UseLazyQuerySubscription<D extends QueryDefinition<any, any, any, any>> = (
+  options?: SubscriptionOptions
+) => [(args: QueryArgFrom<D>) => void, React.MutableRefObject<any>];
 
 export type QueryStateSelector<R, D extends QueryDefinition<any, any, any, any>> = (
   state: QueryResultSelectorResult<D>,
@@ -235,6 +238,64 @@ export function buildHooks<Definitions extends EndpointDefinitions>({
       );
     };
 
+    const useLazyQuerySubscription: UseLazyQuerySubscription<any> = ({
+      refetchOnReconnect,
+      refetchOnFocus,
+      pollingInterval = 0,
+    } = {}) => {
+      const { initiate } = api.endpoints[name] as ApiEndpointQuery<
+        QueryDefinition<any, any, any, any, any>,
+        Definitions
+      >;
+      const dispatch = useDispatch<ThunkDispatch<any, any, AnyAction>>();
+
+      const promiseRef = useRef<QueryActionCreatorResult<any>>();
+      const lastPromise = promiseRef.current;
+
+      const optionsRef = useRef<SubscriptionOptions>();
+
+      useEffect(() => {
+        const options = {
+          refetchOnReconnect,
+          refetchOnFocus,
+          pollingInterval,
+        };
+        if (lastPromise) {
+          if (!shallowEqual(options, optionsRef.current)) {
+            lastPromise.updateSubscriptionOptions(options);
+            optionsRef.current = options;
+          }
+        }
+      }, [lastPromise, refetchOnFocus, refetchOnReconnect, pollingInterval]);
+
+      useEffect(() => {
+        return () => {
+          // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+          promiseRef.current?.unsubscribe();
+          promiseRef.current = undefined;
+          optionsRef.current = undefined;
+        };
+      }, []);
+
+      const trigger = useCallback(
+        function (args: any) {
+          promiseRef.current = dispatch(
+            initiate(args, {
+              subscriptionOptions: { pollingInterval, refetchOnReconnect, refetchOnFocus },
+              forceRefetch: true,
+            })
+          );
+          // Set the subscription options on the initial query
+          if (!optionsRef.current) {
+            optionsRef.current = { pollingInterval, refetchOnReconnect, refetchOnFocus };
+          }
+        },
+        [dispatch, initiate, pollingInterval, refetchOnFocus, refetchOnReconnect]
+      );
+
+      return [trigger, promiseRef];
+    };
+
     const useQueryState: UseQueryState<any> = (
       arg: any,
       { skip = false, selectFromResult = defaultQueryStateSelector as QueryStateSelector<any, any> } = {}
@@ -268,24 +329,23 @@ export function buildHooks<Definitions extends EndpointDefinitions>({
     return {
       useQueryState,
       useQuerySubscription,
-      useLazyQuery(arg, options) {
-        const queryStateResults = useQueryState(arg, options);
-        const [isTriggered, setTriggered] = useState((queryStateResults as any).isSuccess);
-
-        // `skip` gets overridden because it doesn't make sense to use a query lazily, then skip it's result
-        const { refetch, ...querySubscriptionResults } = useQuerySubscription(arg, {
+      useLazyQuerySubscription,
+      useLazyQuery(options) {
+        const [providedArgs, setProvidedArgs] = useState(null);
+        const [trigger] = useLazyQuerySubscription(options);
+        const queryStateResults = useQueryState(providedArgs, {
           ...options,
-          skip: !isTriggered,
+          skip: providedArgs === null,
         });
+        const triggerQuery = useCallback(
+          function (args: any) {
+            setProvidedArgs(args);
+            trigger(args);
+          },
+          [trigger]
+        );
 
-        const triggerQuery = useCallback(() => (!isTriggered ? setTriggered(true) : refetch()), [refetch, isTriggered]);
-
-        return useMemo(() => [triggerQuery, { refetch, ...queryStateResults, ...querySubscriptionResults }], [
-          queryStateResults,
-          querySubscriptionResults,
-          refetch,
-          triggerQuery,
-        ]);
+        return useMemo(() => [triggerQuery, queryStateResults], [triggerQuery, queryStateResults]);
       },
       useQuery(arg, options) {
         const querySubscriptionResults = useQuerySubscription(arg, options);

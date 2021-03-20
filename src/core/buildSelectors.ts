@@ -68,7 +68,7 @@ export function buildSelectors<InternalQueryArgs, Definitions extends EndpointDe
   serializeQueryArgs: InternalSerializeQueryArgs<InternalQueryArgs>;
   reducerPath: ReducerPath;
 }) {
-  type RootState = _RootState<Definitions, string, ReducerPath>;
+  type RootState = _RootState<Definitions, string, string>;
 
   return { buildQuerySelector, buildMutationSelector };
 

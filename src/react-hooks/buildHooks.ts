@@ -24,6 +24,7 @@ import { Id, NoInfer, Override } from '../tsHelpers';
 import { ApiEndpointMutation, ApiEndpointQuery, CoreModule, PrefetchOptions } from '../core/module';
 import { ReactHooksModuleOptions } from './module';
 import { useShallowStableValue } from './useShallowStableValue';
+import isDeepEqual from 'react-fast-compare';
 
 export interface QueryHooks<Definition extends QueryDefinition<any, any, any, any, any>> {
   useQuery: UseQuery<Definition>;
@@ -253,6 +254,7 @@ export function buildHooks<Definitions extends EndpointDefinitions>({
       const lastPromise = promiseRef.current;
 
       const optionsRef = useRef<SubscriptionOptions>();
+      const argsRef = useRef<any>();
 
       useEffect(() => {
         const options = {
@@ -274,23 +276,36 @@ export function buildHooks<Definitions extends EndpointDefinitions>({
           promiseRef.current?.unsubscribe();
           promiseRef.current = undefined;
           optionsRef.current = undefined;
+          argsRef.current = undefined;
         };
       }, []);
 
       const trigger = useCallback(
         function (args: any) {
+          if (!argsRef.current) {
+            argsRef.current = args;
+          } else if (argsRef.current) {
+            // args have changed, we need to unsubscribe before creating the new subscription ref.
+            if (!isDeepEqual(argsRef.current, args)) {
+              // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+              lastPromise?.unsubscribe();
+              argsRef.current = args;
+            }
+          }
+
+          // Set the subscription options on the initial query
+          if (!optionsRef.current) {
+            optionsRef.current = { pollingInterval, refetchOnReconnect, refetchOnFocus };
+          }
+
           promiseRef.current = dispatch(
             initiate(args, {
               subscriptionOptions: { pollingInterval, refetchOnReconnect, refetchOnFocus },
               forceRefetch: true,
             })
           );
-          // Set the subscription options on the initial query
-          if (!optionsRef.current) {
-            optionsRef.current = { pollingInterval, refetchOnReconnect, refetchOnFocus };
-          }
         },
-        [dispatch, initiate, pollingInterval, refetchOnFocus, refetchOnReconnect]
+        [dispatch, initiate, lastPromise, pollingInterval, refetchOnFocus, refetchOnReconnect]
       );
 
       return [trigger, promiseRef];

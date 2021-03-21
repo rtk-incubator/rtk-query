@@ -262,11 +262,9 @@ export function buildHooks<Definitions extends EndpointDefinitions>({
           refetchOnFocus,
           pollingInterval,
         };
-        if (lastPromise) {
-          if (!shallowEqual(options, optionsRef.current)) {
-            lastPromise.updateSubscriptionOptions(options);
-            optionsRef.current = options;
-          }
+        if (optionsRef.current && !shallowEqual(options, optionsRef.current)) {
+          lastPromise.updateSubscriptionOptions(options);
+          optionsRef.current = options;
         }
       }, [lastPromise, refetchOnFocus, refetchOnReconnect, pollingInterval]);
 

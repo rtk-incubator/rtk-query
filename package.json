@@ -110,6 +110,7 @@
   ],
   "dependencies": {
     "@babel/runtime": "^7.12.5",
+    "@typescript-eslint/parser": "^4.18.0",
     "immer": ">=8.0.0"
   },
   "peerDependencies": {

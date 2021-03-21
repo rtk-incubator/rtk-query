@@ -466,6 +466,65 @@ describe('hooks tests', () => {
         storeRef.store.getState().actions.filter(api.internalActions.updateSubscriptionOptions.match)
       ).toHaveLength(1);
     });
+
+    test('useLazyQuery accepts updated args and unsubscribes the original query', async () => {
+      function User() {
+        const [fetchUser, { data: hookData, isFetching, isUninitialized }] = api.endpoints.getUser.useLazyQuery();
+
+        data = hookData;
+
+        return (
+          <div>
+            <div data-testid="isUninitialized">{String(isUninitialized)}</div>
+            <div data-testid="isFetching">{String(isFetching)}</div>
+
+            <button data-testid="fetchUser1" onClick={() => fetchUser(1)}>
+              fetchUser1
+            </button>
+            <button data-testid="fetchUser2" onClick={() => fetchUser(2)}>
+              fetchUser2
+            </button>
+          </div>
+        );
+      }
+
+      render(<User />, { wrapper: storeRef.wrapper });
+
+      await waitFor(() => expect(screen.getByTestId('isUninitialized').textContent).toBe('true'));
+      await waitFor(() => expect(data).toBeUndefined());
+
+      fireEvent.click(screen.getByTestId('fetchUser1'));
+
+      await waitFor(() => expect(screen.getByTestId('isFetching').textContent).toBe('true'));
+      await waitFor(() => expect(screen.getByTestId('isFetching').textContent).toBe('false'));
+
+      // Being that there is only the initial query, no unsubscribe should be dispatched
+      expect(storeRef.store.getState().actions.filter(api.internalActions.unsubscribeQueryResult.match)).toHaveLength(
+        0
+      );
+
+      fireEvent.click(screen.getByTestId('fetchUser2'));
+
+      await waitFor(() => expect(screen.getByTestId('isFetching').textContent).toBe('true'));
+      await waitFor(() => expect(screen.getByTestId('isFetching').textContent).toBe('false'));
+
+      // `args` changed from 1 -> 2, should unsubscribe the original for 1.
+      expect(storeRef.store.getState().actions.filter(api.internalActions.unsubscribeQueryResult.match)).toHaveLength(
+        1
+      );
+
+      fireEvent.click(screen.getByTestId('fetchUser1'));
+
+      expect(storeRef.store.getState().actions.filter(api.internalActions.unsubscribeQueryResult.match)).toHaveLength(
+        2
+      );
+
+      // no `arg` change, no unsubscribe happens, just another pending request/fulfilled
+      fireEvent.click(screen.getByTestId('fetchUser1'));
+      expect(storeRef.store.getState().actions.filter(api.internalActions.unsubscribeQueryResult.match)).toHaveLength(
+        2
+      );
+    });
   });
 
   describe('useMutation', () => {

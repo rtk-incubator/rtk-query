@@ -404,7 +404,7 @@ describe('hooks tests', () => {
       await waitFor(() => expect(screen.getByTestId('isFetching').textContent).toBe('false'));
     });
 
-    test('useLazyQuery accepts updated subscription options and only dispatches `updateSubscriptionOptions` when values are updated', async () => {
+    test('useLazyQuery accepts updated subscription options and only dispatches updateSubscriptionOptions when values are updated', async () => {
       let interval = 1000;
       function User() {
         const [options, setOptions] = React.useState<SubscriptionOptions>();

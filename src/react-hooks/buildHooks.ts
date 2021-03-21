@@ -1,5 +1,5 @@
 import { AnyAction, createSelector, ThunkAction, ThunkDispatch } from '@reduxjs/toolkit';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import {
   MutationSubState,
   QueryStatus,
@@ -201,14 +201,21 @@ export function buildHooks<Definitions extends EndpointDefinitions>({
         }
 
         const lastPromise = promiseRef.current;
+
+        const subscriptionOptions = {
+          refetchOnReconnect,
+          refetchOnFocus,
+          pollingInterval,
+        };
         if (lastPromise && lastPromise.arg === stableArg) {
           // arg did not change, but options probably did, update them
-          lastPromise.updateSubscriptionOptions({ pollingInterval, refetchOnReconnect, refetchOnFocus });
+          lastPromise.updateSubscriptionOptions(subscriptionOptions);
+          lastPromise.subscriptionOptions = subscriptionOptions;
         } else {
           lastPromise?.unsubscribe();
           const promise = dispatch(
             initiate(stableArg, {
-              subscriptionOptions: { pollingInterval, refetchOnReconnect, refetchOnFocus },
+              subscriptionOptions,
               forceRefetch: refetchOnMountOrArgChange,
             })
           );
@@ -245,6 +252,7 @@ export function buildHooks<Definitions extends EndpointDefinitions>({
       refetchOnFocus,
       pollingInterval = 0,
     } = {}) => {
+      const forceUpdate = useReducer(() => ({}), {})[1];
       const { initiate } = api.endpoints[name] as ApiEndpointQuery<
         QueryDefinition<any, any, any, any, any>,
         Definitions
@@ -255,13 +263,14 @@ export function buildHooks<Definitions extends EndpointDefinitions>({
       const lastPromise = promiseRef.current;
 
       useEffect(() => {
-        const options = {
+        const subscriptionOptions = {
           refetchOnReconnect,
           refetchOnFocus,
           pollingInterval,
         };
-        if (lastPromise && !shallowEqual(options, lastPromise.subscriptionOptions)) {
-          lastPromise?.updateSubscriptionOptions(options);
+        if (lastPromise && !shallowEqual(subscriptionOptions, lastPromise.subscriptionOptions)) {
+          lastPromise?.updateSubscriptionOptions(subscriptionOptions);
+          lastPromise.subscriptionOptions = subscriptionOptions;
         }
       }, [lastPromise, refetchOnFocus, refetchOnReconnect, pollingInterval]);
 
@@ -276,17 +285,24 @@ export function buildHooks<Definitions extends EndpointDefinitions>({
         function (arg: any) {
           lastPromise?.unsubscribe();
 
+          const subscriptionOptions = {
+            refetchOnReconnect,
+            refetchOnFocus,
+            pollingInterval,
+          };
+
           promiseRef.current = dispatch(
             initiate(arg, {
-              subscriptionOptions: { pollingInterval, refetchOnReconnect, refetchOnFocus },
+              subscriptionOptions,
               forceRefetch: true,
             })
           );
+          forceUpdate();
         },
         [dispatch, initiate, lastPromise, pollingInterval, refetchOnFocus, refetchOnReconnect]
       );
 
-      return [trigger, lastPromise];
+      return useMemo(() => [trigger, lastPromise], [trigger, lastPromise]);
     };
 
     const useQueryState: UseQueryState<any> = (
@@ -324,22 +340,14 @@ export function buildHooks<Definitions extends EndpointDefinitions>({
       useQuerySubscription,
       useLazyQuerySubscription,
       useLazyQuery(options) {
-        const [providedArgs, setProvidedArgs] = useState(null);
         const [trigger, lastPromise] = useLazyQuerySubscription(options);
-        const queryStateResults = useQueryState(providedArgs, {
+        const queryStateResults = useQueryState(lastPromise?.arg, {
           ...options,
-          skip: providedArgs === null,
+          skip: !lastPromise,
         });
-        const triggerQuery = useCallback(
-          function (args: any) {
-            setProvidedArgs(args);
-            trigger(args);
-          },
-          [trigger]
-        );
 
         const info = useMemo(() => ({ lastArgs: lastPromise?.arg }), [lastPromise]);
-        return useMemo(() => [triggerQuery, queryStateResults, info], [triggerQuery, queryStateResults, info]);
+        return useMemo(() => [trigger, queryStateResults, info], [trigger, queryStateResults, info]);
       },
       useQuery(arg, options) {
         const querySubscriptionResults = useQuerySubscription(arg, options);

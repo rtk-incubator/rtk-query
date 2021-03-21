@@ -508,7 +508,6 @@ describe('hooks tests', () => {
       await waitFor(() => expect(screen.getByTestId('isFetching').textContent).toBe('true'));
       await waitFor(() => expect(screen.getByTestId('isFetching').textContent).toBe('false'));
 
-      // `args` changed from 1 -> 2, should unsubscribe the original for 1.
       expect(storeRef.store.getState().actions.filter(api.internalActions.unsubscribeQueryResult.match)).toHaveLength(
         1
       );
@@ -519,10 +518,10 @@ describe('hooks tests', () => {
         2
       );
 
-      // no `arg` change, no unsubscribe happens, just another pending request/fulfilled
+      // we always unsubscribe the original promise and create a new one
       fireEvent.click(screen.getByTestId('fetchUser1'));
       expect(storeRef.store.getState().actions.filter(api.internalActions.unsubscribeQueryResult.match)).toHaveLength(
-        2
+        3
       );
     });
   });

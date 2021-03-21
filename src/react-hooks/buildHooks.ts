@@ -24,7 +24,6 @@ import { Id, NoInfer, Override } from '../tsHelpers';
 import { ApiEndpointMutation, ApiEndpointQuery, CoreModule, PrefetchOptions } from '../core/module';
 import { ReactHooksModuleOptions } from './module';
 import { useShallowStableValue } from './useShallowStableValue';
-import isDeepEqual from 'react-fast-compare';
 
 export interface QueryHooks<Definition extends QueryDefinition<any, any, any, any, any>> {
   useQuery: UseQuery<Definition>;
@@ -52,13 +51,16 @@ export type UseQuerySubscription<D extends QueryDefinition<any, any, any, any>> 
   options?: UseQuerySubscriptionOptions
 ) => Pick<QueryActionCreatorResult<D>, 'refetch'>;
 
+export type UseLazyQueryLastPromiseInfo<D extends QueryDefinition<any, any, any, any>> = {
+  lastArgs: QueryArgFrom<D>;
+};
 export type UseLazyQuery<D extends QueryDefinition<any, any, any, any>> = <R = UseQueryStateDefaultResult<D>>(
   options?: SubscriptionOptions & Omit<UseQueryStateOptions<D, R>, 'skip'>
-) => [(arg: QueryArgFrom<D>) => void, UseQueryStateResult<D, R>];
+) => [(arg: QueryArgFrom<D>) => void, UseQueryStateResult<D, R>, UseLazyQueryLastPromiseInfo<D>];
 
 export type UseLazyQuerySubscription<D extends QueryDefinition<any, any, any, any>> = (
   options?: SubscriptionOptions
-) => [(args: QueryArgFrom<D>) => void, React.MutableRefObject<any>];
+) => [(args: QueryArgFrom<D>) => void, undefined | React.MutableRefObject<QueryActionCreatorResult<any>>['current']];
 
 export type QueryStateSelector<R, D extends QueryDefinition<any, any, any, any>> = (
   state: QueryResultSelectorResult<D>,
@@ -200,7 +202,7 @@ export function buildHooks<Definitions extends EndpointDefinitions>({
 
         const lastPromise = promiseRef.current;
         if (lastPromise && lastPromise.arg === stableArg) {
-          // arg did not change, but options did probably, update them
+          // arg did not change, but options probably did, update them
           lastPromise.updateSubscriptionOptions({ pollingInterval, refetchOnReconnect, refetchOnFocus });
         } else {
           if (lastPromise) lastPromise.unsubscribe();
@@ -254,7 +256,6 @@ export function buildHooks<Definitions extends EndpointDefinitions>({
       const lastPromise = promiseRef.current;
 
       const optionsRef = useRef<SubscriptionOptions>();
-      const argsRef = useRef<any>();
 
       useEffect(() => {
         const options = {
@@ -263,7 +264,8 @@ export function buildHooks<Definitions extends EndpointDefinitions>({
           pollingInterval,
         };
         if (optionsRef.current && !shallowEqual(options, optionsRef.current)) {
-          lastPromise.updateSubscriptionOptions(options);
+          // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+          lastPromise?.updateSubscriptionOptions(options);
           optionsRef.current = options;
         }
       }, [lastPromise, refetchOnFocus, refetchOnReconnect, pollingInterval]);
@@ -274,22 +276,13 @@ export function buildHooks<Definitions extends EndpointDefinitions>({
           promiseRef.current?.unsubscribe();
           promiseRef.current = undefined;
           optionsRef.current = undefined;
-          argsRef.current = undefined;
         };
       }, []);
 
       const trigger = useCallback(
         function (args: any) {
-          if (!argsRef.current) {
-            argsRef.current = args;
-          } else if (argsRef.current) {
-            // args have changed, we need to unsubscribe before creating the new subscription ref.
-            if (!isDeepEqual(argsRef.current, args)) {
-              // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-              lastPromise?.unsubscribe();
-              argsRef.current = args;
-            }
-          }
+          // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+          lastPromise?.unsubscribe();
 
           // Set the subscription options on the initial query
           if (!optionsRef.current) {
@@ -306,7 +299,7 @@ export function buildHooks<Definitions extends EndpointDefinitions>({
         [dispatch, initiate, lastPromise, pollingInterval, refetchOnFocus, refetchOnReconnect]
       );
 
-      return [trigger, promiseRef];
+      return [trigger, lastPromise];
     };
 
     const useQueryState: UseQueryState<any> = (
@@ -345,7 +338,7 @@ export function buildHooks<Definitions extends EndpointDefinitions>({
       useLazyQuerySubscription,
       useLazyQuery(options) {
         const [providedArgs, setProvidedArgs] = useState(null);
-        const [trigger] = useLazyQuerySubscription(options);
+        const [trigger, lastPromise] = useLazyQuerySubscription(options);
         const queryStateResults = useQueryState(providedArgs, {
           ...options,
           skip: providedArgs === null,
@@ -358,7 +351,7 @@ export function buildHooks<Definitions extends EndpointDefinitions>({
           [trigger]
         );
 
-        const info = useMemo(() => ({ lastArgs: promise.args }, [ promise.args ]);
+        const info = useMemo(() => ({ lastArgs: lastPromise?.arg }), [lastPromise]);
         return useMemo(() => [triggerQuery, queryStateResults, info], [triggerQuery, queryStateResults, info]);
       },
       useQuery(arg, options) {

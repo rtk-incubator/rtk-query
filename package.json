@@ -110,8 +110,7 @@
   ],
   "dependencies": {
     "@babel/runtime": "^7.12.5",
-    "immer": ">=8.0.0",
-    "react-fast-compare": "^3.2.0"
+    "immer": ">=8.0.0"
   },
   "peerDependencies": {
     "@reduxjs/toolkit": "^1.5.0",

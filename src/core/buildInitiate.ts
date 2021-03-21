@@ -43,6 +43,7 @@ type StartQueryActionCreator<D extends QueryDefinition<any, any, any, any, any>>
 export type QueryActionCreatorResult<D extends QueryDefinition<any, any, any, any>> = Promise<QuerySubState<D>> & {
   arg: QueryArgFrom<D>;
   requestId: string;
+  subscriptionOptions: SubscriptionOptions | undefined;
   abort(): void;
   unsubscribe(): void;
   refetch(): void;
@@ -109,6 +110,7 @@ export function buildInitiate<InternalQueryArgs>({
       return Object.assign(statePromise, {
         arg,
         requestId,
+        subscriptionOptions,
         abort,
         refetch() {
           dispatch(queryAction(arg, { subscribe: false, forceRefetch: true }));

@@ -488,7 +488,7 @@ describe('hooks tests', () => {
         );
       }
 
-      render(<User />, { wrapper: storeRef.wrapper });
+      const { unmount } = render(<User />, { wrapper: storeRef.wrapper });
 
       await waitFor(() => expect(screen.getByTestId('isUninitialized').textContent).toBe('true'));
       await waitFor(() => expect(data).toBeUndefined());
@@ -522,6 +522,13 @@ describe('hooks tests', () => {
       fireEvent.click(screen.getByTestId('fetchUser1'));
       expect(storeRef.store.getState().actions.filter(api.internalActions.unsubscribeQueryResult.match)).toHaveLength(
         3
+      );
+
+      unmount();
+
+      // We unsubscribe after the component unmounts
+      expect(storeRef.store.getState().actions.filter(api.internalActions.unsubscribeQueryResult.match)).toHaveLength(
+        4
       );
     });
   });

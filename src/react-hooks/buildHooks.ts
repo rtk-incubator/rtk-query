@@ -60,7 +60,7 @@ export type UseLazyQuery<D extends QueryDefinition<any, any, any, any>> = <R = U
 
 export type UseLazyQuerySubscription<D extends QueryDefinition<any, any, any, any>> = (
   options?: SubscriptionOptions
-) => [(args: QueryArgFrom<D>) => void, undefined | React.MutableRefObject<QueryActionCreatorResult<any>>['current']];
+) => [(args: QueryArgFrom<D>) => void, undefined | QueryActionCreatorResult<any>];
 
 export type QueryStateSelector<R, D extends QueryDefinition<any, any, any, any>> = (
   state: QueryResultSelectorResult<D>,
@@ -252,15 +252,14 @@ export function buildHooks<Definitions extends EndpointDefinitions>({
       refetchOnFocus,
       pollingInterval = 0,
     } = {}) => {
-      const forceUpdate = useReducer(() => ({}), {})[1];
       const { initiate } = api.endpoints[name] as ApiEndpointQuery<
         QueryDefinition<any, any, any, any, any>,
         Definitions
       >;
       const dispatch = useDispatch<ThunkDispatch<any, any, AnyAction>>();
 
-      const promiseRef = useRef<QueryActionCreatorResult<any>>();
-      const lastPromise = promiseRef.current;
+      const [promiseRef, setPromiseRef] = useState<QueryActionCreatorResult<any>>();
+      const unmountRef = useRef<QueryActionCreatorResult<any> | undefined>();
 
       useEffect(() => {
         const subscriptionOptions = {
@@ -268,41 +267,47 @@ export function buildHooks<Definitions extends EndpointDefinitions>({
           refetchOnFocus,
           pollingInterval,
         };
-        if (lastPromise && !shallowEqual(subscriptionOptions, lastPromise.subscriptionOptions)) {
-          lastPromise?.updateSubscriptionOptions(subscriptionOptions);
-          lastPromise.subscriptionOptions = subscriptionOptions;
+        if (promiseRef && !shallowEqual(subscriptionOptions, promiseRef.subscriptionOptions)) {
+          promiseRef?.updateSubscriptionOptions(subscriptionOptions);
+          setPromiseRef((prev) => ({ ...prev!, subscriptionOptions }));
         }
-      }, [lastPromise, refetchOnFocus, refetchOnReconnect, pollingInterval]);
+      }, [promiseRef, refetchOnFocus, refetchOnReconnect, pollingInterval]);
+
+      useEffect(() => {
+        unmountRef.current = promiseRef;
+      }, [promiseRef]);
 
       useEffect(() => {
         return () => {
-          promiseRef.current?.unsubscribe();
-          promiseRef.current = undefined;
+          unmountRef?.current?.unsubscribe();
         };
       }, []);
 
       const trigger = useCallback(
         function (arg: any) {
-          lastPromise?.unsubscribe();
+          batch(() => {
+            promiseRef?.unsubscribe();
 
-          const subscriptionOptions = {
-            refetchOnReconnect,
-            refetchOnFocus,
-            pollingInterval,
-          };
+            const subscriptionOptions = {
+              refetchOnReconnect,
+              refetchOnFocus,
+              pollingInterval,
+            };
 
-          promiseRef.current = dispatch(
-            initiate(arg, {
-              subscriptionOptions,
-              forceRefetch: true,
-            })
-          );
-          forceUpdate();
+            const promise = dispatch(
+              initiate(arg, {
+                subscriptionOptions,
+                forceRefetch: true,
+              })
+            );
+
+            setPromiseRef(promise);
+          });
         },
-        [dispatch, initiate, lastPromise, pollingInterval, refetchOnFocus, refetchOnReconnect]
+        [dispatch, initiate, promiseRef, pollingInterval, refetchOnFocus, refetchOnReconnect]
       );
 
-      return useMemo(() => [trigger, lastPromise], [trigger, lastPromise]);
+      return useMemo(() => [trigger, promiseRef], [trigger, promiseRef]);
     };
 
     const useQueryState: UseQueryState<any> = (

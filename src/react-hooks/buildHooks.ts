@@ -205,7 +205,7 @@ export function buildHooks<Definitions extends EndpointDefinitions>({
           // arg did not change, but options probably did, update them
           lastPromise.updateSubscriptionOptions({ pollingInterval, refetchOnReconnect, refetchOnFocus });
         } else {
-          if (lastPromise) lastPromise.unsubscribe();
+          lastPromise?.unsubscribe();
           const promise = dispatch(
             initiate(stableArg, {
               subscriptionOptions: { pollingInterval, refetchOnReconnect, refetchOnFocus },
@@ -227,7 +227,6 @@ export function buildHooks<Definitions extends EndpointDefinitions>({
 
       useEffect(() => {
         return () => {
-          // eslint-disable-next-line @typescript-eslint/no-unused-expressions
           promiseRef.current?.unsubscribe();
           promiseRef.current = undefined;
         };
@@ -255,42 +254,30 @@ export function buildHooks<Definitions extends EndpointDefinitions>({
       const promiseRef = useRef<QueryActionCreatorResult<any>>();
       const lastPromise = promiseRef.current;
 
-      const optionsRef = useRef<SubscriptionOptions>();
-
       useEffect(() => {
         const options = {
           refetchOnReconnect,
           refetchOnFocus,
           pollingInterval,
         };
-        if (optionsRef.current && !shallowEqual(options, optionsRef.current)) {
-          // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+        if (lastPromise && !shallowEqual(options, lastPromise.subscriptionOptions)) {
           lastPromise?.updateSubscriptionOptions(options);
-          optionsRef.current = options;
         }
       }, [lastPromise, refetchOnFocus, refetchOnReconnect, pollingInterval]);
 
       useEffect(() => {
         return () => {
-          // eslint-disable-next-line @typescript-eslint/no-unused-expressions
           promiseRef.current?.unsubscribe();
           promiseRef.current = undefined;
-          optionsRef.current = undefined;
         };
       }, []);
 
       const trigger = useCallback(
-        function (args: any) {
-          // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+        function (arg: any) {
           lastPromise?.unsubscribe();
 
-          // Set the subscription options on the initial query
-          if (!optionsRef.current) {
-            optionsRef.current = { pollingInterval, refetchOnReconnect, refetchOnFocus };
-          }
-
           promiseRef.current = dispatch(
-            initiate(args, {
+            initiate(arg, {
               subscriptionOptions: { pollingInterval, refetchOnReconnect, refetchOnFocus },
               forceRefetch: true,
             })
@@ -378,7 +365,6 @@ export function buildHooks<Definitions extends EndpointDefinitions>({
 
       useEffect(() => {
         return () => {
-          // eslint-disable-next-line @typescript-eslint/no-unused-expressions
           promiseRef.current?.unsubscribe();
           promiseRef.current = undefined;
         };
@@ -388,7 +374,7 @@ export function buildHooks<Definitions extends EndpointDefinitions>({
         function (args) {
           let promise: MutationActionCreatorResult<any>;
           batch(() => {
-            if (promiseRef.current) promiseRef.current.unsubscribe();
+            promiseRef?.current?.unsubscribe();
             promise = dispatch(initiate(args));
             promiseRef.current = promise;
             setRequestId(promise.requestId);

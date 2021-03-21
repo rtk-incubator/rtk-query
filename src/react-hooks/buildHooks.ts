@@ -358,7 +358,8 @@ export function buildHooks<Definitions extends EndpointDefinitions>({
           [trigger]
         );
 
-        return useMemo(() => [triggerQuery, queryStateResults], [triggerQuery, queryStateResults]);
+        const info = useMemo(() => ({ lastArgs: promise.args }, [ promise.args ]);
+        return useMemo(() => [triggerQuery, queryStateResults, info], [triggerQuery, queryStateResults, info]);
       },
       useQuery(arg, options) {
         const querySubscriptionResults = useQuerySubscription(arg, options);

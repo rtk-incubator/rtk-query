@@ -104,30 +104,32 @@ export function buildInitiate<InternalQueryArgs>({
       });
       const thunkResult = dispatch(thunk);
       const { requestId, abort } = thunkResult;
-      const statePromise = thunkResult.then(() =>
-        (api.endpoints[endpointName] as ApiEndpointQuery<any, any>).select(arg)(getState())
+      const statePromise = Object.assign(
+        thunkResult.then(() => (api.endpoints[endpointName] as ApiEndpointQuery<any, any>).select(arg)(getState())),
+        {
+          arg,
+          requestId,
+          subscriptionOptions,
+          abort,
+          refetch() {
+            dispatch(queryAction(arg, { subscribe: false, forceRefetch: true }));
+          },
+          unsubscribe() {
+            if (subscribe)
+              dispatch(
+                unsubscribeQueryResult({
+                  queryCacheKey,
+                  requestId,
+                })
+              );
+          },
+          updateSubscriptionOptions(options: SubscriptionOptions) {
+            statePromise.subscriptionOptions = options;
+            dispatch(updateSubscriptionOptions({ endpointName, requestId, queryCacheKey, options }));
+          },
+        }
       );
-      return Object.assign(statePromise, {
-        arg,
-        requestId,
-        subscriptionOptions,
-        abort,
-        refetch() {
-          dispatch(queryAction(arg, { subscribe: false, forceRefetch: true }));
-        },
-        unsubscribe() {
-          if (subscribe)
-            dispatch(
-              unsubscribeQueryResult({
-                queryCacheKey,
-                requestId,
-              })
-            );
-        },
-        updateSubscriptionOptions(options: SubscriptionOptions) {
-          dispatch(updateSubscriptionOptions({ endpointName, requestId, queryCacheKey, options }));
-        },
-      });
+      return statePromise;
     };
     return queryAction;
   }

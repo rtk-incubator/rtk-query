@@ -1,5 +1,5 @@
 import { AnyAction, createSelector, ThunkAction, ThunkDispatch } from '@reduxjs/toolkit';
-import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   MutationSubState,
   QueryStatus,
@@ -294,7 +294,7 @@ export function buildHooks<Definitions extends EndpointDefinitions>({
             setArg(arg);
           });
         },
-        [dispatch, initiate, arg, pollingInterval, refetchOnFocus, refetchOnReconnect]
+        [dispatch, initiate, pollingInterval, refetchOnFocus, refetchOnReconnect]
       );
 
       /* cleanup on unmount */

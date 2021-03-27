@@ -193,6 +193,11 @@ export function buildHooks<Definitions extends EndpointDefinitions>({
       >;
       const dispatch = useDispatch<ThunkDispatch<any, any, AnyAction>>();
       const stableArg = useShallowStableValue(arg);
+      const stableSubscriptionOptions = useShallowStableValue({
+        refetchOnReconnect,
+        refetchOnFocus,
+        pollingInterval,
+      });
 
       const promiseRef = useRef<QueryActionCreatorResult<any>>();
 
@@ -202,36 +207,21 @@ export function buildHooks<Definitions extends EndpointDefinitions>({
         }
 
         const lastPromise = promiseRef.current;
+        const lastSubscriptionOptions = promiseRef.current?.subscriptionOptions;
 
-        const subscriptionOptions = {
-          refetchOnReconnect,
-          refetchOnFocus,
-          pollingInterval,
-        };
-        if (lastPromise && lastPromise.arg === stableArg) {
-          // arg did not change, but options probably did, update them
-          lastPromise.updateSubscriptionOptions(subscriptionOptions);
-          lastPromise.subscriptionOptions = subscriptionOptions;
-        } else {
+        if (!lastPromise || lastPromise.arg !== stableArg) {
           lastPromise?.unsubscribe();
           const promise = dispatch(
             initiate(stableArg, {
-              subscriptionOptions,
+              subscriptionOptions: stableSubscriptionOptions,
               forceRefetch: refetchOnMountOrArgChange,
             })
           );
           promiseRef.current = promise;
+        } else if (stableSubscriptionOptions !== lastSubscriptionOptions) {
+          lastPromise.updateSubscriptionOptions(stableSubscriptionOptions);
         }
-      }, [
-        stableArg,
-        dispatch,
-        skip,
-        pollingInterval,
-        refetchOnMountOrArgChange,
-        refetchOnFocus,
-        refetchOnReconnect,
-        initiate,
-      ]);
+      }, [dispatch, initiate, refetchOnMountOrArgChange, skip, stableArg, stableSubscriptionOptions]);
 
       useEffect(() => {
         return () => {
@@ -262,39 +252,40 @@ export function buildHooks<Definitions extends EndpointDefinitions>({
       const [arg, setArg] = useState<any>(UNINITIALIZED_VALUE);
       const promiseRef = useRef<QueryActionCreatorResult<any> | undefined>();
 
-      const lastSubscriptionOptions = promiseRef.current?.subscriptionOptions;
+      const stableSubscriptionOptions = useShallowStableValue({
+        refetchOnReconnect,
+        refetchOnFocus,
+        pollingInterval,
+      });
+
       useEffect(() => {
-        const subscriptionOptions = {
-          refetchOnReconnect,
-          refetchOnFocus,
-          pollingInterval,
-        };
-        if (!shallowEqual(subscriptionOptions, lastSubscriptionOptions)) {
-          promiseRef.current?.updateSubscriptionOptions(subscriptionOptions);
+        const lastSubscriptionOptions = promiseRef.current?.subscriptionOptions;
+
+        if (stableSubscriptionOptions !== lastSubscriptionOptions) {
+          promiseRef.current?.updateSubscriptionOptions(stableSubscriptionOptions);
         }
-      }, [lastSubscriptionOptions, refetchOnFocus, refetchOnReconnect, pollingInterval]);
+      }, [stableSubscriptionOptions]);
+
+      const subscriptionOptionsRef = useRef(stableSubscriptionOptions);
+      useEffect(() => {
+        subscriptionOptionsRef.current = stableSubscriptionOptions;
+      }, [stableSubscriptionOptions]);
 
       const trigger = useCallback(
         function (arg: any, preferCacheValue = false) {
           batch(() => {
             promiseRef.current?.unsubscribe();
 
-            const subscriptionOptions = {
-              refetchOnReconnect,
-              refetchOnFocus,
-              pollingInterval,
-            };
-
             promiseRef.current = dispatch(
               initiate(arg, {
-                subscriptionOptions,
+                subscriptionOptions: subscriptionOptionsRef.current,
                 forceRefetch: !preferCacheValue,
               })
             );
             setArg(arg);
           });
         },
-        [dispatch, initiate, pollingInterval, refetchOnFocus, refetchOnReconnect]
+        [dispatch, initiate]
       );
 
       /* cleanup on unmount */
@@ -309,7 +300,7 @@ export function buildHooks<Definitions extends EndpointDefinitions>({
         if (arg !== UNINITIALIZED_VALUE && !promiseRef.current) {
           trigger(arg, true);
         }
-      }, [arg]);
+      }, [arg, trigger]);
 
       return useMemo(() => [trigger, arg], [trigger, arg]);
     };

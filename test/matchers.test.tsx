@@ -1,7 +1,14 @@
-import { AnyAction, createSlice, SerializedError } from '@reduxjs/toolkit';
+import { createSlice, SerializedError } from '@reduxjs/toolkit';
 import { createApi, fetchBaseQuery } from '@rtk-incubator/rtk-query/react';
 import { renderHook, act } from '@testing-library/react-hooks';
-import { expectExactType, hookWaitFor, setupApiStore } from './helpers';
+import {
+  actionsReducer,
+  expectExactType,
+  hookWaitFor,
+  matchSequence,
+  notMatchSequence,
+  setupApiStore,
+} from './helpers';
 
 interface ResultType {
   result: 'complex';
@@ -28,30 +35,8 @@ const api = createApi({
 });
 
 const storeRef = setupApiStore(api, {
-  actions(state: AnyAction[] = [], action: AnyAction) {
-    return [...state, action];
-  },
+  ...actionsReducer,
 });
-
-function matchSequence(_actions: AnyAction[], ...matchers: Array<(arg: any) => boolean>) {
-  const actions = _actions.concat();
-  actions.shift(); // remove INIT
-  expect(matchers.length).toBe(actions.length);
-  for (let i = 0; i < matchers.length; i++) {
-    expect(matchers[i](actions[i])).toBe(true);
-  }
-}
-
-function notMatchSequence(_actions: AnyAction[], ...matchers: Array<Array<(arg: any) => boolean>>) {
-  const actions = _actions.concat();
-  actions.shift(); // remove INIT
-  expect(matchers.length).toBe(actions.length);
-  for (let i = 0; i < matchers.length; i++) {
-    for (const matcher of matchers[i]) {
-      expect(matcher(actions[i])).not.toBe(true);
-    }
-  }
-}
 
 const { mutationFail, mutationSuccess, mutationSuccess2, queryFail, querySuccess, querySuccess2 } = api.endpoints;
 

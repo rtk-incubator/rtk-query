@@ -60,7 +60,7 @@ export const reactHooksModule = ({
   name: reactHooksModuleName,
   init(api, options, context) {
     const { buildQueryHooks, buildMutationHook, usePrefetch } = buildHooks({
-      api,
+      api: api as any,
       moduleOptions: { batch, useDispatch, useSelector, useStore },
     });
     safeAssign(api, { usePrefetch });

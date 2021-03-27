@@ -2,7 +2,7 @@
  * Note: this file should import all other files for type discovery and declaration merging
  */
 import { buildThunks, PatchQueryResultThunk, UpdateQueryResultThunk } from './buildThunks';
-import { AnyAction, Middleware, Reducer, ThunkAction, ThunkDispatch } from '@reduxjs/toolkit';
+import { ActionCreatorWithPayload, AnyAction, Middleware, Reducer, ThunkAction, ThunkDispatch } from '@reduxjs/toolkit';
 import {
   EndpointDefinitions,
   QueryArgFrom,
@@ -11,6 +11,7 @@ import {
   AssertEntityTypes,
   isQueryDefinition,
   isMutationDefinition,
+  FullEntityDescription,
 } from '../endpointDefinitions';
 import { CombinedState, QueryKeys, RootState } from './apiState';
 import './buildSelectors';
@@ -44,7 +45,7 @@ declare module '../apiTypes' {
   > {
     [coreModuleName]: {
       reducerPath: ReducerPath;
-      internalActions: InternalActions;
+      internalActions: InternalActions<EntityTypes>;
       reducer: Reducer<CombinedState<Definitions, EntityTypes, ReducerPath>, AnyAction>;
       middleware: Middleware<{}, RootState<Definitions, string, ReducerPath>, ThunkDispatch<any, any, AnyAction>>;
       util: {
@@ -87,7 +88,7 @@ export interface ApiEndpointMutation<
   Definitions extends EndpointDefinitions
 > {}
 
-export type InternalActions = SliceActions & {
+export type ListenerActions = {
   /**
    * Will cause the RTK Query middleware to trigger any refetchOnReconnect-related behavior
    * @link https://rtk-query-docs.netlify.app/api/setupListeners
@@ -101,6 +102,14 @@ export type InternalActions = SliceActions & {
   onFocus: typeof onFocus;
   onFocusLost: typeof onFocusLost;
 };
+
+export type MiddlewareActions<EntityTypes extends string> = {
+  invalidateEntities: ActionCreatorWithPayload<Array<EntityTypes | FullEntityDescription<EntityTypes>>, string>;
+};
+
+export type InternalActions<EntityTypes extends string> = SliceActions &
+  ListenerActions &
+  MiddlewareActions<EntityTypes>;
 
 export const coreModule = (): Module<CoreModule> => ({
   name: coreModuleName,
@@ -152,7 +161,7 @@ export const coreModule = (): Module<CoreModule> => ({
       baseQuery,
       reducerPath,
       context,
-      api,
+      api: api as any,
       serializeQueryArgs,
     });
 
@@ -168,14 +177,15 @@ export const coreModule = (): Module<CoreModule> => ({
     safeAssign(api.util, { patchQueryResult, updateQueryResult, prefetchThunk });
     safeAssign(api.internalActions, sliceActions);
 
-    const { middleware } = buildMiddleware({
+    const { middleware, actions: middlewareActions } = buildMiddleware({
       reducerPath,
       context,
       queryThunk,
       mutationThunk,
-      api,
+      api: api as any,
       assertEntityType,
     });
+    safeAssign(api.internalActions, sliceActions, middlewareActions);
 
     safeAssign(api, { reducer: reducer as any, middleware });
 
@@ -187,7 +197,7 @@ export const coreModule = (): Module<CoreModule> => ({
     const { buildInitiateQuery, buildInitiateMutation } = buildInitiate({
       queryThunk,
       mutationThunk,
-      api,
+      api: api as any,
       serializeQueryArgs: serializeQueryArgs as any,
     });
 

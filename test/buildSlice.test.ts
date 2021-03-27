@@ -69,7 +69,7 @@ it('only resets the api state when resetApiState is dispatched', async () => {
     },
   });
 
-  storeRef.store.dispatch(api.internalActions.resetApiState());
+  storeRef.store.dispatch(api.util.resetApiState());
 
   expect(storeRef.store.getState()).toEqual(initialState);
 });

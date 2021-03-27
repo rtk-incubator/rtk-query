@@ -1,12 +1,4 @@
-import {
-  AnyAction,
-  AsyncThunk,
-  combineReducers,
-  createAction,
-  createSlice,
-  PayloadAction,
-  Reducer,
-} from '@reduxjs/toolkit';
+import { AsyncThunk, combineReducers, createAction, createSlice, PayloadAction } from '@reduxjs/toolkit';
 import {
   CombinedState,
   QuerySubstateIdentifier,

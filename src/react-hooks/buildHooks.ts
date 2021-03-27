@@ -35,13 +35,32 @@ export interface MutationHooks<Definition extends MutationDefinition<any, any, a
   useMutation: MutationHook<Definition>;
 }
 
+/**
+ * Hook to execute a Query.
+ *
+ * @param arg - This argument will be passed to `queryEndpointDefinition.query` or `queryEndpointDefinition.queryFn`.
+ *              If your query does not require an argument, but you want to pass `options`, pass `undefined` here.
+ * @param options - See [options](#options)
+ * @example
+ * ```ts
+ * const { data, error, isLoading } = useGetPokemonByNameQuery('bulbasaur');
+ * ```
+ */
 export type UseQuery<D extends QueryDefinition<any, any, any, any>> = <R = UseQueryStateDefaultResult<D>>(
   arg: QueryArgFrom<D>,
   options?: UseQuerySubscriptionOptions & UseQueryStateOptions<D, R>
 ) => UseQueryStateResult<D, R> & ReturnType<UseQuerySubscription<D>>;
 
+/**
+ *
+ */
 interface UseQuerySubscriptionOptions extends SubscriptionOptions {
+  /** If `true`, this query will not be executed. The hook will return `isUninitialized: true`. */
   skip?: boolean;
+  /**
+   * If `true`, this query will be refetched on mount or arg change even if the value is already in the cache.
+   * If `number`, this query will be refetched on mount or arg change if the current cache value is older than `refetchOnMountOrArgChange` seconds
+   *  */
   refetchOnMountOrArgChange?: boolean | number;
 }
 

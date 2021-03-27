@@ -40,6 +40,51 @@ module.exports = {
             'api/exports/setupListeners',
           ],
         },
+        {
+          type: 'category',
+          label: 'Api created by createApi',
+          collapsed: false,
+          items: [
+            'api/created-api/overview',
+            'api/created-api/injectEndpoints',
+            'api/created-api/enhanceEndpoints',
+            'api/created-api/internalActions',
+            'api/created-api/redux-integration',
+            {
+              type: 'category',
+              label: 'endpoints',
+              collapsed: false,
+              items: [
+                'api/created-api/endpoints/overview',
+                'api/created-api/endpoints/initiate',
+                'api/created-api/endpoints/matchers',
+                'api/created-api/endpoints/select',
+              ],
+            },
+            {
+              type: 'category',
+              label: 'Hooks (React only)',
+              collapsed: false,
+              items: [
+                'api/created-api/hooks/overview',
+                'api/created-api/hooks/useQuerySubscription',
+                'api/created-api/hooks/useMutation',
+                'api/created-api/hooks/useQueryState',
+                'api/created-api/hooks/useQuery',
+              ],
+            },
+            {
+              type: 'category',
+              label: 'util',
+              collapsed: false,
+              items: [
+                'api/created-api/util/updateQueryResult',
+                'api/created-api/util/patchQueryResult',
+                'api/created-api/util/prefetchThunk',
+              ],
+            },
+          ],
+        },
       ],
     },
     {

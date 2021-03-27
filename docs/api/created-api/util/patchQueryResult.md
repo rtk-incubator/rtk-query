@@ -1,0 +1,1 @@
+- **patchQueryResult** - used for [optimistic updates](../concepts/optimistic-updates).

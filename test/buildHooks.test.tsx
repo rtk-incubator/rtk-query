@@ -509,7 +509,7 @@ describe('hooks tests', () => {
     });
   });
 
-  test('usePrefetch respects `ifOlderThan` when it evaluates to `true`', async () => {
+  test('usePrefetch respects ifOlderThan when it evaluates to true', async () => {
     const { usePrefetch } = api;
     const USER_ID = 47;
 
@@ -517,7 +517,6 @@ describe('hooks tests', () => {
       // Load the initial query
       const { isFetching } = api.endpoints.getUser.useQuery(USER_ID);
       const prefetchUser = usePrefetch('getUser', { ifOlderThan: 0.2 });
-
       return (
         <div>
           <div data-testid="isFetching">{String(isFetching)}</div>

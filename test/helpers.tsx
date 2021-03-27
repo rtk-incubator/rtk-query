@@ -42,6 +42,32 @@ export const hookWaitFor = async (cb: () => void, time = 2000) => {
   }
 };
 
+export function matchSequence(_actions: AnyAction[], ...matchers: Array<(arg: any) => boolean>) {
+  const actions = _actions.concat();
+  actions.shift(); // remove INIT
+  expect(matchers.length).toBe(actions.length);
+  for (let i = 0; i < matchers.length; i++) {
+    expect(matchers[i](actions[i])).toBe(true);
+  }
+}
+
+export function notMatchSequence(_actions: AnyAction[], ...matchers: Array<Array<(arg: any) => boolean>>) {
+  const actions = _actions.concat();
+  actions.shift(); // remove INIT
+  expect(matchers.length).toBe(actions.length);
+  for (let i = 0; i < matchers.length; i++) {
+    for (const matcher of matchers[i]) {
+      expect(matcher(actions[i])).not.toBe(true);
+    }
+  }
+}
+
+export const actionsReducer = {
+  actions: (state: AnyAction[] = [], action: AnyAction) => {
+    return [...state, action];
+  },
+};
+
 export function setupApiStore<
   A extends { reducerPath: any; reducer: Reducer<any, any>; middleware: Middleware<any> },
   R extends Record<string, Reducer<any, any>>

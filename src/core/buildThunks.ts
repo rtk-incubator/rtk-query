@@ -133,7 +133,7 @@ export function buildThunks<
   reducerPath: ReducerPath;
   context: ApiContext<Definitions>;
   serializeQueryArgs: InternalSerializeQueryArgs<BaseQueryArg<BaseQuery>>;
-  api: Api<BaseQuery, EndpointDefinitions, ReducerPath, string>;
+  api: Api<BaseQuery, EndpointDefinitions, ReducerPath, any>;
 }) {
   type InternalQueryArgs = BaseQueryArg<BaseQuery>;
   type State = RootState<any, string, ReducerPath>;

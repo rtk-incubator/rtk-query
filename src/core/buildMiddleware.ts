@@ -1,4 +1,4 @@
-import { AnyAction, AsyncThunk, Middleware, MiddlewareAPI, ThunkDispatch } from '@reduxjs/toolkit';
+import { AnyAction, AsyncThunk, createAction, Middleware, MiddlewareAPI, ThunkDispatch } from '@reduxjs/toolkit';
 import { QueryCacheKey, QueryStatus, QuerySubState, QuerySubstateIdentifier, RootState, Subscribers } from './apiState';
 import { Api, ApiContext } from '../apiTypes';
 import { MutationThunkArg, QueryThunkArg, ThunkResult } from './buildThunks';
@@ -14,7 +14,11 @@ import { flatten } from '../utils';
 type QueryStateMeta<T> = Record<string, undefined | T>;
 type TimeoutId = ReturnType<typeof setTimeout>;
 
-export function buildMiddleware<Definitions extends EndpointDefinitions, ReducerPath extends string>({
+export function buildMiddleware<
+  Definitions extends EndpointDefinitions,
+  ReducerPath extends string,
+  EntityTypes extends string
+>({
   reducerPath,
   context,
   context: { endpointDefinitions },
@@ -27,15 +31,21 @@ export function buildMiddleware<Definitions extends EndpointDefinitions, Reducer
   context: ApiContext<Definitions>;
   queryThunk: AsyncThunk<ThunkResult, QueryThunkArg<any>, {}>;
   mutationThunk: AsyncThunk<ThunkResult, MutationThunkArg<any>, {}>;
-  api: Api<any, EndpointDefinitions, ReducerPath, string>;
+  api: Api<any, EndpointDefinitions, ReducerPath, EntityTypes>;
   assertEntityType: AssertEntityTypes;
 }) {
   type MWApi = MiddlewareAPI<ThunkDispatch<any, any, AnyAction>, RootState<Definitions, string, ReducerPath>>;
-
   const currentRemovalTimeouts: QueryStateMeta<TimeoutId> = {};
   const { removeQueryResult, unsubscribeQueryResult, updateSubscriptionOptions } = api.internalActions;
 
   const currentPolls: QueryStateMeta<{ nextPollTimestamp: number; timeout?: TimeoutId; pollingInterval: number }> = {};
+
+  const actions = {
+    invalidateEntities: createAction<Array<EntityTypes | FullEntityDescription<EntityTypes>>>(
+      `${reducerPath}/invalidateEntities`
+    ),
+  };
+
   const middleware: Middleware<{}, RootState<Definitions, string, ReducerPath>, ThunkDispatch<any, any, AnyAction>> = (
     mwApi
   ) => (next) => (action) => {
@@ -51,6 +61,10 @@ export function buildMiddleware<Definitions extends EndpointDefinitions, Reducer
         ),
         mwApi
       );
+    }
+
+    if (actions.invalidateEntities.match(action)) {
+      invalidateEntities(calculateProvidedBy(action.payload, undefined, undefined, assertEntityType), mwApi);
     }
 
     if (unsubscribeQueryResult.match(action)) {
@@ -77,7 +91,7 @@ export function buildMiddleware<Definitions extends EndpointDefinitions, Reducer
     return result;
   };
 
-  return { middleware };
+  return { middleware, actions };
 
   function refetchQuery(
     querySubState: Exclude<QuerySubState<any>, { status: QueryStatus.uninitialized }>,

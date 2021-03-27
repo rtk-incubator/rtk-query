@@ -1,4 +1,4 @@
-import { AsyncThunk, combineReducers, createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { AsyncThunk, combineReducers, createAction, createSlice, PayloadAction } from '@reduxjs/toolkit';
 import {
   CombinedState,
   QuerySubstateIdentifier,
@@ -43,6 +43,8 @@ function updateMutationSubstateIfExists(
   }
 }
 
+const initialState = {} as any;
+
 export function buildSlice({
   reducerPath,
   queryThunk,
@@ -58,9 +60,10 @@ export function buildSlice({
   assertEntityType: AssertEntityTypes;
   config: Omit<ConfigState<string>, 'online' | 'focused'>;
 }) {
+  const resetApiState = createAction(`${reducerPath}/resetApiState`);
   const querySlice = createSlice({
     name: `${reducerPath}/queries`,
-    initialState: {} as QueryState<any>,
+    initialState: initialState as QueryState<any>,
     reducers: {
       removeQueryResult(draft, { payload: { queryCacheKey } }: PayloadAction<QuerySubstateIdentifier>) {
         delete draft[queryCacheKey];
@@ -117,7 +120,7 @@ export function buildSlice({
   });
   const mutationSlice = createSlice({
     name: `${reducerPath}/mutations`,
-    initialState: {} as MutationState<any>,
+    initialState: initialState as MutationState<any>,
     reducers: {
       unsubscribeResult(draft, action: PayloadAction<MutationSubstateIdentifier>) {
         if (action.payload.requestId in draft) {
@@ -159,7 +162,7 @@ export function buildSlice({
 
   const invalidationSlice = createSlice({
     name: `${reducerPath}/invalidation`,
-    initialState: {} as InvalidationState<string>,
+    initialState: initialState as InvalidationState<string>,
     reducers: {},
     extraReducers(builder) {
       builder
@@ -194,7 +197,7 @@ export function buildSlice({
 
   const subscriptionSlice = createSlice({
     name: `${reducerPath}/subscriptions`,
-    initialState: {} as SubscriptionState,
+    initialState: initialState as SubscriptionState,
     reducers: {
       updateSubscriptionOptions(
         draft,
@@ -263,7 +266,7 @@ export function buildSlice({
     },
   });
 
-  const reducer = combineReducers<CombinedState<any, string, string>>({
+  const combinedReducer = combineReducers<CombinedState<any, string, string>>({
     queries: querySlice.reducer,
     mutations: mutationSlice.reducer,
     provided: invalidationSlice.reducer,
@@ -271,12 +274,16 @@ export function buildSlice({
     config: configSlice.reducer,
   });
 
+  const reducer: typeof combinedReducer = (state, action) =>
+    combinedReducer(resetApiState.match(action) ? undefined : state, action);
+
   const actions = {
     updateSubscriptionOptions: subscriptionSlice.actions.updateSubscriptionOptions,
     queryResultPatched: querySlice.actions.queryResultPatched,
     removeQueryResult: querySlice.actions.removeQueryResult,
     unsubscribeQueryResult: subscriptionSlice.actions.unsubscribeResult,
     unsubscribeMutationResult: mutationSlice.actions.unsubscribeResult,
+    resetApiState,
   };
 
   return { reducer, actions };

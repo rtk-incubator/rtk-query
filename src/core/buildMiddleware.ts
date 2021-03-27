@@ -35,9 +35,9 @@ export function buildMiddleware<
   assertEntityType: AssertEntityTypes;
 }) {
   type MWApi = MiddlewareAPI<ThunkDispatch<any, any, AnyAction>, RootState<Definitions, string, ReducerPath>>;
-  const currentRemovalTimeouts: QueryStateMeta<TimeoutId> = {};
-  const { removeQueryResult, unsubscribeQueryResult, updateSubscriptionOptions } = api.internalActions;
+  const { removeQueryResult, unsubscribeQueryResult, updateSubscriptionOptions, resetApiState } = api.internalActions;
 
+  const currentRemovalTimeouts: QueryStateMeta<TimeoutId> = {};
   const currentPolls: QueryStateMeta<{ nextPollTimestamp: number; timeout?: TimeoutId; pollingInterval: number }> = {};
 
   const actions = {
@@ -86,6 +86,17 @@ export function buildMiddleware<
     }
     if (onOnline.match(action)) {
       refetchValidQueries(mwApi, 'refetchOnReconnect');
+    }
+
+    if (resetApiState.match(action)) {
+      for (const [key, poll] of Object.entries(currentPolls)) {
+        if (poll?.timeout) clearTimeout(poll.timeout);
+        delete currentPolls[key];
+      }
+      for (const [key, timeout] of Object.entries(currentRemovalTimeouts)) {
+        if (timeout) clearTimeout(timeout);
+        delete currentRemovalTimeouts[key];
+      }
     }
 
     return result;

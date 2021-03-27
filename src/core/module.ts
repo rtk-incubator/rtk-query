@@ -56,6 +56,7 @@ declare module '../apiTypes' {
         ): ThunkAction<void, any, any, AnyAction>;
         updateQueryResult: UpdateQueryResultThunk<Definitions, RootState<Definitions, string, ReducerPath>>;
         patchQueryResult: PatchQueryResultThunk<Definitions, RootState<Definitions, string, ReducerPath>>;
+        resetApiState: SliceActions['resetApiState'];
         invalidateEntities: ActionCreatorWithPayload<Array<EntityTypes | FullEntityDescription<EntityTypes>>, string>;
       };
       // If you actually care about the return value, use useQuery
@@ -169,7 +170,12 @@ export const coreModule = (): Module<CoreModule> => ({
       config: { refetchOnFocus, refetchOnReconnect, refetchOnMountOrArgChange, keepUnusedDataFor, reducerPath },
     });
 
-    safeAssign(api.util, { patchQueryResult, updateQueryResult, prefetchThunk });
+    safeAssign(api.util, {
+      patchQueryResult,
+      updateQueryResult,
+      prefetchThunk,
+      resetApiState: sliceActions.resetApiState,
+    });
     safeAssign(api.internalActions, sliceActions);
 
     const { middleware, actions: middlewareActions } = buildMiddleware({

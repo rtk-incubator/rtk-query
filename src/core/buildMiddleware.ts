@@ -33,7 +33,7 @@ export function buildMiddleware<Definitions extends EndpointDefinitions, Reducer
   type MWApi = MiddlewareAPI<ThunkDispatch<any, any, AnyAction>, RootState<Definitions, string, ReducerPath>>;
 
   const currentRemovalTimeouts: QueryStateMeta<TimeoutId> = {};
-  const { removeQueryResult, unsubscribeQueryResult, updateSubscriptionOptions } = api.internalActions;
+  const { removeQueryResult, unsubscribeQueryResult, updateSubscriptionOptions, resetApiState } = api.internalActions;
 
   const currentPolls: QueryStateMeta<{ nextPollTimestamp: number; timeout?: TimeoutId; pollingInterval: number }> = {};
   const middleware: Middleware<{}, RootState<Definitions, string, ReducerPath>, ThunkDispatch<any, any, AnyAction>> = (
@@ -72,6 +72,23 @@ export function buildMiddleware<Definitions extends EndpointDefinitions, Reducer
     }
     if (onOnline.match(action)) {
       refetchValidQueries(mwApi, 'refetchOnReconnect');
+    }
+
+    if (resetApiState.match(action)) {
+      for (const queryCacheKey in currentPolls) {
+        const currentTimeout = currentPolls[queryCacheKey]?.timeout;
+        if (currentTimeout) {
+          clearTimeout(currentTimeout);
+        }
+        delete currentPolls[queryCacheKey];
+      }
+      for (const queryCacheKey in currentRemovalTimeouts) {
+        const currentTimeout = currentRemovalTimeouts[queryCacheKey];
+        if (currentTimeout) {
+          clearTimeout(currentTimeout);
+        }
+        delete currentRemovalTimeouts[queryCacheKey];
+      }
     }
 
     return result;

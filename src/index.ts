@@ -13,6 +13,5 @@ export { retry } from './retry';
 export { setupListeners } from './core/setupListeners';
 export type { CreateApi, CreateApiOptions } from './createApi';
 export { buildCreateApi } from './createApi';
-export {} from './constants';
 
 export { createApi, coreModule } from './core';

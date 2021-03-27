@@ -16,6 +16,7 @@ import { BaseQueryResult } from '../baseQueryTypes';
 declare module './module' {
   export interface ApiEndpointQuery<
     Definition extends QueryDefinition<any, any, any, any, any>,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     Definitions extends EndpointDefinitions
   > {
     initiate: StartQueryActionCreator<Definition>;
@@ -23,6 +24,7 @@ declare module './module' {
 
   export interface ApiEndpointMutation<
     Definition extends MutationDefinition<any, any, any, any, any>,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     Definitions extends EndpointDefinitions
   > {
     initiate: StartMutationActionCreator<Definition>;

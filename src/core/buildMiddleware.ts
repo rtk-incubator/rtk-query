@@ -14,7 +14,11 @@ import { flatten } from '../utils';
 type QueryStateMeta<T> = Record<string, undefined | T>;
 type TimeoutId = ReturnType<typeof setTimeout>;
 
-export function buildMiddleware<Definitions extends EndpointDefinitions, ReducerPath extends string>({
+export function buildMiddleware<
+  Definitions extends EndpointDefinitions,
+  ReducerPath extends string,
+  EntityTypes extends string
+>({
   reducerPath,
   context,
   context: { endpointDefinitions },
@@ -27,7 +31,7 @@ export function buildMiddleware<Definitions extends EndpointDefinitions, Reducer
   context: ApiContext<Definitions>;
   queryThunk: AsyncThunk<ThunkResult, QueryThunkArg<any>, {}>;
   mutationThunk: AsyncThunk<ThunkResult, MutationThunkArg<any>, {}>;
-  api: Api<any, EndpointDefinitions, ReducerPath, string>;
+  api: Api<any, EndpointDefinitions, ReducerPath, EntityTypes>;
   assertEntityType: AssertEntityTypes;
 }) {
   type MWApi = MiddlewareAPI<ThunkDispatch<any, any, AnyAction>, RootState<Definitions, string, ReducerPath>>;
@@ -37,7 +41,9 @@ export function buildMiddleware<Definitions extends EndpointDefinitions, Reducer
   const currentPolls: QueryStateMeta<{ nextPollTimestamp: number; timeout?: TimeoutId; pollingInterval: number }> = {};
 
   const actions = {
-    invalidateEntities: createAction<any[]>('__rtkq/invalidateEntities'),
+    invalidateEntities: createAction<Array<EntityTypes | FullEntityDescription<EntityTypes>>>(
+      `${reducerPath}/invalidateEntities`
+    ),
   };
 
   const middleware: Middleware<{}, RootState<Definitions, string, ReducerPath>, ThunkDispatch<any, any, AnyAction>> = (

@@ -45,7 +45,7 @@ declare module '../apiTypes' {
   > {
     [coreModuleName]: {
       reducerPath: ReducerPath;
-      internalActions: InternalActions<EntityTypes>;
+      internalActions: InternalActions;
       reducer: Reducer<CombinedState<Definitions, EntityTypes, ReducerPath>, AnyAction>;
       middleware: Middleware<{}, RootState<Definitions, string, ReducerPath>, ThunkDispatch<any, any, AnyAction>>;
       util: {
@@ -56,6 +56,7 @@ declare module '../apiTypes' {
         ): ThunkAction<void, any, any, AnyAction>;
         updateQueryResult: UpdateQueryResultThunk<Definitions, RootState<Definitions, string, ReducerPath>>;
         patchQueryResult: PatchQueryResultThunk<Definitions, RootState<Definitions, string, ReducerPath>>;
+        invalidateEntities: ActionCreatorWithPayload<Array<EntityTypes | FullEntityDescription<EntityTypes>>, string>;
       };
       // If you actually care about the return value, use useQuery
       usePrefetch<EndpointName extends QueryKeys<Definitions>>(
@@ -103,13 +104,7 @@ export type ListenerActions = {
   onFocusLost: typeof onFocusLost;
 };
 
-export type MiddlewareActions<EntityTypes extends string> = {
-  invalidateEntities: ActionCreatorWithPayload<Array<EntityTypes | FullEntityDescription<EntityTypes>>, string>;
-};
-
-export type InternalActions<EntityTypes extends string> = SliceActions &
-  ListenerActions &
-  MiddlewareActions<EntityTypes>;
+export type InternalActions = SliceActions & ListenerActions;
 
 export const coreModule = (): Module<CoreModule> => ({
   name: coreModuleName,
@@ -161,7 +156,7 @@ export const coreModule = (): Module<CoreModule> => ({
       baseQuery,
       reducerPath,
       context,
-      api: api as any,
+      api,
       serializeQueryArgs,
     });
 
@@ -182,10 +177,10 @@ export const coreModule = (): Module<CoreModule> => ({
       context,
       queryThunk,
       mutationThunk,
-      api: api as any,
+      api,
       assertEntityType,
     });
-    safeAssign(api.internalActions, sliceActions, middlewareActions);
+    safeAssign(api.util, middlewareActions);
 
     safeAssign(api, { reducer: reducer as any, middleware });
 
@@ -197,7 +192,7 @@ export const coreModule = (): Module<CoreModule> => ({
     const { buildInitiateQuery, buildInitiateMutation } = buildInitiate({
       queryThunk,
       mutationThunk,
-      api: api as any,
+      api,
       serializeQueryArgs: serializeQueryArgs as any,
     });
 

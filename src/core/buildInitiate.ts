@@ -81,7 +81,7 @@ export function buildInitiate<InternalQueryArgs>({
   serializeQueryArgs: InternalSerializeQueryArgs<InternalQueryArgs>;
   queryThunk: AsyncThunk<any, QueryThunkArg<any>, {}>;
   mutationThunk: AsyncThunk<any, MutationThunkArg<any>, {}>;
-  api: Api<any, EndpointDefinitions, any, string>;
+  api: Api<any, EndpointDefinitions, any, any>;
 }) {
   const { unsubscribeQueryResult, unsubscribeMutationResult, updateSubscriptionOptions } = api.internalActions;
   return { buildInitiateQuery, buildInitiateMutation };

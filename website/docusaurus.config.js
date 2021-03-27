@@ -31,7 +31,7 @@ module.exports = {
           position: 'right',
         },
         {
-          to: 'api/createApi',
+          to: 'api/exports/createApi',
           label: 'API',
           position: 'right',
         },
@@ -57,7 +57,7 @@ module.exports = {
               to: '/introduction/getting-started',
             },
             { label: 'Video Overview', to: '/introduction/video-overview' },
-            { label: 'API Reference', to: '/api/createApi' },
+            { label: 'API Reference', to: '/api/exports/createApi' },
             { label: 'Examples', to: '/examples/examples-overview' },
           ],
         },
@@ -97,7 +97,7 @@ module.exports = {
       {
         docs: {
           path: '../docs',
-          include: ['{api,assets,concepts,introduction,examples}/*.{md,mdx}'],
+          include: ['{api,assets,concepts,introduction,examples}/**/*.{md,mdx}'],
           routeBasePath: '/',
           sidebarPath: require.resolve('./sidebars.js'),
           // Please change this to your repo.

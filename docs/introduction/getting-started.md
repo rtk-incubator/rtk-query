@@ -12,7 +12,7 @@ RTK Query is an advanced data fetching and caching tool, designed to simplify co
 RTK Query is **currently in an alpha state of development**, with the goal of eventually including it directly in the Redux Toolkit library. We encourage you to use it in personal projects, and suggest creating local development branches to try out in actual apps. While we believe the current alpha is stable enough to actually use this library in real code, it's likely that there will be breaking API changes as we iterate on the API design and feature set. We welcome feedback on how it works and ways we can improve the API to help finalize the design!
 
 :::note
-To use the [auto-generated React Hooks](../api/createApi#auto-generated-hooks) as shown below as a TypeScript user, you'll need to use TS4.1+.
+To use the [auto-generated React Hooks](../api/exports/createApi#auto-generated-hooks) as shown below as a TypeScript user, you'll need to use TS4.1+.
 
 For older versions of TS, you can use `api.endpoints.[endpointName].useQuery/useMutation`
 :::

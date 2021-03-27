@@ -31,11 +31,11 @@ export function buildMiddleware<Definitions extends EndpointDefinitions, Reducer
   assertEntityType: AssertEntityTypes;
 }) {
   type MWApi = MiddlewareAPI<ThunkDispatch<any, any, AnyAction>, RootState<Definitions, string, ReducerPath>>;
-
-  const currentRemovalTimeouts: QueryStateMeta<TimeoutId> = {};
   const { removeQueryResult, unsubscribeQueryResult, updateSubscriptionOptions, resetApiState } = api.internalActions;
 
+  const currentRemovalTimeouts: QueryStateMeta<TimeoutId> = {};
   const currentPolls: QueryStateMeta<{ nextPollTimestamp: number; timeout?: TimeoutId; pollingInterval: number }> = {};
+
   const middleware: Middleware<{}, RootState<Definitions, string, ReducerPath>, ThunkDispatch<any, any, AnyAction>> = (
     mwApi
   ) => (next) => (action) => {
@@ -75,19 +75,13 @@ export function buildMiddleware<Definitions extends EndpointDefinitions, Reducer
     }
 
     if (resetApiState.match(action)) {
-      for (const queryCacheKey in currentPolls) {
-        const currentTimeout = currentPolls[queryCacheKey]?.timeout;
-        if (currentTimeout) {
-          clearTimeout(currentTimeout);
-        }
-        delete currentPolls[queryCacheKey];
+      for (const [key, poll] of Object.entries(currentPolls)) {
+        if (poll?.timeout) clearTimeout(poll.timeout);
+        delete currentPolls[key];
       }
-      for (const queryCacheKey in currentRemovalTimeouts) {
-        const currentTimeout = currentRemovalTimeouts[queryCacheKey];
-        if (currentTimeout) {
-          clearTimeout(currentTimeout);
-        }
-        delete currentRemovalTimeouts[queryCacheKey];
+      for (const [key, timeout] of Object.entries(currentRemovalTimeouts)) {
+        if (timeout) clearTimeout(timeout);
+        delete currentRemovalTimeouts[key];
       }
     }
 

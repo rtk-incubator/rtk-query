@@ -51,8 +51,6 @@ function updateMutationSubstateIfExists(
   }
 }
 
-const resetApiState = createAction('__rtkq/resetApiState');
-
 const initialState = {} as any;
 
 export function buildSlice({
@@ -70,6 +68,7 @@ export function buildSlice({
   assertEntityType: AssertEntityTypes;
   config: Omit<ConfigState<string>, 'online' | 'focused'>;
 }) {
+  const resetApiState = createAction(`${reducerPath}/resetApiState`);
   const querySlice = createSlice({
     name: `${reducerPath}/queries`,
     initialState: initialState as QueryState<any>,
@@ -275,18 +274,16 @@ export function buildSlice({
     },
   });
 
-  const reducer: Reducer<CombinedState<any, string, string>, AnyAction> = (state, action) => {
-    if (resetApiState.match(action)) {
-      state = undefined;
-    }
-    return combineReducers({
-      queries: querySlice.reducer,
-      mutations: mutationSlice.reducer,
-      provided: invalidationSlice.reducer,
-      subscriptions: subscriptionSlice.reducer,
-      config: configSlice.reducer,
-    })(state, action);
-  };
+  const combinedReducer = combineReducers<CombinedState<any, string, string>>({
+    queries: querySlice.reducer,
+    mutations: mutationSlice.reducer,
+    provided: invalidationSlice.reducer,
+    subscriptions: subscriptionSlice.reducer,
+    config: configSlice.reducer,
+  });
+
+  const reducer: typeof combinedReducer = (state, action) =>
+    combinedReducer(resetApiState.match(action) ? undefined : state, action);
 
   const actions = {
     updateSubscriptionOptions: subscriptionSlice.actions.updateSubscriptionOptions,

@@ -169,7 +169,7 @@ describe.skip('TS only tests', () => {
   });
 
   test('useLazyQuery union', () => {
-    const [trigger, result] = api.endpoints.test.useLazyQuery();
+    const [_trigger, result] = api.endpoints.test.useLazyQuery();
 
     if (result.isUninitialized) {
       expectExactType(undefined)(result.data);
@@ -226,7 +226,7 @@ describe.skip('TS only tests', () => {
   });
 
   test('useLazyQuery TS4.1 union', () => {
-    const [trigger, result] = api.useLazyTestQuery();
+    const [_trigger, result] = api.useLazyTestQuery();
 
     if (result.isUninitialized) {
       expectExactType(undefined)(result.data);
@@ -314,7 +314,7 @@ describe.skip('TS only tests', () => {
   });
 
   test('useMutation union', () => {
-    const [trigger, result] = api.endpoints.mutation.useMutation();
+    const [_trigger, result] = api.endpoints.mutation.useMutation();
 
     if (result.isUninitialized) {
       expectExactType(undefined)(result.data);
@@ -358,7 +358,7 @@ describe.skip('TS only tests', () => {
   });
 
   test('useMutation TS4.1 union', () => {
-    const [trigger, result] = api.useMutationMutation();
+    const [_trigger, result] = api.useMutationMutation();
 
     if (result.isUninitialized) {
       expectExactType(undefined)(result.data);

@@ -27,7 +27,9 @@ declare module '../apiTypes' {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     BaseQuery extends BaseQueryFn,
     Definitions extends EndpointDefinitions,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     ReducerPath extends string,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     EntityTypes extends string
   > {
     [reactHooksModuleName]: {

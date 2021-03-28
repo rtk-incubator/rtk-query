@@ -16,6 +16,7 @@ import { BaseQueryResult } from '../baseQueryTypes';
 declare module './module' {
   export interface ApiEndpointQuery<
     Definition extends QueryDefinition<any, any, any, any, any>,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     Definitions extends EndpointDefinitions
   > {
     initiate: StartQueryActionCreator<Definition>;
@@ -23,6 +24,7 @@ declare module './module' {
 
   export interface ApiEndpointMutation<
     Definition extends MutationDefinition<any, any, any, any, any>,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     Definitions extends EndpointDefinitions
   > {
     initiate: StartMutationActionCreator<Definition>;
@@ -43,6 +45,7 @@ type StartQueryActionCreator<D extends QueryDefinition<any, any, any, any, any>>
 export type QueryActionCreatorResult<D extends QueryDefinition<any, any, any, any>> = Promise<QuerySubState<D>> & {
   arg: QueryArgFrom<D>;
   requestId: string;
+  subscriptionOptions: SubscriptionOptions | undefined;
   abort(): void;
   unsubscribe(): void;
   refetch(): void;
@@ -103,29 +106,32 @@ export function buildInitiate<InternalQueryArgs>({
       });
       const thunkResult = dispatch(thunk);
       const { requestId, abort } = thunkResult;
-      const statePromise = thunkResult.then(() =>
-        (api.endpoints[endpointName] as ApiEndpointQuery<any, any>).select(arg)(getState())
+      const statePromise = Object.assign(
+        thunkResult.then(() => (api.endpoints[endpointName] as ApiEndpointQuery<any, any>).select(arg)(getState())),
+        {
+          arg,
+          requestId,
+          subscriptionOptions,
+          abort,
+          refetch() {
+            dispatch(queryAction(arg, { subscribe: false, forceRefetch: true }));
+          },
+          unsubscribe() {
+            if (subscribe)
+              dispatch(
+                unsubscribeQueryResult({
+                  queryCacheKey,
+                  requestId,
+                })
+              );
+          },
+          updateSubscriptionOptions(options: SubscriptionOptions) {
+            statePromise.subscriptionOptions = options;
+            dispatch(updateSubscriptionOptions({ endpointName, requestId, queryCacheKey, options }));
+          },
+        }
       );
-      return Object.assign(statePromise, {
-        arg,
-        requestId,
-        abort,
-        refetch() {
-          dispatch(queryAction(arg, { subscribe: false, forceRefetch: true }));
-        },
-        unsubscribe() {
-          if (subscribe)
-            dispatch(
-              unsubscribeQueryResult({
-                queryCacheKey,
-                requestId,
-              })
-            );
-        },
-        updateSubscriptionOptions(options: SubscriptionOptions) {
-          dispatch(updateSubscriptionOptions({ endpointName, requestId, queryCacheKey, options }));
-        },
-      });
+      return statePromise;
     };
     return queryAction;
   }

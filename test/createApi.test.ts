@@ -439,6 +439,10 @@ describe('additional transformResponse behaviors', () => {
       echo: build.mutation({
         query: () => ({ method: 'PUT', url: '/echo' }),
       }),
+      mutation: build.mutation({
+        query: () => ({ url: '/echo', method: 'POST', body: { nested: { banana: 'bread' } } }),
+        transformResponse: (response: { body: { nested: EchoResponseData } }) => response.body.nested,
+      }),
       query: build.query<SuccessResponse & EchoResponseData, void>({
         query: () => '/success',
         transformResponse: async (response: SuccessResponse) => {
@@ -455,10 +459,16 @@ describe('additional transformResponse behaviors', () => {
 
   const storeRef = setupApiStore(api);
 
-  test('transformResponse handles an async transformation and returns the merged data', async () => {
+  test('transformResponse handles an async transformation and returns the merged data (query)', async () => {
     const result = await storeRef.store.dispatch(api.endpoints.query.initiate());
 
     expect(result.data).toEqual({ value: 'success', banana: 'bread' });
+  });
+
+  test('transformResponse transforms a response from a mutation', async () => {
+    const result = await storeRef.store.dispatch(api.endpoints.mutation.initiate({}));
+
+    expect(result.data).toEqual({ banana: 'bread' });
   });
 });
 

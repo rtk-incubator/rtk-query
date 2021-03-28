@@ -3,7 +3,7 @@ import { createApi, fetchBaseQuery, QueryStatus } from '@rtk-incubator/rtk-query
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { rest } from 'msw';
-import { setupApiStore, waitMs } from './helpers';
+import { setupApiStore, useRenderCounter, waitMs } from './helpers';
 import { server } from './mocks/server';
 import { AnyAction } from 'redux';
 import { SubscriptionOptions } from '@internal/core/apiState';
@@ -54,8 +54,31 @@ afterEach(() => {
 
 describe('hooks tests', () => {
   describe('useQuery', () => {
+    let getRenderCount: () => number = () => 0;
+
+    test('useQuery hook basic render count assumptions', async () => {
+      function User() {
+        getRenderCount = useRenderCounter();
+
+        const { isFetching } = api.endpoints.getUser.useQuery(1);
+
+        return (
+          <div>
+            <div data-testid="isFetching">{String(isFetching)}</div>
+          </div>
+        );
+      }
+
+      render(<User />, { wrapper: storeRef.wrapper });
+      expect(getRenderCount()).toBe(2); // By the time this runs, the initial render will happen, and the query will start immediately running by the time we can expect this
+
+      await waitFor(() => expect(screen.getByTestId('isFetching').textContent).toBe('false'));
+      expect(getRenderCount()).toBe(3);
+    });
+
     test('useQuery hook sets isFetching=true whenever a request is in flight', async () => {
       function User() {
+        getRenderCount = useRenderCounter();
         const [value, setValue] = React.useState(0);
 
         const { isFetching } = api.endpoints.getUser.useQuery(1, { skip: value < 1 });
@@ -69,14 +92,18 @@ describe('hooks tests', () => {
       }
 
       render(<User />, { wrapper: storeRef.wrapper });
+      expect(getRenderCount()).toBe(1);
 
       await waitFor(() => expect(screen.getByTestId('isFetching').textContent).toBe('false'));
-      fireEvent.click(screen.getByText('Increment value'));
+      fireEvent.click(screen.getByText('Increment value')); // setState = 1, perform request = 2
       await waitFor(() => expect(screen.getByTestId('isFetching').textContent).toBe('true'));
       await waitFor(() => expect(screen.getByTestId('isFetching').textContent).toBe('false'));
+      expect(getRenderCount()).toBe(4);
+
       fireEvent.click(screen.getByText('Increment value'));
       // Being that nothing has changed in the args, this should never fire.
       expect(screen.getByTestId('isFetching').textContent).toBe('false');
+      expect(getRenderCount()).toBe(5); // even though there was no request, the button click updates the state so this is an expected render
     });
 
     test('useQuery hook sets isLoading=true only on initial request', async () => {
@@ -114,6 +141,7 @@ describe('hooks tests', () => {
       let refetchMe: () => void = () => {};
       function User() {
         const [value, setValue] = React.useState(0);
+        getRenderCount = useRenderCounter();
 
         const { isLoading, isFetching, refetch } = api.endpoints.getUser.useQuery(22, { skip: value < 1 });
         refetchMe = refetch;
@@ -127,33 +155,33 @@ describe('hooks tests', () => {
       }
 
       render(<User />, { wrapper: storeRef.wrapper });
+      expect(getRenderCount()).toBe(1);
 
-      await waitFor(() => {
-        expect(screen.getByTestId('isLoading').textContent).toBe('false');
-        expect(screen.getByTestId('isFetching').textContent).toBe('false');
-      });
-      fireEvent.click(screen.getByText('Increment value'));
+      expect(screen.getByTestId('isLoading').textContent).toBe('false');
+      expect(screen.getByTestId('isFetching').textContent).toBe('false');
+
+      fireEvent.click(screen.getByText('Increment value')); // renders: set state = 1, perform request = 2
       // Condition is met, should load
       await waitFor(() => {
         expect(screen.getByTestId('isLoading').textContent).toBe('true');
         expect(screen.getByTestId('isFetching').textContent).toBe('true');
       });
+
       // Make sure the request is done for sure.
       await waitFor(() => {
         expect(screen.getByTestId('isLoading').textContent).toBe('false');
         expect(screen.getByTestId('isFetching').textContent).toBe('false');
       });
+      expect(getRenderCount()).toBe(4);
+
       fireEvent.click(screen.getByText('Increment value'));
-      // Being that we already have data, isLoading should be false
+      // Being that we already have data and changing the value doesn't trigger a new request, only the button click should impact the render
       await waitFor(() => {
         expect(screen.getByTestId('isLoading').textContent).toBe('false');
         expect(screen.getByTestId('isFetching').textContent).toBe('false');
       });
-      // Make sure the request is done for sure.
-      await waitFor(() => {
-        expect(screen.getByTestId('isLoading').textContent).toBe('false');
-        expect(screen.getByTestId('isFetching').textContent).toBe('false');
-      });
+      expect(getRenderCount()).toBe(5);
+
       // We call a refetch, should set both to true, then false when complete/errored
       act(() => refetchMe());
       await waitFor(() => {
@@ -164,6 +192,7 @@ describe('hooks tests', () => {
         expect(screen.getByTestId('isLoading').textContent).toBe('false');
         expect(screen.getByTestId('isFetching').textContent).toBe('false');
       });
+      expect(getRenderCount()).toBe(7);
     });
 
     test('useQuery hook respects refetchOnMountOrArgChange: true', async () => {
@@ -372,10 +401,11 @@ describe('hooks tests', () => {
       data = undefined;
     });
 
+    let getRenderCount: () => number = () => 0;
     test('useLazyQuery does not automatically fetch when mounted and has undefined data', async () => {
       function User() {
         const [fetchUser, { data: hookData, isFetching, isUninitialized }] = api.endpoints.getUser.useLazyQuery();
-
+        getRenderCount = useRenderCounter();
         data = hookData;
 
         return (
@@ -391,17 +421,22 @@ describe('hooks tests', () => {
       }
 
       render(<User />, { wrapper: storeRef.wrapper });
+      expect(getRenderCount()).toBe(1);
 
       await waitFor(() => expect(screen.getByTestId('isUninitialized').textContent).toBe('true'));
       await waitFor(() => expect(data).toBeUndefined());
 
       fireEvent.click(screen.getByTestId('fetchButton'));
+      expect(getRenderCount()).toBe(2);
 
-      await waitFor(() => {
-        expect(screen.getByTestId('isUninitialized').textContent).toBe('false');
-        expect(screen.getByTestId('isFetching').textContent).toBe('true');
-      });
+      await waitFor(() => expect(screen.getByTestId('isUninitialized').textContent).toBe('false'));
       await waitFor(() => expect(screen.getByTestId('isFetching').textContent).toBe('false'));
+      expect(getRenderCount()).toBe(3);
+
+      fireEvent.click(screen.getByTestId('fetchButton'));
+      await waitFor(() => expect(screen.getByTestId('isFetching').textContent).toBe('true'));
+      await waitFor(() => expect(screen.getByTestId('isFetching').textContent).toBe('false'));
+      expect(getRenderCount()).toBe(5);
     });
 
     test('useLazyQuery accepts updated subscription options and only dispatches updateSubscriptionOptions when values are updated', async () => {
@@ -411,6 +446,7 @@ describe('hooks tests', () => {
         const [fetchUser, { data: hookData, isFetching, isUninitialized }] = api.endpoints.getUser.useLazyQuery(
           options
         );
+        getRenderCount = useRenderCounter();
 
         data = hookData;
 
@@ -437,30 +473,35 @@ describe('hooks tests', () => {
       }
 
       render(<User />, { wrapper: storeRef.wrapper });
+      expect(getRenderCount()).toBe(1); // hook mount
 
       await waitFor(() => expect(screen.getByTestId('isUninitialized').textContent).toBe('true'));
       await waitFor(() => expect(data).toBeUndefined());
 
       fireEvent.click(screen.getByTestId('fetchButton'));
+      expect(getRenderCount()).toBe(2);
 
       await waitFor(() => expect(screen.getByTestId('isFetching').textContent).toBe('true'));
       await waitFor(() => expect(screen.getByTestId('isFetching').textContent).toBe('false'));
+      expect(getRenderCount()).toBe(3);
 
-      fireEvent.click(screen.getByTestId('updateOptions'));
-      fireEvent.click(screen.getByTestId('fetchButton'));
+      fireEvent.click(screen.getByTestId('updateOptions')); // setState = 1
+      expect(getRenderCount()).toBe(4);
 
+      fireEvent.click(screen.getByTestId('fetchButton')); // perform new request = 2
       await waitFor(() => expect(screen.getByTestId('isFetching').textContent).toBe('true'));
       await waitFor(() => expect(screen.getByTestId('isFetching').textContent).toBe('false'));
+      expect(getRenderCount()).toBe(6);
 
       interval = 1000;
 
-      fireEvent.click(screen.getByTestId('updateOptions'));
-      fireEvent.click(screen.getByTestId('fetchButton'));
+      fireEvent.click(screen.getByTestId('updateOptions')); // setState = 1
+      expect(getRenderCount()).toBe(7);
 
-      await waitFor(() => {
-        expect(screen.getByTestId('isFetching').textContent).toBe('true');
-      });
+      fireEvent.click(screen.getByTestId('fetchButton'));
+      await waitFor(() => expect(screen.getByTestId('isFetching').textContent).toBe('true'));
       await waitFor(() => expect(screen.getByTestId('isFetching').textContent).toBe('false'));
+      expect(getRenderCount()).toBe(9);
 
       expect(
         storeRef.store.getState().actions.filter(api.internalActions.updateSubscriptionOptions.match)
@@ -534,7 +575,7 @@ describe('hooks tests', () => {
   });
 
   describe('useMutation', () => {
-    test('useMutation hook sets and unsets the `isLoading` flag when running', async () => {
+    test('useMutation hook sets and unsets the isLoading flag when running', async () => {
       function User() {
         const [updateUser, { isLoading }] = api.endpoints.updateUser.useMutation();
 
@@ -1043,6 +1084,7 @@ describe('hooks with createApi defaults set', () => {
         </div>,
         { wrapper: storeRef.wrapper }
       );
+
       expect(screen.getByTestId('renderCount').textContent).toBe('1');
 
       const addBtn = screen.getByTestId('addPost');

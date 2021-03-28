@@ -2,7 +2,7 @@ import { AnyAction, configureStore, EnhancedStore, Middleware, Store } from '@re
 import { setupListeners } from '@rtk-incubator/rtk-query';
 
 import { act } from '@testing-library/react-hooks';
-import React, { Reducer } from 'react';
+import React, { Reducer, useCallback } from 'react';
 import { Provider } from 'react-redux';
 
 export const ANY = 0 as any;
@@ -40,6 +40,22 @@ export const hookWaitFor = async (cb: () => void, time = 2000) => {
       await act(() => waitMs(2));
     }
   }
+};
+
+export const useRenderCounter = () => {
+  const countRef = React.useRef(0);
+
+  React.useEffect(() => {
+    countRef.current += 1;
+  });
+
+  React.useEffect(() => {
+    return () => {
+      countRef.current = 0;
+    };
+  }, []);
+
+  return useCallback(() => countRef.current, []);
 };
 
 export function matchSequence(_actions: AnyAction[], ...matchers: Array<(arg: any) => boolean>) {

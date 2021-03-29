@@ -1,7 +1,7 @@
 import { BaseQueryFn } from './baseQueryTypes';
 
-const NEVER = Symbol();
-export type NEVER = typeof NEVER;
+const _NEVER = Symbol();
+export type NEVER = typeof _NEVER;
 
 /**
  * Creates a "dummy" BaseQuery to be used if your api *only* uses the `queryFn` definition syntax.

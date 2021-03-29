@@ -493,7 +493,7 @@ describe('fetchFn', () => {
 
     const baseQuery = fetchBaseQuery({
       baseUrl,
-      fetchFn: crossFetch,
+      fetchFn: crossFetch as any,
     });
 
     let request: any;

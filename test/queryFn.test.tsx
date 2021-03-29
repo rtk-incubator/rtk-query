@@ -1,7 +1,6 @@
 import { configureStore } from '@reduxjs/toolkit';
 import { BaseQueryFn, createApi, fetchBaseQuery } from '@rtk-incubator/rtk-query';
-import { rest } from 'msw';
-import { server } from './mocks/server';
+import { Post, posts } from './mocks/server';
 import { actionsReducer, setupApiStore } from './helpers';
 
 describe('queryFn base implementation tests', () => {
@@ -242,26 +241,6 @@ describe('queryFn base implementation tests', () => {
 });
 
 describe('usage scenario tests', () => {
-  type Post = {
-    id: number;
-    title: string;
-    body: string;
-  };
-
-  const posts: Record<number, Post> = {
-    1: { id: 1, title: 'hello', body: 'extra body!' },
-  };
-
-  server.use(
-    rest.get<Post>('http://example.com/posts/random', (req, res, ctx) => {
-      // just simulate an api that returned a random ID
-      const { id, ..._post } = posts[1];
-      return res(ctx.json({ id }));
-    }),
-    rest.get<Post, any, { id: number }>('http://example.com/posts/:id', (req, res, ctx) => {
-      return res(ctx.json(posts[req.params.id]));
-    })
-  );
   const baseQuery = fetchBaseQuery({ baseUrl: 'http://example.com/' });
   const api = createApi({
     baseQuery,
@@ -269,9 +248,8 @@ describe('usage scenario tests', () => {
       getRandomUser: build.query<Post, void>({
         async queryFn(_arg: void, _queryApi, _extraOptions, fetchWithBQ) {
           // get a random post
-          const { data } = await fetchWithBQ<Post>('/posts/random');
-          // fetch further details and enhance it!
-          return fetchWithBQ(`/posts/${data?.id}`);
+          const { data } = await fetchWithBQ<Post>('posts/random');
+          return fetchWithBQ<Post>(`/posts/${data?.id}`);
         },
       }),
     }),

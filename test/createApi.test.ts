@@ -1,7 +1,7 @@
 import { configureStore, createAction, createReducer } from '@reduxjs/toolkit';
 import { Api, createApi, fetchBaseQuery } from '@rtk-incubator/rtk-query';
 import { QueryDefinition, MutationDefinition } from '@internal/endpointDefinitions';
-import { ANY, expectType, expectExactType, setupApiStore, waitMs } from './helpers';
+import { ANY, expectType, expectExactType, setupApiStore, waitMs, getSerializedHeaders } from './helpers';
 import { server } from './mocks/server';
 import { rest } from 'msw';
 
@@ -448,7 +448,10 @@ describe('additional transformResponse behaviors', () => {
         transformResponse: (response: { body: { nested: EchoResponseData } }, meta) => {
           return {
             ...response.body.nested,
-            ...(meta?.responseHeaders ? { responseHeaders: meta.responseHeaders } : {}),
+            meta: {
+              request: { headers: getSerializedHeaders(meta?.request.headers) },
+              response: { headers: getSerializedHeaders(meta?.response.headers) },
+            },
           };
         },
       }),
@@ -466,7 +469,13 @@ describe('additional transformResponse behaviors', () => {
       queryWithMeta: build.query<SuccessResponse, void>({
         query: () => '/success',
         transformResponse: async (response: SuccessResponse, meta) => {
-          return { ...response, ...(meta?.responseHeaders ? { responseHeaders: meta.responseHeaders } : {}) };
+          return {
+            ...response,
+            meta: {
+              request: { headers: getSerializedHeaders(meta?.request.headers) },
+              response: { headers: getSerializedHeaders(meta?.response.headers) },
+            },
+          };
         },
       }),
     }),
@@ -491,9 +500,18 @@ describe('additional transformResponse behaviors', () => {
 
     expect(result.data).toEqual({
       banana: 'bread',
-      responseHeaders: {
-        'content-type': 'application/json',
-        'x-powered-by': 'msw',
+      meta: {
+        request: {
+          headers: {
+            'content-type': 'application/json',
+          },
+        },
+        response: {
+          headers: {
+            'content-type': 'application/json',
+            'x-powered-by': 'msw',
+          },
+        },
       },
     });
   });
@@ -503,9 +521,16 @@ describe('additional transformResponse behaviors', () => {
 
     expect(result.data).toEqual({
       value: 'success',
-      responseHeaders: {
-        'content-type': 'application/json',
-        'x-powered-by': 'msw',
+      meta: {
+        request: {
+          headers: {},
+        },
+        response: {
+          headers: {
+            'content-type': 'application/json',
+            'x-powered-by': 'msw',
+          },
+        },
       },
     });
   });

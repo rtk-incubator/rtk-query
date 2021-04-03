@@ -59,6 +59,8 @@ export type FetchBaseQueryArgs = {
   fetchFn?: (input: RequestInfo, init?: RequestInit | undefined) => Promise<Response>;
 } & RequestInit;
 
+export type FetchBaseQueryMeta = { request: Request; response: Response };
+
 /**
  * This is a very small wrapper around fetch that aims to simplify requests.
  *
@@ -83,13 +85,7 @@ export function fetchBaseQuery({
   prepareHeaders = (x) => x,
   fetchFn = fetch,
   ...baseFetchOptions
-}: FetchBaseQueryArgs = {}): BaseQueryFn<
-  string | FetchArgs,
-  unknown,
-  FetchBaseQueryError,
-  {},
-  { responseHeaders?: Record<string, any> }
-> {
+}: FetchBaseQueryArgs = {}): BaseQueryFn<string | FetchArgs, unknown, FetchBaseQueryError, {}, FetchBaseQueryMeta> {
   return async (arg, { signal, getState }) => {
     let {
       url,
@@ -131,14 +127,15 @@ export function fetchBaseQuery({
 
     url = joinUrls(baseUrl, url);
 
-    const response = await fetchFn(url, config);
-    const resultData = await handleResponse(response, responseHandler);
+    const request = new Request(url, config);
+    const requestClone = request.clone();
 
-    const responseHeaders: Record<string, string> = {};
-    response.headers.forEach((val, key) => {
-      responseHeaders[key] = val;
-    });
-    const meta = { responseHeaders };
+    const response = await fetchFn(request);
+    const responseClone = response.clone();
+
+    const meta = { request: requestClone, response: responseClone };
+
+    const resultData = await handleResponse(response, responseHandler);
 
     return validateStatus(response, resultData)
       ? {

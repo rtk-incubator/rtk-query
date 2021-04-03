@@ -9,6 +9,14 @@ export const ANY = 0 as any;
 
 export const DEFAULT_DELAY_MS = 150;
 
+export const getSerializedHeaders = (headers: Headers = new Headers()) => {
+  let result: Record<string, string> = {};
+  headers.forEach((val, key) => {
+    result[key] = val;
+  });
+  return result;
+};
+
 export async function waitMs(time = DEFAULT_DELAY_MS) {
   const now = Date.now();
   while (Date.now() < now + time) {

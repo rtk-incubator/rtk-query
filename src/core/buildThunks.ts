@@ -209,9 +209,10 @@ export function buildThunks<
         );
         if (result.error) throw new HandledError(result.error);
         if (endpointDefinition.onSuccess) endpointDefinition.onSuccess(arg.originalArgs, queryApi, result.data);
+
         return {
           fulfilledTimeStamp: Date.now(),
-          result: await (endpointDefinition.transformResponse ?? defaultTransformResponse)(result.data),
+          result: await (endpointDefinition.transformResponse ?? defaultTransformResponse)(result.data, result.meta),
         };
       } catch (error) {
         if (endpointDefinition.onError)
@@ -274,7 +275,10 @@ export function buildThunks<
       if (endpointDefinition.onSuccess) endpointDefinition.onSuccess(arg.originalArgs, mutationApi, result.data);
       return {
         fulfilledTimeStamp: Date.now(),
-        result: await (endpointDefinition.transformResponse ?? defaultTransformResponse)(result.data),
+        result: await (endpointDefinition.transformResponse ?? defaultTransformResponse)(
+          result.data,
+          result.meta as any
+        ),
       };
     } catch (error) {
       if (endpointDefinition.onError)

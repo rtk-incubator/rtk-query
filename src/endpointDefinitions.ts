@@ -1,6 +1,6 @@
 import { AnyAction, ThunkDispatch } from '@reduxjs/toolkit';
 import { RootState } from './core/apiState';
-import { BaseQueryExtraOptions, BaseQueryFn, BaseQueryResult, BaseQueryArg } from './baseQueryTypes';
+import { BaseQueryExtraOptions, BaseQueryMeta, BaseQueryFn, BaseQueryResult, BaseQueryArg } from './baseQueryTypes';
 import { fetchBaseQuery } from './fetchBaseQuery';
 import { HasRequiredProps } from './tsHelpers';
 
@@ -8,7 +8,10 @@ const resultType = Symbol();
 
 export type BaseEndpointDefinition<QueryArg, BaseQuery extends BaseQueryFn, ResultType> = {
   query(arg: QueryArg): BaseQueryArg<BaseQuery>;
-  transformResponse?(baseQueryReturnValue: BaseQueryResult<BaseQuery>): ResultType | Promise<ResultType>;
+  transformResponse?(
+    baseQueryReturnValue: BaseQueryResult<BaseQuery>,
+    meta: BaseQueryMeta
+  ): ResultType | Promise<ResultType>;
   [resultType]?: ResultType;
 } & HasRequiredProps<
   BaseQueryExtraOptions<BaseQuery>,

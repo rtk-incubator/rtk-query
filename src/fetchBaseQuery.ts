@@ -128,8 +128,23 @@ export function fetchBaseQuery({
     const response = await fetchFn(url, config);
     const resultData = await handleResponse(response, responseHandler);
 
+    const responseHeaders: Record<string, string> = {};
+    response.headers.forEach((val, key) => {
+      responseHeaders[key] = val;
+    });
+    const meta = { responseHeaders };
+
     return validateStatus(response, resultData)
-      ? { data: resultData }
-      : { error: { status: response.status, data: resultData } };
+      ? {
+          data: resultData,
+          meta,
+        }
+      : {
+          error: {
+            status: response.status,
+            data: resultData,
+          },
+          meta,
+        };
   };
 }

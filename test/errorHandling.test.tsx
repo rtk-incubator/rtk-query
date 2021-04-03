@@ -36,6 +36,12 @@ describe('fetchBaseQuery', () => {
       )
     ).resolves.toEqual({
       data: { value: 'success' },
+      meta: {
+        responseHeaders: {
+          'content-type': 'application/json',
+          'x-powered-by': 'msw',
+        },
+      },
     });
   });
   test('error', async () => {
@@ -48,6 +54,12 @@ describe('fetchBaseQuery', () => {
       )
     ).resolves.toEqual({
       error: { data: { value: 'error' }, status: 500 },
+      meta: {
+        responseHeaders: {
+          'content-type': 'application/json',
+          'x-powered-by': 'msw',
+        },
+      },
     });
   });
 });

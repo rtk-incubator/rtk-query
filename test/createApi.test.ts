@@ -443,6 +443,15 @@ describe('additional transformResponse behaviors', () => {
         query: () => ({ url: '/echo', method: 'POST', body: { nested: { banana: 'bread' } } }),
         transformResponse: (response: { body: { nested: EchoResponseData } }) => response.body.nested,
       }),
+      mutationWithMeta: build.mutation({
+        query: () => ({ url: '/echo', method: 'POST', body: { nested: { banana: 'bread' } } }),
+        transformResponse: (response: { body: { nested: EchoResponseData } }, meta) => {
+          return {
+            ...response.body.nested,
+            ...(meta?.responseHeaders ? { responseHeaders: meta.responseHeaders } : {}),
+          };
+        },
+      }),
       query: build.query<SuccessResponse & EchoResponseData, void>({
         query: () => '/success',
         transformResponse: async (response: SuccessResponse) => {
@@ -452,6 +461,12 @@ describe('additional transformResponse behaviors', () => {
           }).then((res) => res.json());
           const additionalData = JSON.parse(res.body) as EchoResponseData;
           return { ...response, ...additionalData };
+        },
+      }),
+      queryWithMeta: build.query<SuccessResponse, void>({
+        query: () => '/success',
+        transformResponse: async (response: SuccessResponse, meta) => {
+          return { ...response, ...(meta?.responseHeaders ? { responseHeaders: meta.responseHeaders } : {}) };
         },
       }),
     }),
@@ -469,6 +484,30 @@ describe('additional transformResponse behaviors', () => {
     const result = await storeRef.store.dispatch(api.endpoints.mutation.initiate({}));
 
     expect(result.data).toEqual({ banana: 'bread' });
+  });
+
+  test('transformResponse can inject baseQuery meta into the end result from a mutation', async () => {
+    const result = await storeRef.store.dispatch(api.endpoints.mutationWithMeta.initiate({}));
+
+    expect(result.data).toEqual({
+      banana: 'bread',
+      responseHeaders: {
+        'content-type': 'application/json',
+        'x-powered-by': 'msw',
+      },
+    });
+  });
+
+  test('transformResponse can inject baseQuery meta into the end result from a query', async () => {
+    const result = await storeRef.store.dispatch(api.endpoints.queryWithMeta.initiate());
+
+    expect(result.data).toEqual({
+      value: 'success',
+      responseHeaders: {
+        'content-type': 'application/json',
+        'x-powered-by': 'msw',
+      },
+    });
   });
 });
 

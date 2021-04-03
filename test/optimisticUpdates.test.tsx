@@ -15,8 +15,8 @@ beforeEach(() => baseQuery.mockReset());
 const api = createApi({
   baseQuery: (...args: any[]) => {
     const result = baseQuery(...args);
-    if ('then' in result) return result.then((data: any) => ({ data }));
-    return { data: result };
+    if ('then' in result) return result.then((data: any) => ({ data, meta: 'meta' }));
+    return { data: result, meta: 'meta' };
   },
   entityTypes: ['Post'],
   endpoints: (build) => ({
@@ -82,7 +82,7 @@ describe('basic lifecycle', () => {
     expect(onSuccess).not.toHaveBeenCalled();
     await act(() => waitMs(5));
     expect(onError).not.toHaveBeenCalled();
-    expect(onSuccess).toHaveBeenCalledWith('arg', expect.any(Object), 'success');
+    expect(onSuccess).toHaveBeenCalledWith('arg', expect.any(Object), 'success', 'meta');
   });
 
   test('error', async () => {
@@ -101,7 +101,7 @@ describe('basic lifecycle', () => {
     expect(onError).not.toHaveBeenCalled();
     expect(onSuccess).not.toHaveBeenCalled();
     await act(() => waitMs(5));
-    expect(onError).toHaveBeenCalledWith('arg', expect.any(Object), 'error');
+    expect(onError).toHaveBeenCalledWith('arg', expect.any(Object), 'error', undefined);
     expect(onSuccess).not.toHaveBeenCalled();
   });
 });

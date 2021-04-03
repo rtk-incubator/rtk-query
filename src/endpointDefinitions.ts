@@ -10,7 +10,7 @@ export type BaseEndpointDefinition<QueryArg, BaseQuery extends BaseQueryFn, Resu
   query(arg: QueryArg): BaseQueryArg<BaseQuery>;
   transformResponse?(
     baseQueryReturnValue: BaseQueryResult<BaseQuery>,
-    meta: BaseQueryMeta
+    meta: BaseQueryMeta<BaseQuery>
   ): ResultType | Promise<ResultType>;
   [resultType]?: ResultType;
 } & HasRequiredProps<
@@ -58,8 +58,18 @@ export type QueryDefinition<
   provides?: ResultDescription<EntityTypes, ResultType, QueryArg>;
   invalidates?: never;
   onStart?(arg: QueryArg, queryApi: QueryApi<ReducerPath, Context>): void;
-  onError?(arg: QueryArg, queryApi: QueryApi<ReducerPath, Context>, error: unknown): void;
-  onSuccess?(arg: QueryArg, queryApi: QueryApi<ReducerPath, Context>, result: ResultType): void;
+  onError?(
+    arg: QueryArg,
+    queryApi: QueryApi<ReducerPath, Context>,
+    error: unknown,
+    meta: BaseQueryMeta<BaseQuery>
+  ): void;
+  onSuccess?(
+    arg: QueryArg,
+    queryApi: QueryApi<ReducerPath, Context>,
+    result: ResultType,
+    meta: BaseQueryMeta<BaseQuery> | undefined
+  ): void;
 };
 
 export interface MutationApi<ReducerPath extends string, Context extends {}> {
@@ -82,8 +92,18 @@ export type MutationDefinition<
   invalidates?: ResultDescription<EntityTypes, ResultType, QueryArg>;
   provides?: never;
   onStart?(arg: QueryArg, mutationApi: MutationApi<ReducerPath, Context>): void;
-  onError?(arg: QueryArg, mutationApi: MutationApi<ReducerPath, Context>, error: unknown): void;
-  onSuccess?(arg: QueryArg, mutationApi: MutationApi<ReducerPath, Context>, result: ResultType): void;
+  onError?(
+    arg: QueryArg,
+    mutationApi: MutationApi<ReducerPath, Context>,
+    error: unknown,
+    meta: BaseQueryMeta<BaseQuery>
+  ): void;
+  onSuccess?(
+    arg: QueryArg,
+    mutationApi: MutationApi<ReducerPath, Context>,
+    result: ResultType,
+    meta: BaseQueryMeta<BaseQuery> | undefined
+  ): void;
 };
 
 export type EndpointDefinition<

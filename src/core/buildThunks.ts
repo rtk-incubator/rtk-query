@@ -207,8 +207,9 @@ export function buildThunks<
           { signal, dispatch: api.dispatch, getState: api.getState },
           endpointDefinition.extraOptions as any
         );
-        if (result.error) throw new HandledError(result.error);
-        if (endpointDefinition.onSuccess) endpointDefinition.onSuccess(arg.originalArgs, queryApi, result.data);
+        if (result.error) throw new HandledError(result.error, result.meta);
+        if (endpointDefinition.onSuccess)
+          endpointDefinition.onSuccess(arg.originalArgs, queryApi, result.data, result.meta);
 
         return {
           fulfilledTimeStamp: Date.now(),
@@ -216,7 +217,12 @@ export function buildThunks<
         };
       } catch (error) {
         if (endpointDefinition.onError)
-          endpointDefinition.onError(arg.originalArgs, queryApi, error instanceof HandledError ? error.value : error);
+          endpointDefinition.onError(
+            arg.originalArgs,
+            queryApi,
+            error instanceof HandledError ? error.value : error,
+            error instanceof HandledError ? error.meta : undefined
+          );
         if (error instanceof HandledError) {
           return rejectWithValue(error.value);
         }
@@ -271,18 +277,21 @@ export function buildThunks<
         { signal, dispatch: api.dispatch, getState: api.getState },
         endpointDefinition.extraOptions as any
       );
-      if (result.error) throw new HandledError(result.error);
-      if (endpointDefinition.onSuccess) endpointDefinition.onSuccess(arg.originalArgs, mutationApi, result.data);
+      if (result.error) throw new HandledError(result.error, result.meta);
+      if (endpointDefinition.onSuccess)
+        endpointDefinition.onSuccess(arg.originalArgs, mutationApi, result.data, result.meta);
       return {
         fulfilledTimeStamp: Date.now(),
-        result: await (endpointDefinition.transformResponse ?? defaultTransformResponse)(
-          result.data,
-          result.meta as any
-        ),
+        result: await (endpointDefinition.transformResponse ?? defaultTransformResponse)(result.data, result.meta),
       };
     } catch (error) {
       if (endpointDefinition.onError)
-        endpointDefinition.onError(arg.originalArgs, mutationApi, error instanceof HandledError ? error.value : error);
+        endpointDefinition.onError(
+          arg.originalArgs,
+          mutationApi,
+          error instanceof HandledError ? error.value : error,
+          error instanceof HandledError ? error.meta : undefined
+        );
       if (error instanceof HandledError) {
         return rejectWithValue(error.value);
       }

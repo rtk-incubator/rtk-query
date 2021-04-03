@@ -83,7 +83,13 @@ export function fetchBaseQuery({
   prepareHeaders = (x) => x,
   fetchFn = fetch,
   ...baseFetchOptions
-}: FetchBaseQueryArgs = {}): BaseQueryFn<string | FetchArgs, unknown, FetchBaseQueryError, {}> {
+}: FetchBaseQueryArgs = {}): BaseQueryFn<
+  string | FetchArgs,
+  unknown,
+  FetchBaseQueryError,
+  {},
+  { responseHeaders?: Record<string, any> }
+> {
   return async (arg, { signal, getState }) => {
     let {
       url,

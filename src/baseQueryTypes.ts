@@ -7,13 +7,11 @@ export interface BaseQueryApi {
   getState: () => unknown;
 }
 
-export type BaseQueryFn<Args = any, Result = unknown, Error = unknown, DefinitionExtraOptions = {}> = (
+export type BaseQueryFn<Args = any, Result = unknown, Error = unknown, DefinitionExtraOptions = {}, Meta = {}> = (
   args: Args,
   api: BaseQueryApi,
   extraOptions: DefinitionExtraOptions
-) => MaybePromise<
-  { error: Error; data?: undefined; meta?: BaseQueryMeta } | { error?: undefined; data?: Result; meta?: BaseQueryMeta }
->;
+) => MaybePromise<{ error: Error; data?: undefined; meta?: Meta } | { error?: undefined; data?: Result; meta?: Meta }>;
 
 export type BaseQueryEnhancer<AdditionalArgs = unknown, AdditionalDefinitionExtraOptions = unknown, Config = void> = <
   BaseQuery extends BaseQueryFn
@@ -32,6 +30,8 @@ export type BaseQueryResult<BaseQuery extends BaseQueryFn> = Exclude<
   { data: undefined }
 >['data'];
 
+export type BaseQueryMeta<BaseQuery extends BaseQueryFn> = UnwrapPromise<ReturnType<BaseQuery>>['meta'];
+
 export type BaseQueryError<BaseQuery extends BaseQueryFn> = Exclude<
   UnwrapPromise<ReturnType<BaseQuery>>,
   { error: undefined }
@@ -42,4 +42,3 @@ export type BaseQueryArg<T extends (arg: any, ...args: any[]) => any> = T extend
   : any;
 
 export type BaseQueryExtraOptions<BaseQuery extends BaseQueryFn> = Parameters<BaseQuery>[2];
-export type BaseQueryMeta = { responseHeaders: Record<string, any> } | undefined;

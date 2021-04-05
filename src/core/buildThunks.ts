@@ -218,7 +218,7 @@ export function buildThunks<
           arg.originalArgs,
           baseQueryApi,
           endpointDefinition.extraOptions as any,
-          (arg) => baseQuery(arg, baseQueryApi, endpointDefinition.extraOptions as any) as any
+          (arg) => baseQuery(arg, baseQueryApi, endpointDefinition.extraOptions as any)
         );
       }
       if (result.error) throw new HandledError(result.error);

@@ -1,5 +1,5 @@
 import { configureStore } from '@reduxjs/toolkit';
-import { BaseQueryFn, createApi, fetchBaseQuery } from '@rtk-incubator/rtk-query';
+import { BaseQueryFn, createApi, fetchBaseQuery, FetchBaseQueryError } from '@rtk-incubator/rtk-query';
 import { Post, posts } from './mocks/server';
 import { actionsReducer, setupApiStore } from './helpers';
 
@@ -248,8 +248,13 @@ describe('usage scenario tests', () => {
       getRandomUser: build.query<Post, void>({
         async queryFn(_arg: void, _queryApi, _extraOptions, fetchWithBQ) {
           // get a random post
-          const { data } = await fetchWithBQ<Post>('posts/random');
-          return fetchWithBQ<Post>(`/posts/${data?.id}`);
+          const randomResult = await fetchWithBQ('posts/random');
+          if (randomResult.error) {
+            throw randomResult.error;
+          }
+          const post = randomResult.data as Post;
+          const result = await fetchWithBQ(`/posts/${post.id}`);
+          return result.data ? { data: result.data as Post } : { error: result.error as FetchBaseQueryError };
         },
       }),
     }),

@@ -28,7 +28,7 @@ export type BaseEndpointDefinition<QueryArg, BaseQuery extends BaseQueryFn, Resu
         arg: QueryArg,
         api: BaseQueryApi,
         extraOptions: BaseQueryExtraOptions<BaseQuery>,
-        baseQuery: <Ret>(arg: any) => MaybePromise<QueryReturnValue<Ret, BaseQueryError<BaseQuery>>>
+        baseQuery: (arg: Parameters<BaseQuery>[0]) => ReturnType<BaseQuery>
       ): MaybePromise<QueryReturnValue<ResultType, BaseQueryError<BaseQuery>>>;
       query?: never;
       transformResponse?: never;

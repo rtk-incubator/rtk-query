@@ -217,7 +217,8 @@ export function buildThunks<
         result = await endpointDefinition.queryFn(
           arg.originalArgs,
           baseQueryApi,
-          endpointDefinition.extraOptions as any
+          endpointDefinition.extraOptions as any,
+          (arg) => baseQuery(arg, baseQueryApi, endpointDefinition.extraOptions as any)
         );
       }
       if (result.error) throw new HandledError(result.error);

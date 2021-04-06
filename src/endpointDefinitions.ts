@@ -1,23 +1,48 @@
 import { AnyAction, ThunkDispatch } from '@reduxjs/toolkit';
 import { RootState } from './core/apiState';
-import { BaseQueryExtraOptions, BaseQueryFn, BaseQueryResult, BaseQueryArg } from './baseQueryTypes';
-import { fetchBaseQuery } from './fetchBaseQuery';
-import { HasRequiredProps } from './tsHelpers';
+import {
+  BaseQueryExtraOptions,
+  BaseQueryFn,
+  BaseQueryResult,
+  BaseQueryArg,
+  BaseQueryApi,
+  QueryReturnValue,
+  BaseQueryError,
+} from './baseQueryTypes';
+import { HasRequiredProps, MaybePromise, OmitFromUnion, CastAny } from './tsHelpers';
+import { NEVER } from './dummyBaseQuery';
 
 const resultType = Symbol();
+const baseQuery = Symbol();
 
-export type BaseEndpointDefinition<QueryArg, BaseQuery extends BaseQueryFn, ResultType> = {
-  query(arg: QueryArg): BaseQueryArg<BaseQuery>;
-  transformResponse?(baseQueryReturnValue: BaseQueryResult<BaseQuery>): ResultType | Promise<ResultType>;
+export type BaseEndpointDefinition<QueryArg, BaseQuery extends BaseQueryFn, ResultType> = (
+  | ([CastAny<BaseQueryResult<BaseQuery>, {}>] extends [NEVER]
+      ? never
+      : {
+          query(arg: QueryArg): BaseQueryArg<BaseQuery>;
+          queryFn?: never;
+          transformResponse?(baseQueryReturnValue: BaseQueryResult<BaseQuery>): ResultType | Promise<ResultType>;
+        })
+  | {
+      queryFn(
+        arg: QueryArg,
+        api: BaseQueryApi,
+        extraOptions: BaseQueryExtraOptions<BaseQuery>,
+        baseQuery: (arg: Parameters<BaseQuery>[0]) => ReturnType<BaseQuery>
+      ): MaybePromise<QueryReturnValue<ResultType, BaseQueryError<BaseQuery>>>;
+      query?: never;
+      transformResponse?: never;
+    }
+) & {
+  /* phantom type */
   [resultType]?: ResultType;
+  /* phantom type */
+  [baseQuery]?: BaseQuery;
 } & HasRequiredProps<
-  BaseQueryExtraOptions<BaseQuery>,
-  { extraOptions: BaseQueryExtraOptions<BaseQuery> },
-  { extraOptions?: BaseQueryExtraOptions<BaseQuery> }
->;
-
-const t: BaseEndpointDefinition<any, ReturnType<typeof fetchBaseQuery>, ''> = { query: 0 as any };
-t.extraOptions = {};
+    BaseQueryExtraOptions<BaseQuery>,
+    { extraOptions: BaseQueryExtraOptions<BaseQuery> },
+    { extraOptions?: BaseQueryExtraOptions<BaseQuery> }
+  >;
 
 export enum DefinitionType {
   query = 'query',
@@ -107,10 +132,13 @@ export function isMutationDefinition(
 
 export type EndpointBuilder<BaseQuery extends BaseQueryFn, EntityTypes extends string, ReducerPath extends string> = {
   query<ResultType, QueryArg>(
-    definition: Omit<QueryDefinition<QueryArg, BaseQuery, EntityTypes, ResultType>, 'type'>
+    definition: OmitFromUnion<QueryDefinition<QueryArg, BaseQuery, EntityTypes, ResultType>, 'type'>
   ): QueryDefinition<QueryArg, BaseQuery, EntityTypes, ResultType>;
   mutation<ResultType, QueryArg, Context = Record<string, any>>(
-    definition: Omit<MutationDefinition<QueryArg, BaseQuery, EntityTypes, ResultType, ReducerPath, Context>, 'type'>
+    definition: OmitFromUnion<
+      MutationDefinition<QueryArg, BaseQuery, EntityTypes, ResultType, ReducerPath, Context>,
+      'type'
+    >
   ): MutationDefinition<QueryArg, BaseQuery, EntityTypes, ResultType, ReducerPath, Context>;
 };
 

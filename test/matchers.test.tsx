@@ -26,10 +26,10 @@ const api = createApi({
     return {
       querySuccess: build.query<ResultType, ArgType>({ query: () => '/success' }),
       querySuccess2: build.query({ query: () => '/success' }),
-      queryFail: build.query({ query: () => '/fail' }),
+      queryFail: build.query({ query: () => '/error' }),
       mutationSuccess: build.mutation({ query: () => ({ url: '/success', method: 'POST' }) }),
       mutationSuccess2: build.mutation({ query: () => ({ url: '/success', method: 'POST' }) }),
-      mutationFail: build.mutation({ query: () => ({ url: '/fail', method: 'POST' }) }),
+      mutationFail: build.mutation({ query: () => ({ url: '/error', method: 'POST' }) }),
     };
   },
 });

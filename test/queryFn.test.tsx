@@ -241,6 +241,20 @@ describe('queryFn base implementation tests', () => {
 });
 
 describe('usage scenario tests', () => {
+  const mockData = { id: 1, name: 'Banana' };
+  const mockDocResult = {
+    exists: () => true,
+    data: () => mockData,
+  };
+  const collection = jest.fn((name) => ({ get, doc }));
+  const get = jest.fn(() => Promise.resolve(mockDocResult));
+  const doc = jest.fn((name) => ({
+    get,
+  }));
+  const firestore = () => {
+    return { collection, doc };
+  };
+
   const baseQuery = fetchBaseQuery({ baseUrl: 'http://example.com/' });
   const api = createApi({
     baseQuery,
@@ -255,6 +269,25 @@ describe('usage scenario tests', () => {
           const post = randomResult.data as Post;
           const result = await fetchWithBQ(`/posts/${post.id}`);
           return result.data ? { data: result.data as Post } : { error: result.error as FetchBaseQueryError };
+        },
+      }),
+      getFirebaseUser: build.query<typeof mockData, number>({
+        async queryFn(arg: number) {
+          const getResult = await firestore().collection('users').doc(arg).get();
+          if (!getResult.exists()) {
+            throw new Error('Missing user');
+          }
+          return { data: getResult.data() };
+        },
+      }),
+      getMissingFirebaseUser: build.query<typeof mockData, number>({
+        async queryFn(arg: number) {
+          const getResult = await firestore().collection('users').doc(arg).get();
+          // intentionally throw if it exists to keep the mocking overhead low
+          if (getResult.exists()) {
+            throw new Error('Missing user');
+          }
+          return { data: getResult.data() };
         },
       }),
     }),
@@ -274,5 +307,21 @@ describe('usage scenario tests', () => {
   it('can chain multiple queries together', async () => {
     const result = await storeRef.store.dispatch(api.endpoints.getRandomUser.initiate());
     expect(result.data).toEqual(posts[1]);
+  });
+
+  it('can wrap a service like Firebase', async () => {
+    const result = await storeRef.store.dispatch(api.endpoints.getFirebaseUser.initiate(1));
+    expect(result.data).toEqual(mockData);
+  });
+
+  it('can wrap a service like Firebase and handle errors', async () => {
+    const result = await storeRef.store.dispatch(api.endpoints.getMissingFirebaseUser.initiate(1));
+    expect(result.data).toBeUndefined();
+    expect(result.error).toEqual(
+      expect.objectContaining({
+        message: 'Missing user',
+        name: 'Error',
+      })
+    );
   });
 });

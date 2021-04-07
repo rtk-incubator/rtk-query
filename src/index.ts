@@ -13,5 +13,6 @@ export { retry } from './retry';
 export { setupListeners } from './core/setupListeners';
 export type { CreateApi, CreateApiOptions } from './createApi';
 export { buildCreateApi } from './createApi';
+export { dummyBaseQuery } from './dummyBaseQuery';
 
 export { createApi, coreModule } from './core';

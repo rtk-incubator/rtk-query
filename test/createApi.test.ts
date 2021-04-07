@@ -1,7 +1,7 @@
 import { configureStore, createAction, createReducer } from '@reduxjs/toolkit';
 import { Api, createApi, fetchBaseQuery } from '@rtk-incubator/rtk-query';
 import { QueryDefinition, MutationDefinition } from '@internal/endpointDefinitions';
-import { ANY, expectType, expectExactType, setupApiStore, waitMs } from './helpers';
+import { ANY, expectType, expectExactType, setupApiStore, waitMs, getSerializedHeaders } from './helpers';
 import { server } from './mocks/server';
 import { rest } from 'msw';
 
@@ -443,6 +443,18 @@ describe('additional transformResponse behaviors', () => {
         query: () => ({ url: '/echo', method: 'POST', body: { nested: { banana: 'bread' } } }),
         transformResponse: (response: { body: { nested: EchoResponseData } }) => response.body.nested,
       }),
+      mutationWithMeta: build.mutation({
+        query: () => ({ url: '/echo', method: 'POST', body: { nested: { banana: 'bread' } } }),
+        transformResponse: (response: { body: { nested: EchoResponseData } }, meta) => {
+          return {
+            ...response.body.nested,
+            meta: {
+              request: { headers: getSerializedHeaders(meta?.request.headers) },
+              response: { headers: getSerializedHeaders(meta?.response.headers) },
+            },
+          };
+        },
+      }),
       query: build.query<SuccessResponse & EchoResponseData, void>({
         query: () => '/success',
         transformResponse: async (response: SuccessResponse) => {
@@ -452,6 +464,18 @@ describe('additional transformResponse behaviors', () => {
           }).then((res) => res.json());
           const additionalData = JSON.parse(res.body) as EchoResponseData;
           return { ...response, ...additionalData };
+        },
+      }),
+      queryWithMeta: build.query<SuccessResponse, void>({
+        query: () => '/success',
+        transformResponse: async (response: SuccessResponse, meta) => {
+          return {
+            ...response,
+            meta: {
+              request: { headers: getSerializedHeaders(meta?.request.headers) },
+              response: { headers: getSerializedHeaders(meta?.response.headers) },
+            },
+          };
         },
       }),
     }),
@@ -469,6 +493,46 @@ describe('additional transformResponse behaviors', () => {
     const result = await storeRef.store.dispatch(api.endpoints.mutation.initiate({}));
 
     expect(result.data).toEqual({ banana: 'bread' });
+  });
+
+  test('transformResponse can inject baseQuery meta into the end result from a mutation', async () => {
+    const result = await storeRef.store.dispatch(api.endpoints.mutationWithMeta.initiate({}));
+
+    expect(result.data).toEqual({
+      banana: 'bread',
+      meta: {
+        request: {
+          headers: {
+            'content-type': 'application/json',
+          },
+        },
+        response: {
+          headers: {
+            'content-type': 'application/json',
+            'x-powered-by': 'msw',
+          },
+        },
+      },
+    });
+  });
+
+  test('transformResponse can inject baseQuery meta into the end result from a query', async () => {
+    const result = await storeRef.store.dispatch(api.endpoints.queryWithMeta.initiate());
+
+    expect(result.data).toEqual({
+      value: 'success',
+      meta: {
+        request: {
+          headers: {},
+        },
+        response: {
+          headers: {
+            'content-type': 'application/json',
+            'x-powered-by': 'msw',
+          },
+        },
+      },
+    });
   });
 });
 

@@ -200,7 +200,7 @@ export function buildThunks<
     if (endpointDefinition.onStart) endpointDefinition.onStart(arg.originalArgs, queryApi);
 
     try {
-      let transformResponse: (baseQueryReturnValue: any) => any = defaultTransformResponse;
+      let transformResponse: (baseQueryReturnValue: any, meta: any) => any = defaultTransformResponse;
       let result: QueryReturnValue;
       const baseQueryApi = { signal, dispatch: api.dispatch, getState: api.getState };
       if (endpointDefinition.query) {
@@ -221,15 +221,21 @@ export function buildThunks<
           (arg) => baseQuery(arg, baseQueryApi, endpointDefinition.extraOptions as any)
         );
       }
-      if (result.error) throw new HandledError(result.error);
-      if (endpointDefinition.onSuccess) endpointDefinition.onSuccess(arg.originalArgs, queryApi, result.data);
+      if (result.error) throw new HandledError(result.error, result.meta);
+      if (endpointDefinition.onSuccess)
+        endpointDefinition.onSuccess(arg.originalArgs, queryApi, result.data, result.meta);
       return {
         fulfilledTimeStamp: Date.now(),
-        result: await transformResponse(result.data),
+        result: await transformResponse(result.data, result.meta),
       };
     } catch (error) {
       if (endpointDefinition.onError)
-        endpointDefinition.onError(arg.originalArgs, queryApi, error instanceof HandledError ? error.value : error);
+        endpointDefinition.onError(
+          arg.originalArgs,
+          queryApi,
+          error instanceof HandledError ? error.value : error,
+          error instanceof HandledError ? error.meta : undefined
+        );
       if (error instanceof HandledError) {
         return rejectWithValue(error.value);
       }

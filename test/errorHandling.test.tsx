@@ -2,7 +2,7 @@ import * as React from 'react';
 import { BaseQueryFn, createApi, fetchBaseQuery } from '@rtk-incubator/rtk-query/react';
 import { renderHook, act } from '@testing-library/react-hooks';
 import { rest } from 'msw';
-import axios, { AxiosError, AxiosRequestConfig } from 'axios';
+import axios, { AxiosError, AxiosRequestConfig, AxiosResponse } from 'axios';
 
 import { expectExactType, hookWaitFor, setupApiStore } from './helpers';
 import { server } from './mocks/server';
@@ -36,6 +36,10 @@ describe('fetchBaseQuery', () => {
       )
     ).resolves.toEqual({
       data: { value: 'success' },
+      meta: {
+        request: expect.any(Object),
+        response: expect.any(Object),
+      },
     });
   });
   test('error', async () => {
@@ -48,6 +52,10 @@ describe('fetchBaseQuery', () => {
       )
     ).resolves.toEqual({
       error: { data: { value: 'error' }, status: 500 },
+      meta: {
+        request: expect.any(Object),
+        response: expect.any(Object),
+      },
     });
   });
 });
@@ -291,36 +299,58 @@ describe('custom axios baseQuery', () => {
       data?: AxiosRequestConfig['data'];
     },
     unknown,
-    unknown
+    unknown,
+    unknown,
+    { response: AxiosResponse; request: AxiosRequestConfig }
   > => async ({ url, method, data }) => {
+    const config = { url: baseUrl + url, method, data };
     try {
-      const result = await axios({ url: baseUrl + url, method, data });
-      return { data: result.data };
+      const result = await axios(config);
+      return { data: result.data, meta: { request: config, response: result } };
     } catch (axiosError) {
       let err = axiosError as AxiosError;
-      return { error: { status: err.response?.status, data: err.response?.data } };
+      return {
+        error: {
+          status: err.response?.status,
+          data: err.response?.data,
+        },
+        meta: { request: config, response: err.response as AxiosResponse },
+      };
     }
   };
 
+  type SuccessResponse = { value: 'success' };
   const api = createApi({
     baseQuery: axiosBaseQuery({
       baseUrl: 'http://example.com',
     }),
     endpoints(build) {
       return {
-        query: build.query({ query: () => ({ url: '/query', method: 'get' }) }),
-        mutation: build.mutation({ query: () => ({ url: '/mutation', method: 'post' }) }),
+        query: build.query<SuccessResponse, void>({
+          query: () => ({ url: '/success', method: 'get' }),
+          transformResponse: (result: SuccessResponse, meta) => {
+            return { ...result, metaResponseData: meta?.response.data };
+          },
+        }),
+        mutation: build.mutation<SuccessResponse, any>({ query: () => ({ url: '/success', method: 'post' }) }),
       };
     },
   });
 
   const storeRef = setupApiStore(api);
+
+  test('axiosBaseQuery transformResponse uses its custom meta format', async () => {
+    const result = await storeRef.store.dispatch(api.endpoints.query.initiate());
+
+    expect(result.data).toEqual({ value: 'success', metaResponseData: { value: 'success' } });
+  });
+
   test('axios errors behave as expected', async () => {
     server.use(
-      rest.get('http://example.com/query', (_, res, ctx) => res(ctx.status(500), ctx.json({ value: 'error' })))
+      rest.get('http://example.com/success', (_, res, ctx) => res(ctx.status(500), ctx.json({ value: 'error' })))
     );
 
-    const { result } = renderHook(() => api.useQueryQuery({}), { wrapper: storeRef.wrapper });
+    const { result } = renderHook(() => api.useQueryQuery(), { wrapper: storeRef.wrapper });
 
     await hookWaitFor(() => expect(result.current.isFetching).toBeFalsy());
     expect(result.current).toEqual(

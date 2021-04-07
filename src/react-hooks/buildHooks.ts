@@ -151,6 +151,26 @@ const defaultQueryStateSelector: DefaultQueryStateSelector<any> = (currentState,
   return { ...currentState, data, isFetching, isLoading, isSuccess } as UseQueryStateDefaultResult<any>;
 };
 
+/**
+ * Wrapper around `defaultQueryStateSelector` to be used in `useQuery`.
+ * We want the initial render to already come back with
+ * `{ isUninitialized: false, isFetching: true, isLoading: true }`
+ * to prevent that the library user has to do an additional check for `isUninitialized`/
+ */
+const noPendingQueryStateSelector: DefaultQueryStateSelector<any> = (currentState, lastResult) => {
+  const selected = defaultQueryStateSelector(currentState, lastResult);
+  if (selected.isUninitialized) {
+    return {
+      ...selected,
+      isUninitialized: false,
+      isFetching: true,
+      isLoading: true,
+      status: QueryStatus.pending,
+    };
+  }
+  return selected;
+};
+
 type GenericPrefetchThunk = (
   endpointName: any,
   arg: any,
@@ -351,7 +371,10 @@ export function buildHooks<Definitions extends EndpointDefinitions>({
       },
       useQuery(arg, options) {
         const querySubscriptionResults = useQuerySubscription(arg, options);
-        const queryStateResults = useQueryState(arg, options);
+        const queryStateResults = useQueryState(arg, {
+          selectFromResult: options?.skip ? undefined : (noPendingQueryStateSelector as QueryStateSelector<any, any>),
+          ...options,
+        });
         return useMemo(() => ({ ...queryStateResults, ...querySubscriptionResults }), [
           queryStateResults,
           querySubscriptionResults,

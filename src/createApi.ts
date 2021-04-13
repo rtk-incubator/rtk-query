@@ -47,7 +47,7 @@ export function buildCreateApi<Modules extends [Module<any>, ...Module<any>[]]>(
     const context: ApiContext<EndpointDefinitions> = {
       endpointDefinitions: {},
       batch(fn) {
-        // dummy "batch" method to be overridden by plugins, for example with React.unstable_batchedUpdate
+        // placeholder "batch" method to be overridden by plugins, for example with React.unstable_batchedUpdate
         fn();
       },
     };

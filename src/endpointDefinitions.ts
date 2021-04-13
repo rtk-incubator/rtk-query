@@ -11,7 +11,7 @@ import {
   BaseQueryMeta,
 } from './baseQueryTypes';
 import { HasRequiredProps, MaybePromise, OmitFromUnion, CastAny } from './tsHelpers';
-import { NEVER } from './dummyBaseQuery';
+import { NEVER } from './fakeBaseQuery';
 
 const resultType = Symbol();
 const baseQuery = Symbol();

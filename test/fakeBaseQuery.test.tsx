@@ -1,10 +1,10 @@
 import { configureStore } from '@reduxjs/toolkit';
-import { createApi, dummyBaseQuery } from '@rtk-incubator/rtk-query';
+import { createApi, fakeBaseQuery } from '@rtk-incubator/rtk-query';
 
 type CustomErrorType = { type: 'Custom' };
 
 const api = createApi({
-  baseQuery: dummyBaseQuery<CustomErrorType>(),
+  baseQuery: fakeBaseQuery<CustomErrorType>(),
   endpoints: (build) => ({
     withQuery: build.query<string, string>({
       // @ts-expect-error
@@ -120,11 +120,11 @@ const store = configureStore({
   middleware: (gDM) => gDM({}).concat(api.middleware),
 });
 
-test('dummyBaseQuery throws when invoking query', async () => {
+test('fakeBaseQuery throws when invoking query', async () => {
   const thunk = api.endpoints.withQuery.initiate('');
   const result = await store.dispatch(thunk);
   expect(result.error).toEqual({
-    message: 'When using `dummyBaseQuery`, all queries & mutations have to use the `queryFn` definition syntax.',
+    message: 'When using `fakeBaseQuery`, all queries & mutations must use the `queryFn` definition syntax.',
     name: 'Error',
     stack: expect.any(String),
   });

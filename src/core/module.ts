@@ -26,11 +26,19 @@ import { InternalSerializeQueryArgs } from '../defaultSerializeQueryArgs';
 import { SliceActions } from './buildSlice';
 import { BaseQueryFn } from '../baseQueryTypes';
 
+/**
+ * `ifOlderThan` - (default: `false` | `number`) - _number is value in seconds_
+ * - If specified, it will only run the query if the difference between `new Date()` and the last `fulfilledTimeStamp` is greater than the given value
+ *
+ * @overloadSummary
+ * `force`
+ * - If `force: true`, it will ignore the `ifOlderThan` value if it is set and the query will be run even if it exists in the cache.
+ */
 export type PrefetchOptions =
-  | { force?: boolean }
   | {
       ifOlderThan?: false | number;
-    };
+    }
+  | { force?: boolean };
 
 export const coreModuleName = Symbol();
 export type CoreModule = typeof coreModuleName;
@@ -107,6 +115,14 @@ export type ListenerActions = {
 
 export type InternalActions = SliceActions & ListenerActions;
 
+/**
+ * Creates a module containing the basic redux logic for use with `buildCreateApi`.
+ *
+ * @example
+ * ```ts
+ * const createBaseApi = buildCreateApi(coreModule());
+ * ```
+ */
 export const coreModule = (): Module<CoreModule> => ({
   name: coreModuleName,
   init(

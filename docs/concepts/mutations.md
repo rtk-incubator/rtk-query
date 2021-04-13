@@ -39,26 +39,36 @@ Notice the `onStart`, `onSuccess`, `onError` methods? Be sure to check out how t
 ### Type interfaces
 
 ```ts title="Mutation endpoint definition"
-export interface MutationDefinition<
+export type MutationDefinition<
   QueryArg,
-  BaseQuery extends (arg: any, ...args: any[]) => any,
+  BaseQuery extends BaseQueryFn,
   EntityTypes extends string,
   ResultType,
   ReducerPath extends string = string,
   Context = Record<string, any>
-> extends BaseEndpointDefinition<QueryArg, BaseQuery, ResultType> {
+> = BaseEndpointDefinition<QueryArg, BaseQuery, ResultType> & {
   type: DefinitionType.mutation;
   invalidates?: ResultDescription<EntityTypes, ResultType, QueryArg>;
   provides?: never;
   onStart?(arg: QueryArg, mutationApi: MutationApi<ReducerPath, Context>): void;
-  onError?(arg: QueryArg, mutationApi: MutationApi<ReducerPath, Context>, error: unknown): void;
-  onSuccess?(arg: QueryArg, mutationApi: MutationApi<ReducerPath, Context>, result: ResultType): void;
-}
+  onError?(
+    arg: QueryArg,
+    mutationApi: MutationApi<ReducerPath, Context>,
+    error: unknown,
+    meta: BaseQueryMeta<BaseQuery>
+  ): void;
+  onSuccess?(
+    arg: QueryArg,
+    mutationApi: MutationApi<ReducerPath, Context>,
+    result: ResultType,
+    meta: BaseQueryMeta<BaseQuery> | undefined
+  ): void;
+};
 ```
 
 ```ts title="MutationApi"
 export interface MutationApi<ReducerPath extends string, Context extends {}> {
-  dispatch: ThunkDispatch<RootState<any, any, ReducerPath>, unknown, AnyAction>;
+  dispatch: ThunkDispatch<any, any, AnyAction>;
   getState(): RootState<any, any, ReducerPath>;
   extra: unknown;
   requestId: string;

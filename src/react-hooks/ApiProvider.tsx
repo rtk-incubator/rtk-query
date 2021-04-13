@@ -5,7 +5,23 @@ import { setupListeners } from '../core/setupListeners';
 import { Api } from '../apiTypes';
 
 /**
- * Can be used as a Provider if you **do not have a Redux store**.
+ * Can be used as a `Provider` if you **do not already have a Redux store**.
+ *
+ * @example
+ * ```ts title="Basic usage - wrap your App with ApiProvider"
+ * import * as React from 'react';
+ * import { ApiProvider } from '@rtk-incubator/rtk-query';
+ *
+ * function App() {
+ *   return (
+ *     <ApiProvider api={api}>
+ *       <Pokemon />
+ *     </ApiProvider>
+ *   );
+ * }
+ * ```
+ *
+ * @remarks
  * Using this together with an existing redux store, both will
  * conflict with each other - please use the traditional redux setup
  * in that case.

@@ -53,6 +53,24 @@ export interface ReactHooksModuleOptions {
   useStore?: RR['useStore'];
 }
 
+/**
+ * Creates a module that generates react hooks from endpoints, for use with `buildCreateApi`.
+ *
+ *  @example
+ * ```ts
+ * const MyContext = React.createContext<ReactReduxContextValue>(null as any);
+ * const customCreateApi = buildCreateApi(
+ *   coreModule(),
+ *   reactHooksModule({ useDispatch: createDispatchHook(MyContext) })
+ * );
+ * ```
+ *
+ * @param opts.batch - The version of the `batchedUpdates` function to be used
+ * @param opts.useDispatch - The version of the `useDispatch` hook to be used
+ * @param opts.useSelector - The version of the `useSelector` hook to be used
+ * @param opts.useStore - Currently unused - for potential future use
+ * @returns A module for use with `buildCreateApi`
+ */
 export const reactHooksModule = ({
   batch = rrBatch,
   useDispatch = rrUseDispatch,

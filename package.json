@@ -47,20 +47,6 @@
       "pre-commit": "tsdx lint"
     }
   },
-  "prettier": {
-    "printWidth": 120,
-    "semi": true,
-    "singleQuote": true,
-    "trailingComma": "es5",
-    "overrides": [
-      {
-        "files": "*.ts",
-        "options": {
-          "parser": "babel-ts"
-        }
-      }
-    ]
-  },
   "size-limit": [
     {
       "name": "ESM full",

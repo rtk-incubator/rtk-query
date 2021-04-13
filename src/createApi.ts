@@ -29,6 +29,23 @@ export type CreateApi<Modules extends ModuleName> = <
   options: CreateApiOptions<BaseQuery, Definitions, ReducerPath, EntityTypes>
 ) => Api<BaseQuery, Definitions, ReducerPath, EntityTypes, Modules>;
 
+/**
+ * Builds a `createApi` method based on the provided `modules`.
+ *
+ * @link https://rtk-query-docs.netlify.app/concepts/customizing-create-api
+ *
+ * @example
+ * ```ts
+ * const MyContext = React.createContext<ReactReduxContextValue>(null as any);
+ * const customCreateApi = buildCreateApi(
+ *   coreModule(),
+ *   reactHooksModule({ useDispatch: createDispatchHook(MyContext) })
+ * );
+ * ```
+ *
+ * @param modules - A variable number of modules that customize how the `createApi` method handles endpoints
+ * @returns A `createApi` method using the provided `modules`.
+ */
 export function buildCreateApi<Modules extends [Module<any>, ...Module<any>[]]>(
   ...modules: Modules
 ): CreateApi<Modules[number]['name']> {

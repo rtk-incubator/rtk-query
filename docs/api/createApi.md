@@ -26,6 +26,7 @@ The main point where you will define a service to use in your application.
 ```
 
 ### `baseQuery`
+The base query used by each endpoint if no `queryFn` option is specified. RTK Query exports a utility called [fetchBaseQuery](./fetchBaseQuery) as a lightweight wrapper around `fetch` for common use-cases.
 
 ```ts title="Simulating axios-like interceptors with a custom base query"
 const baseQuery = fetchBaseQuery({ baseUrl: '/' });
@@ -54,7 +55,7 @@ const baseQueryWithReauth: BaseQueryFn<
 
 ### `entityTypes`
 
-Specifying entity types is optional, but you should define them so that they can be used for caching and invalidation. When defining an entity type, you will be able to add them with `provides` and [invalidate](../concepts/mutations#advanced-mutations-with-revalidation) them with `invalidates` when configuring [endpoints](#endpoints).
+An array of string entity type names. Specifying entity types is optional, but you should define them so that they can be used for caching and invalidation. When defining an entity type, you will be able to [provide](../concepts/mutations#provides) them with `provides` and [invalidate](../concepts/mutations#advanced-mutations-with-revalidation) them with `invalidates` when configuring [endpoints](#endpoints).
 
 ### `reducerPath`
 
@@ -86,7 +87,7 @@ Accepts a custom function if you have a need to change the creation of cache key
 
 ```ts no-compile
 export const defaultSerializeQueryArgs: SerializeQueryArgs<any> = ({ endpoint, queryArgs }) => {
-  // Sort the object keys before stringifying, to prevent useQuery({ a: 1, b: 2 }) having a different cache key than  useQuery({ b: 2, a: 1 })
+  // Sort the object keys before stringifying, to prevent useQuery({ a: 1, b: 2 }) having a different cache key than useQuery({ b: 2, a: 1 })
   return `${endpoint}(${JSON.stringify(queryArgs, Object.keys(queryArgs || {}).sort())})`;
 };
 ```
@@ -98,14 +99,14 @@ Endpoints are just a set of operations that you want to perform against your ser
 #### Anatomy of an endpoint
 
 - `query` _(required)_
-  - `query` is the only required property, and can be either a `string` or an `object` that is passed to your `baseQuery`. If you are using [fetchBaseQuery](./fetchBaseQuery), this can be a `string` or an object of properties in `FetchArgs`. If you use your own custom `baseQuery`, you can customize this behavior to your liking
+  - `query` is the only required property, and can be a function that returns either a `string` or an `object` which is passed to your `baseQuery`. If you are using [fetchBaseQuery](./fetchBaseQuery), this can return either a `string` or an `object` of properties in `FetchArgs`. If you use your own custom `baseQuery`, you can customize this behavior to your liking
 - `transformResponse` _(optional)_
 
   - A function to manipulate the data returned by a query or mutation
   - ```js title="Unpack a deeply nested collection"
     transformResponse: (response) => response.some.nested.collection;
     ```
-    ```js title="Normalize the response data"
+  - ```js title="Normalize the response data"
     transformResponse: (response) =>
       response.reduce((acc, curr) => {
         acc[curr.id] = curr;
@@ -116,8 +117,8 @@ Endpoints are just a set of operations that you want to perform against your ser
 - `provides` _(optional)_
   - Used by `queries` to provide entities to the cache
   - Expects an array of entity type strings, or an array of objects of entity types with ids.
-    1.  `['Post']` - equivalent to 2
-    2.  `[{ type: 'Post' }]` - equivalent to 1
+    1.  `['Post']` - equivalent to `b`
+    2.  `[{ type: 'Post' }]` - equivalent to `a`
     3.  `[{ type: 'Post', id: 1 }]`
 - `invalidates` _(optional)_
 
@@ -290,6 +291,7 @@ export const {
   internalActions,
   util,
   injectEndpoints,
+  enhanceEndpoints,
   usePrefetch,
   ...generatedHooks
 } = api;

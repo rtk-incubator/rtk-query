@@ -24,10 +24,13 @@ import { Id, NoInfer, Override } from '../tsHelpers';
 import { ApiEndpointMutation, ApiEndpointQuery, CoreModule, PrefetchOptions } from '../core/module';
 import { ReactHooksModuleOptions } from './module';
 import { useShallowStableValue } from './useShallowStableValue';
+import { UninitializedValue, UNINITIALIZED_VALUE } from '../constants';
 
 export interface QueryHooks<Definition extends QueryDefinition<any, any, any, any, any>> {
   useQuery: UseQuery<Definition>;
+  useLazyQuery: UseLazyQuery<Definition>;
   useQuerySubscription: UseQuerySubscription<Definition>;
+  useLazyQuerySubscription: UseLazyQuerySubscription<Definition>;
   useQueryState: UseQueryState<Definition>;
 }
 
@@ -39,7 +42,6 @@ export type UseQuery<D extends QueryDefinition<any, any, any, any>> = <R = UseQu
   arg: QueryArgFrom<D>,
   options?: UseQuerySubscriptionOptions & UseQueryStateOptions<D, R>
 ) => UseQueryStateResult<D, R> & ReturnType<UseQuerySubscription<D>>;
-
 interface UseQuerySubscriptionOptions extends SubscriptionOptions {
   skip?: boolean;
   refetchOnMountOrArgChange?: boolean | number;
@@ -49,6 +51,17 @@ export type UseQuerySubscription<D extends QueryDefinition<any, any, any, any>> 
   arg: QueryArgFrom<D>,
   options?: UseQuerySubscriptionOptions
 ) => Pick<QueryActionCreatorResult<D>, 'refetch'>;
+
+export type UseLazyQueryLastPromiseInfo<D extends QueryDefinition<any, any, any, any>> = {
+  lastArg: QueryArgFrom<D>;
+};
+export type UseLazyQuery<D extends QueryDefinition<any, any, any, any>> = <R = UseQueryStateDefaultResult<D>>(
+  options?: SubscriptionOptions & Omit<UseQueryStateOptions<D, R>, 'skip'>
+) => [(arg: QueryArgFrom<D>) => void, UseQueryStateResult<D, R>, UseLazyQueryLastPromiseInfo<D>];
+
+export type UseLazyQuerySubscription<D extends QueryDefinition<any, any, any, any>> = (
+  options?: SubscriptionOptions
+) => [(arg: QueryArgFrom<D>) => void, QueryArgFrom<D> | UninitializedValue];
 
 export type QueryStateSelector<R, D extends QueryDefinition<any, any, any, any>> = (
   state: QueryResultSelectorResult<D>,
@@ -138,6 +151,26 @@ const defaultQueryStateSelector: DefaultQueryStateSelector<any> = (currentState,
   return { ...currentState, data, isFetching, isLoading, isSuccess } as UseQueryStateDefaultResult<any>;
 };
 
+/**
+ * Wrapper around `defaultQueryStateSelector` to be used in `useQuery`.
+ * We want the initial render to already come back with
+ * `{ isUninitialized: false, isFetching: true, isLoading: true }`
+ * to prevent that the library user has to do an additional check for `isUninitialized`/
+ */
+const noPendingQueryStateSelector: DefaultQueryStateSelector<any> = (currentState, lastResult) => {
+  const selected = defaultQueryStateSelector(currentState, lastResult);
+  if (selected.isUninitialized) {
+    return {
+      ...selected,
+      isUninitialized: false,
+      isFetching: true,
+      isLoading: true,
+      status: QueryStatus.pending,
+    };
+  }
+  return selected;
+};
+
 type GenericPrefetchThunk = (
   endpointName: any,
   arg: any,
@@ -148,7 +181,7 @@ export function buildHooks<Definitions extends EndpointDefinitions>({
   api,
   moduleOptions: { batch, useDispatch, useSelector },
 }: {
-  api: Api<any, Definitions, any, string, CoreModule>;
+  api: Api<any, Definitions, any, any, CoreModule>;
   moduleOptions: Required<ReactHooksModuleOptions>;
 }) {
   return { buildQueryHooks, buildMutationHook, usePrefetch };
@@ -180,6 +213,11 @@ export function buildHooks<Definitions extends EndpointDefinitions>({
       >;
       const dispatch = useDispatch<ThunkDispatch<any, any, AnyAction>>();
       const stableArg = useShallowStableValue(arg);
+      const stableSubscriptionOptions = useShallowStableValue({
+        refetchOnReconnect,
+        refetchOnFocus,
+        pollingInterval,
+      });
 
       const promiseRef = useRef<QueryActionCreatorResult<any>>();
 
@@ -189,33 +227,24 @@ export function buildHooks<Definitions extends EndpointDefinitions>({
         }
 
         const lastPromise = promiseRef.current;
-        if (lastPromise && lastPromise.arg === stableArg) {
-          // arg did not change, but options did probably, update them
-          lastPromise.updateSubscriptionOptions({ pollingInterval, refetchOnReconnect, refetchOnFocus });
-        } else {
-          if (lastPromise) lastPromise.unsubscribe();
+        const lastSubscriptionOptions = promiseRef.current?.subscriptionOptions;
+
+        if (!lastPromise || lastPromise.arg !== stableArg) {
+          lastPromise?.unsubscribe();
           const promise = dispatch(
             initiate(stableArg, {
-              subscriptionOptions: { pollingInterval, refetchOnReconnect, refetchOnFocus },
+              subscriptionOptions: stableSubscriptionOptions,
               forceRefetch: refetchOnMountOrArgChange,
             })
           );
           promiseRef.current = promise;
+        } else if (stableSubscriptionOptions !== lastSubscriptionOptions) {
+          lastPromise.updateSubscriptionOptions(stableSubscriptionOptions);
         }
-      }, [
-        stableArg,
-        dispatch,
-        skip,
-        pollingInterval,
-        refetchOnMountOrArgChange,
-        refetchOnFocus,
-        refetchOnReconnect,
-        initiate,
-      ]);
+      }, [dispatch, initiate, refetchOnMountOrArgChange, skip, stableArg, stableSubscriptionOptions]);
 
       useEffect(() => {
         return () => {
-          // eslint-disable-next-line @typescript-eslint/no-unused-expressions
           promiseRef.current?.unsubscribe();
           promiseRef.current = undefined;
         };
@@ -227,6 +256,73 @@ export function buildHooks<Definitions extends EndpointDefinitions>({
         }),
         []
       );
+    };
+
+    const useLazyQuerySubscription: UseLazyQuerySubscription<any> = ({
+      refetchOnReconnect,
+      refetchOnFocus,
+      pollingInterval = 0,
+    } = {}) => {
+      const { initiate } = api.endpoints[name] as ApiEndpointQuery<
+        QueryDefinition<any, any, any, any, any>,
+        Definitions
+      >;
+      const dispatch = useDispatch<ThunkDispatch<any, any, AnyAction>>();
+
+      const [arg, setArg] = useState<any>(UNINITIALIZED_VALUE);
+      const promiseRef = useRef<QueryActionCreatorResult<any> | undefined>();
+
+      const stableSubscriptionOptions = useShallowStableValue({
+        refetchOnReconnect,
+        refetchOnFocus,
+        pollingInterval,
+      });
+
+      useEffect(() => {
+        const lastSubscriptionOptions = promiseRef.current?.subscriptionOptions;
+
+        if (stableSubscriptionOptions !== lastSubscriptionOptions) {
+          promiseRef.current?.updateSubscriptionOptions(stableSubscriptionOptions);
+        }
+      }, [stableSubscriptionOptions]);
+
+      const subscriptionOptionsRef = useRef(stableSubscriptionOptions);
+      useEffect(() => {
+        subscriptionOptionsRef.current = stableSubscriptionOptions;
+      }, [stableSubscriptionOptions]);
+
+      const trigger = useCallback(
+        function (arg: any, preferCacheValue = false) {
+          batch(() => {
+            promiseRef.current?.unsubscribe();
+
+            promiseRef.current = dispatch(
+              initiate(arg, {
+                subscriptionOptions: subscriptionOptionsRef.current,
+                forceRefetch: !preferCacheValue,
+              })
+            );
+            setArg(arg);
+          });
+        },
+        [dispatch, initiate]
+      );
+
+      /* cleanup on unmount */
+      useEffect(() => {
+        return () => {
+          promiseRef?.current?.unsubscribe();
+        };
+      }, []);
+
+      /* if "cleanup on unmount" was triggered from a fast refresh, we want to reinstate the query */
+      useEffect(() => {
+        if (arg !== UNINITIALIZED_VALUE && !promiseRef.current) {
+          trigger(arg, true);
+        }
+      }, [arg, trigger]);
+
+      return useMemo(() => [trigger, arg], [trigger, arg]);
     };
 
     const useQueryState: UseQueryState<any> = (
@@ -262,9 +358,23 @@ export function buildHooks<Definitions extends EndpointDefinitions>({
     return {
       useQueryState,
       useQuerySubscription,
+      useLazyQuerySubscription,
+      useLazyQuery(options) {
+        const [trigger, arg] = useLazyQuerySubscription(options);
+        const queryStateResults = useQueryState(arg, {
+          ...options,
+          skip: arg === UNINITIALIZED_VALUE,
+        });
+
+        const info = useMemo(() => ({ lastArg: arg }), [arg]);
+        return useMemo(() => [trigger, queryStateResults, info], [trigger, queryStateResults, info]);
+      },
       useQuery(arg, options) {
         const querySubscriptionResults = useQuerySubscription(arg, options);
-        const queryStateResults = useQueryState(arg, options);
+        const queryStateResults = useQueryState(arg, {
+          selectFromResult: options?.skip ? undefined : (noPendingQueryStateSelector as QueryStateSelector<any, any>),
+          ...options,
+        });
         return useMemo(() => ({ ...queryStateResults, ...querySubscriptionResults }), [
           queryStateResults,
           querySubscriptionResults,
@@ -286,18 +396,17 @@ export function buildHooks<Definitions extends EndpointDefinitions>({
 
       useEffect(() => {
         return () => {
-          // eslint-disable-next-line @typescript-eslint/no-unused-expressions
           promiseRef.current?.unsubscribe();
           promiseRef.current = undefined;
         };
       }, []);
 
       const triggerMutation = useCallback(
-        function (args) {
+        function (arg) {
           let promise: MutationActionCreatorResult<any>;
           batch(() => {
-            if (promiseRef.current) promiseRef.current.unsubscribe();
-            promise = dispatch(initiate(args));
+            promiseRef?.current?.unsubscribe();
+            promise = dispatch(initiate(arg));
             promiseRef.current = promise;
             setRequestId(promise.requestId);
           });

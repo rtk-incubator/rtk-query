@@ -10,7 +10,7 @@ import { Api } from '../apiTypes';
  * conflict with each other - please use the traditional redux setup
  * in that case.
  */
-export function ApiProvider<A extends Api<any, {}, any, string>>(props: {
+export function ApiProvider<A extends Api<any, {}, any, any>>(props: {
   children: any;
   api: A;
   setupListeners?: Parameters<typeof setupListeners>[1];

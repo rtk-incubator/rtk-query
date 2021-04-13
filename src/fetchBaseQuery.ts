@@ -59,6 +59,8 @@ export type FetchBaseQueryArgs = {
   fetchFn?: (input: RequestInfo, init?: RequestInit | undefined) => Promise<Response>;
 } & RequestInit;
 
+export type FetchBaseQueryMeta = { request: Request; response: Response };
+
 /**
  * This is a very small wrapper around fetch that aims to simplify requests.
  *
@@ -83,7 +85,7 @@ export function fetchBaseQuery({
   prepareHeaders = (x) => x,
   fetchFn = fetch,
   ...baseFetchOptions
-}: FetchBaseQueryArgs = {}): BaseQueryFn<string | FetchArgs, unknown, FetchBaseQueryError, {}> {
+}: FetchBaseQueryArgs = {}): BaseQueryFn<string | FetchArgs, unknown, FetchBaseQueryError, {}, FetchBaseQueryMeta> {
   return async (arg, { signal, getState }) => {
     let {
       url,
@@ -125,11 +127,27 @@ export function fetchBaseQuery({
 
     url = joinUrls(baseUrl, url);
 
-    const response = await fetchFn(url, config);
+    const request = new Request(url, config);
+    const requestClone = request.clone();
+
+    const response = await fetchFn(request);
+    const responseClone = response.clone();
+
+    const meta = { request: requestClone, response: responseClone };
+
     const resultData = await handleResponse(response, responseHandler);
 
     return validateStatus(response, resultData)
-      ? { data: resultData }
-      : { error: { status: response.status, data: resultData } };
+      ? {
+          data: resultData,
+          meta,
+        }
+      : {
+          error: {
+            status: response.status,
+            data: resultData,
+          },
+          meta,
+        };
   };
 }

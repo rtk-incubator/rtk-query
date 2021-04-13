@@ -2,7 +2,7 @@
  * Note: this file should import all other files for type discovery and declaration merging
  */
 import { buildThunks, PatchQueryResultThunk, UpdateQueryResultThunk } from './buildThunks';
-import { AnyAction, Middleware, Reducer, ThunkAction, ThunkDispatch } from '@reduxjs/toolkit';
+import { ActionCreatorWithPayload, AnyAction, Middleware, Reducer, ThunkAction, ThunkDispatch } from '@reduxjs/toolkit';
 import {
   EndpointDefinitions,
   QueryArgFrom,
@@ -11,6 +11,7 @@ import {
   AssertEntityTypes,
   isQueryDefinition,
   isMutationDefinition,
+  FullEntityDescription,
 } from '../endpointDefinitions';
 import { CombinedState, QueryKeys, RootState } from './apiState';
 import './buildSelectors';
@@ -55,6 +56,8 @@ declare module '../apiTypes' {
         ): ThunkAction<void, any, any, AnyAction>;
         updateQueryResult: UpdateQueryResultThunk<Definitions, RootState<Definitions, string, ReducerPath>>;
         patchQueryResult: PatchQueryResultThunk<Definitions, RootState<Definitions, string, ReducerPath>>;
+        resetApiState: SliceActions['resetApiState'];
+        invalidateEntities: ActionCreatorWithPayload<Array<EntityTypes | FullEntityDescription<EntityTypes>>, string>;
       };
       // If you actually care about the return value, use useQuery
       usePrefetch<EndpointName extends QueryKeys<Definitions>>(
@@ -87,7 +90,7 @@ export interface ApiEndpointMutation<
   Definitions extends EndpointDefinitions
 > {}
 
-export type InternalActions = SliceActions & {
+export type ListenerActions = {
   /**
    * Will cause the RTK Query middleware to trigger any refetchOnReconnect-related behavior
    * @link https://rtk-query-docs.netlify.app/api/setupListeners
@@ -101,6 +104,8 @@ export type InternalActions = SliceActions & {
   onFocus: typeof onFocus;
   onFocusLost: typeof onFocusLost;
 };
+
+export type InternalActions = SliceActions & ListenerActions;
 
 export const coreModule = (): Module<CoreModule> => ({
   name: coreModuleName,
@@ -165,10 +170,15 @@ export const coreModule = (): Module<CoreModule> => ({
       config: { refetchOnFocus, refetchOnReconnect, refetchOnMountOrArgChange, keepUnusedDataFor, reducerPath },
     });
 
-    safeAssign(api.util, { patchQueryResult, updateQueryResult, prefetchThunk });
+    safeAssign(api.util, {
+      patchQueryResult,
+      updateQueryResult,
+      prefetchThunk,
+      resetApiState: sliceActions.resetApiState,
+    });
     safeAssign(api.internalActions, sliceActions);
 
-    const { middleware } = buildMiddleware({
+    const { middleware, actions: middlewareActions } = buildMiddleware({
       reducerPath,
       context,
       queryThunk,
@@ -176,6 +186,7 @@ export const coreModule = (): Module<CoreModule> => ({
       api,
       assertEntityType,
     });
+    safeAssign(api.util, middlewareActions);
 
     safeAssign(api, { reducer: reducer as any, middleware });
 

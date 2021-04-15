@@ -1,13 +1,7 @@
-import { AnyAction } from '@reduxjs/toolkit';
 import { createApi } from '@rtk-incubator/rtk-query/react';
 import { renderHook, act } from '@testing-library/react-hooks';
-import { hookWaitFor, setupApiStore, waitMs } from './helpers';
-
-interface Patch {
-  op: 'replace' | 'remove' | 'add';
-  path: (string | number)[];
-  value?: any;
-}
+import { actionsReducer, hookWaitFor, setupApiStore, waitMs } from './helpers';
+import { Patch } from 'immer';
 
 interface Post {
   id: string;
@@ -21,8 +15,8 @@ beforeEach(() => baseQuery.mockReset());
 const api = createApi({
   baseQuery: (...args: any[]) => {
     const result = baseQuery(...args);
-    if ('then' in result) return result.then((data: any) => ({ data }));
-    return { data: result };
+    if ('then' in result) return result.then((data: any) => ({ data, meta: 'meta' }));
+    return { data: result, meta: 'meta' };
   },
   entityTypes: ['Post'],
   endpoints: (build) => ({
@@ -45,9 +39,7 @@ const api = createApi({
 });
 
 const storeRef = setupApiStore(api, {
-  actions(state: AnyAction[] = [], action: AnyAction) {
-    return [...state, action];
-  },
+  ...actionsReducer,
 });
 
 describe('basic lifecycle', () => {
@@ -90,7 +82,7 @@ describe('basic lifecycle', () => {
     expect(onSuccess).not.toHaveBeenCalled();
     await act(() => waitMs(5));
     expect(onError).not.toHaveBeenCalled();
-    expect(onSuccess).toHaveBeenCalledWith('arg', expect.any(Object), 'success');
+    expect(onSuccess).toHaveBeenCalledWith('arg', expect.any(Object), 'success', 'meta');
   });
 
   test('error', async () => {
@@ -109,7 +101,7 @@ describe('basic lifecycle', () => {
     expect(onError).not.toHaveBeenCalled();
     expect(onSuccess).not.toHaveBeenCalled();
     await act(() => waitMs(5));
-    expect(onError).toHaveBeenCalledWith('arg', expect.any(Object), 'error');
+    expect(onError).toHaveBeenCalledWith('arg', expect.any(Object), 'error', undefined);
     expect(onSuccess).not.toHaveBeenCalled();
   });
 });

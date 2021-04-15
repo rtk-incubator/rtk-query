@@ -30,9 +30,6 @@ jobs:
       - name: Test
         run: yarn test --ci --coverage --maxWorkers=2
 
-      - name: Build
-        run: yarn build
-
       - name: Pack (including Prepare)
         run: npm pack
 
@@ -93,4 +90,7 @@ jobs:
         run: |
           ./node_modules/.bin/tsc --version
           ls
+          ls test
+          cat ./test/tsconfig.json
+          ./node_modules/.bin/tsc --showConfig
           ./node_modules/.bin/tsc --skipLibCheck -p test

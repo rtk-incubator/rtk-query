@@ -89,8 +89,5 @@ jobs:
       - name: Test types
         run: |
           ./node_modules/.bin/tsc --version
-          ls
-          ls test
-          cat ./test/tsconfig.json
           ./node_modules/.bin/tsc --showConfig
           ./node_modules/.bin/tsc --skipLibCheck -p test

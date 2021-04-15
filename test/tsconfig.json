@@ -2,11 +2,13 @@
   "compilerOptions": {
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
+    "target": "es2018",
     "module": "esnext",
+    "lib": ["dom", "esnext"],
+    "importHelpers": true,
     "moduleResolution": "node",
     "strict": true,
     "noEmit": true,
-    "target": "es2018",
     "jsx": "react",
     "baseUrl": ".",
     "skipLibCheck": true,
@@ -15,5 +17,6 @@
       "@rtk-incubator/rtk-query/*": ["../src/*"],
       "@internal/*": ["../src/*"]
     }
-  }
+  },
+  "include": ["../src/*"]
 }

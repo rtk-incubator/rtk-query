@@ -3,7 +3,7 @@ import { createApi, fetchBaseQuery, QueryStatus } from '@rtk-incubator/rtk-query
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { rest } from 'msw';
-import { setupApiStore, useRenderCounter, waitMs } from './helpers';
+import { matchSequence, setupApiStore, useRenderCounter, waitMs } from './helpers';
 import { server } from './mocks/server';
 import { AnyAction } from 'redux';
 import { SubscriptionOptions } from '@internal/core/apiState';
@@ -851,6 +851,84 @@ describe('hooks tests', () => {
         startedTimeStamp: expect.any(Number),
         status: 'pending',
       });
+    });
+  });
+
+  describe('useQuery and useMutation invalidation behavior', () => {
+    const api = createApi({
+      baseQuery: fetchBaseQuery({ baseUrl: 'https://example.com' }),
+      entityTypes: ['User'],
+      endpoints: (build) => ({
+        checkSession: build.query<any, void>({
+          query: () => '/me',
+          provides: ['User'],
+        }),
+        login: build.mutation<any, any>({
+          query: () => ({ url: '/login', method: 'POST' }),
+          invalidates: ['User'],
+        }),
+      }),
+    });
+
+    const storeRef = setupApiStore(api, {
+      actions(state: AnyAction[] = [], action: AnyAction) {
+        return [...state, action];
+      },
+    });
+    test('initially failed useQueries that provide an entity will refetch after a mutation invalidates it', async () => {
+      const checkSessionData = { name: 'matt' };
+      server.use(
+        rest.get('https://example.com/me', (req, res, ctx) => {
+          return res.once(ctx.status(500));
+        }),
+        rest.get('https://example.com/me', (req, res, ctx) => {
+          return res(ctx.json(checkSessionData));
+        }),
+        rest.post('https://example.com/login', (req, res, ctx) => {
+          return res(ctx.status(200));
+        })
+      );
+      let data, isLoading, isError;
+      function User() {
+        ({ data, isError, isLoading } = api.endpoints.checkSession.useQuery());
+        const [login, { isLoading: loginLoading }] = api.endpoints.login.useMutation();
+
+        return (
+          <div>
+            <div data-testid="isLoading">{String(isLoading)}</div>
+            <div data-testid="isError">{String(isError)}</div>
+            <div data-testid="user">{JSON.stringify(data)}</div>
+            <div data-testid="loginLoading">{String(loginLoading)}</div>
+            <button onClick={() => login(null)}>Login</button>
+          </div>
+        );
+      }
+
+      render(<User />, { wrapper: storeRef.wrapper });
+      await waitFor(() => expect(screen.getByTestId('isLoading').textContent).toBe('true'));
+      await waitFor(() => expect(screen.getByTestId('isLoading').textContent).toBe('false'));
+      await waitFor(() => expect(screen.getByTestId('isError').textContent).toBe('true'));
+      await waitFor(() => expect(screen.getByTestId('user').textContent).toBe(''));
+
+      fireEvent.click(screen.getByRole('button', { name: /Login/i }));
+
+      await waitFor(() => expect(screen.getByTestId('loginLoading').textContent).toBe('true'));
+      await waitFor(() => expect(screen.getByTestId('loginLoading').textContent).toBe('false'));
+      // login mutation will cause the original errored out query to refire, clearing the error and setting the user
+      await waitFor(() => expect(screen.getByTestId('isError').textContent).toBe('false'));
+      await waitFor(() => expect(screen.getByTestId('user').textContent).toBe(JSON.stringify(checkSessionData)));
+
+      const { checkSession, login } = api.endpoints;
+      const completeSequence = [
+        checkSession.matchPending,
+        checkSession.matchRejected,
+        login.matchPending,
+        login.matchFulfilled,
+        checkSession.matchPending,
+        checkSession.matchFulfilled,
+      ];
+
+      matchSequence(storeRef.store.getState().actions, ...completeSequence);
     });
   });
 });

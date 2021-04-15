@@ -1,4 +1,13 @@
-import { AsyncThunk, combineReducers, createSlice, PayloadAction } from '@reduxjs/toolkit';
+import {
+  AsyncThunk,
+  combineReducers,
+  createAction,
+  createSlice,
+  isAnyOf,
+  isFulfilled,
+  isRejectedWithValue,
+  PayloadAction,
+} from '@reduxjs/toolkit';
 import {
   CombinedState,
   QuerySubstateIdentifier,
@@ -14,8 +23,8 @@ import {
   SubscriptionState,
   ConfigState,
 } from './apiState';
-import type { MutationThunkArg, QueryThunkArg, ThunkResult } from './buildThunks';
-import { AssertEntityTypes, calculateProvidedBy, EndpointDefinitions } from '../endpointDefinitions';
+import { calculateProvidedByThunk, MutationThunkArg, QueryThunkArg, ThunkResult } from './buildThunks';
+import { AssertEntityTypes, EndpointDefinitions } from '../endpointDefinitions';
 import { applyPatches, Patch } from 'immer';
 import { onFocus, onFocusLost, onOffline, onOnline } from './setupListeners';
 import { isDocumentVisible, isOnline, copyWithStructuralSharing } from '../utils';
@@ -43,6 +52,8 @@ function updateMutationSubstateIfExists(
   }
 }
 
+const initialState = {} as any;
+
 export function buildSlice({
   reducerPath,
   queryThunk,
@@ -58,9 +69,10 @@ export function buildSlice({
   assertEntityType: AssertEntityTypes;
   config: Omit<ConfigState<string>, 'online' | 'focused'>;
 }) {
+  const resetApiState = createAction(`${reducerPath}/resetApiState`);
   const querySlice = createSlice({
     name: `${reducerPath}/queries`,
-    initialState: {} as QueryState<any>,
+    initialState: initialState as QueryState<any>,
     reducers: {
       removeQueryResult(draft, { payload: { queryCacheKey } }: PayloadAction<QuerySubstateIdentifier>) {
         delete draft[queryCacheKey];
@@ -117,7 +129,7 @@ export function buildSlice({
   });
   const mutationSlice = createSlice({
     name: `${reducerPath}/mutations`,
-    initialState: {} as MutationState<any>,
+    initialState: initialState as MutationState<any>,
     reducers: {
       unsubscribeResult(draft, action: PayloadAction<MutationSubstateIdentifier>) {
         if (action.payload.requestId in draft) {
@@ -159,26 +171,10 @@ export function buildSlice({
 
   const invalidationSlice = createSlice({
     name: `${reducerPath}/invalidation`,
-    initialState: {} as InvalidationState<string>,
+    initialState: initialState as InvalidationState<string>,
     reducers: {},
     extraReducers(builder) {
       builder
-        .addCase(queryThunk.fulfilled, (draft, { payload, meta: { arg } }) => {
-          const { endpointName, queryCacheKey } = arg;
-          const providedEntities = calculateProvidedBy(
-            definitions[endpointName].provides,
-            payload.result,
-            arg.originalArgs,
-            assertEntityType
-          );
-          for (const { type, id } of providedEntities) {
-            const subscribedQueries = ((draft[type] ??= {})[id || '__internal_without_id'] ??= []);
-            const alreadySubscribed = subscribedQueries.includes(queryCacheKey);
-            if (!alreadySubscribed) {
-              subscribedQueries.push(queryCacheKey);
-            }
-          }
-        })
         .addCase(querySlice.actions.removeQueryResult, (draft, { payload: { queryCacheKey } }) => {
           for (const entityTypeSubscriptions of Object.values(draft)) {
             for (const idSubscriptions of Object.values(entityTypeSubscriptions)) {
@@ -188,13 +184,25 @@ export function buildSlice({
               }
             }
           }
+        })
+        .addMatcher(isAnyOf(isFulfilled(queryThunk), isRejectedWithValue(queryThunk)), (draft, action) => {
+          const providedEntities = calculateProvidedByThunk(action, 'provides', definitions, assertEntityType);
+          const { queryCacheKey } = action.meta.arg;
+
+          for (const { type, id } of providedEntities) {
+            const subscribedQueries = ((draft[type] ??= {})[id || '__internal_without_id'] ??= []);
+            const alreadySubscribed = subscribedQueries.includes(queryCacheKey);
+            if (!alreadySubscribed) {
+              subscribedQueries.push(queryCacheKey);
+            }
+          }
         });
     },
   });
 
   const subscriptionSlice = createSlice({
     name: `${reducerPath}/subscriptions`,
-    initialState: {} as SubscriptionState,
+    initialState: initialState as SubscriptionState,
     reducers: {
       updateSubscriptionOptions(
         draft,
@@ -263,7 +271,7 @@ export function buildSlice({
     },
   });
 
-  const reducer = combineReducers<CombinedState<any, string, string>>({
+  const combinedReducer = combineReducers<CombinedState<any, string, string>>({
     queries: querySlice.reducer,
     mutations: mutationSlice.reducer,
     provided: invalidationSlice.reducer,
@@ -271,12 +279,16 @@ export function buildSlice({
     config: configSlice.reducer,
   });
 
+  const reducer: typeof combinedReducer = (state, action) =>
+    combinedReducer(resetApiState.match(action) ? undefined : state, action);
+
   const actions = {
     updateSubscriptionOptions: subscriptionSlice.actions.updateSubscriptionOptions,
     queryResultPatched: querySlice.actions.queryResultPatched,
     removeQueryResult: querySlice.actions.removeQueryResult,
     unsubscribeQueryResult: subscriptionSlice.actions.unsubscribeResult,
     unsubscribeMutationResult: mutationSlice.actions.unsubscribeResult,
+    resetApiState,
   };
 
   return { reducer, actions };

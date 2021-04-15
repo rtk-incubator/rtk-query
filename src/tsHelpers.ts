@@ -23,3 +23,9 @@ export type NoInfer<T> = [T][T extends any ? 0 : never];
 export type UnwrapPromise<T> = T extends PromiseLike<infer V> ? V : T;
 
 export type MaybePromise<T> = T | PromiseLike<T>;
+
+export type OmitFromUnion<T, K extends keyof T> = T extends any ? Omit<T, K> : never;
+
+export type IsAny<T, True, False = never> = true | false extends (T extends never ? true : false) ? True : False;
+
+export type CastAny<T, CastTo> = IsAny<T, CastTo, T>;

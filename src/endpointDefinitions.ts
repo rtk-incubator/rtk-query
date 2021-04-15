@@ -1,39 +1,69 @@
 import { AnyAction, ThunkDispatch } from '@reduxjs/toolkit';
 import { RootState } from './core/apiState';
-import { BaseQueryExtraOptions, BaseQueryFn, BaseQueryResult, BaseQueryArg } from './baseQueryTypes';
-import { fetchBaseQuery } from './fetchBaseQuery';
-import { HasRequiredProps } from './tsHelpers';
+import {
+  BaseQueryExtraOptions,
+  BaseQueryFn,
+  BaseQueryResult,
+  BaseQueryArg,
+  BaseQueryApi,
+  QueryReturnValue,
+  BaseQueryError,
+  BaseQueryMeta,
+} from './baseQueryTypes';
+import { HasRequiredProps, MaybePromise, OmitFromUnion, CastAny } from './tsHelpers';
+import { NEVER } from './fakeBaseQuery';
 
 const resultType = Symbol();
+const baseQuery = Symbol();
 
-export type BaseEndpointDefinition<QueryArg, BaseQuery extends BaseQueryFn, ResultType> = {
-  query(arg: QueryArg): BaseQueryArg<BaseQuery>;
-  transformResponse?(baseQueryReturnValue: BaseQueryResult<BaseQuery>): ResultType | Promise<ResultType>;
+export type BaseEndpointDefinition<QueryArg, BaseQuery extends BaseQueryFn, ResultType> = (
+  | ([CastAny<BaseQueryResult<BaseQuery>, {}>] extends [NEVER]
+      ? never
+      : {
+          query(arg: QueryArg): BaseQueryArg<BaseQuery>;
+          queryFn?: never;
+          transformResponse?(
+            baseQueryReturnValue: BaseQueryResult<BaseQuery>,
+            meta: BaseQueryMeta<BaseQuery>
+          ): ResultType | Promise<ResultType>;
+        })
+  | {
+      queryFn(
+        arg: QueryArg,
+        api: BaseQueryApi,
+        extraOptions: BaseQueryExtraOptions<BaseQuery>,
+        baseQuery: (arg: Parameters<BaseQuery>[0]) => ReturnType<BaseQuery>
+      ): MaybePromise<QueryReturnValue<ResultType, BaseQueryError<BaseQuery>>>;
+      query?: never;
+      transformResponse?: never;
+    }
+) & {
+  /* phantom type */
   [resultType]?: ResultType;
+  /* phantom type */
+  [baseQuery]?: BaseQuery;
 } & HasRequiredProps<
-  BaseQueryExtraOptions<BaseQuery>,
-  { extraOptions: BaseQueryExtraOptions<BaseQuery> },
-  { extraOptions?: BaseQueryExtraOptions<BaseQuery> }
->;
-
-const t: BaseEndpointDefinition<any, ReturnType<typeof fetchBaseQuery>, ''> = { query: 0 as any };
-t.extraOptions = {};
+    BaseQueryExtraOptions<BaseQuery>,
+    { extraOptions: BaseQueryExtraOptions<BaseQuery> },
+    { extraOptions?: BaseQueryExtraOptions<BaseQuery> }
+  >;
 
 export enum DefinitionType {
   query = 'query',
   mutation = 'mutation',
 }
 
-type GetResultDescriptionFn<EntityTypes extends string, ResultType, QueryArg> = (
-  result: ResultType,
+type GetResultDescriptionFn<EntityTypes extends string, ResultType, QueryArg, ErrorType> = (
+  result: ResultType | undefined,
+  error: ErrorType | undefined,
   arg: QueryArg
 ) => ReadonlyArray<EntityDescription<EntityTypes>>;
 
 export type FullEntityDescription<EntityType> = { type: EntityType; id?: number | string };
 type EntityDescription<EntityType> = EntityType | FullEntityDescription<EntityType>;
-type ResultDescription<EntityTypes extends string, ResultType, QueryArg> =
+type ResultDescription<EntityTypes extends string, ResultType, QueryArg, ErrorType> =
   | ReadonlyArray<EntityDescription<EntityTypes>>
-  | GetResultDescriptionFn<EntityTypes, ResultType, QueryArg>;
+  | GetResultDescriptionFn<EntityTypes, ResultType, QueryArg, ErrorType>;
 
 export interface QueryApi<ReducerPath extends string, Context extends {}> {
   dispatch: ThunkDispatch<any, any, AnyAction>;
@@ -52,11 +82,21 @@ export type QueryDefinition<
   Context = Record<string, any>
 > = BaseEndpointDefinition<QueryArg, BaseQuery, ResultType> & {
   type: DefinitionType.query;
-  provides?: ResultDescription<EntityTypes, ResultType, QueryArg>;
+  provides?: ResultDescription<EntityTypes, ResultType, QueryArg, BaseQueryError<BaseQuery>>;
   invalidates?: never;
   onStart?(arg: QueryArg, queryApi: QueryApi<ReducerPath, Context>): void;
-  onError?(arg: QueryArg, queryApi: QueryApi<ReducerPath, Context>, error: unknown): void;
-  onSuccess?(arg: QueryArg, queryApi: QueryApi<ReducerPath, Context>, result: ResultType): void;
+  onError?(
+    arg: QueryArg,
+    queryApi: QueryApi<ReducerPath, Context>,
+    error: unknown,
+    meta: BaseQueryMeta<BaseQuery>
+  ): void;
+  onSuccess?(
+    arg: QueryArg,
+    queryApi: QueryApi<ReducerPath, Context>,
+    result: ResultType,
+    meta: BaseQueryMeta<BaseQuery> | undefined
+  ): void;
 };
 
 export interface MutationApi<ReducerPath extends string, Context extends {}> {
@@ -76,11 +116,21 @@ export type MutationDefinition<
   Context = Record<string, any>
 > = BaseEndpointDefinition<QueryArg, BaseQuery, ResultType> & {
   type: DefinitionType.mutation;
-  invalidates?: ResultDescription<EntityTypes, ResultType, QueryArg>;
+  invalidates?: ResultDescription<EntityTypes, ResultType, QueryArg, BaseQueryError<BaseQuery>>;
   provides?: never;
   onStart?(arg: QueryArg, mutationApi: MutationApi<ReducerPath, Context>): void;
-  onError?(arg: QueryArg, mutationApi: MutationApi<ReducerPath, Context>, error: unknown): void;
-  onSuccess?(arg: QueryArg, mutationApi: MutationApi<ReducerPath, Context>, result: ResultType): void;
+  onError?(
+    arg: QueryArg,
+    mutationApi: MutationApi<ReducerPath, Context>,
+    error: unknown,
+    meta: BaseQueryMeta<BaseQuery>
+  ): void;
+  onSuccess?(
+    arg: QueryArg,
+    mutationApi: MutationApi<ReducerPath, Context>,
+    result: ResultType,
+    meta: BaseQueryMeta<BaseQuery> | undefined
+  ): void;
 };
 
 export type EndpointDefinition<
@@ -107,23 +157,29 @@ export function isMutationDefinition(
 
 export type EndpointBuilder<BaseQuery extends BaseQueryFn, EntityTypes extends string, ReducerPath extends string> = {
   query<ResultType, QueryArg>(
-    definition: Omit<QueryDefinition<QueryArg, BaseQuery, EntityTypes, ResultType>, 'type'>
+    definition: OmitFromUnion<QueryDefinition<QueryArg, BaseQuery, EntityTypes, ResultType>, 'type'>
   ): QueryDefinition<QueryArg, BaseQuery, EntityTypes, ResultType>;
   mutation<ResultType, QueryArg, Context = Record<string, any>>(
-    definition: Omit<MutationDefinition<QueryArg, BaseQuery, EntityTypes, ResultType, ReducerPath, Context>, 'type'>
+    definition: OmitFromUnion<
+      MutationDefinition<QueryArg, BaseQuery, EntityTypes, ResultType, ReducerPath, Context>,
+      'type'
+    >
   ): MutationDefinition<QueryArg, BaseQuery, EntityTypes, ResultType, ReducerPath, Context>;
 };
 
 export type AssertEntityTypes = <T extends FullEntityDescription<string>>(t: T) => T;
 
-export function calculateProvidedBy<ResultType, QueryArg>(
-  description: ResultDescription<string, ResultType, QueryArg> | undefined,
-  result: ResultType,
+export function calculateProvidedBy<ResultType, QueryArg, ErrorType>(
+  description: ResultDescription<string, ResultType, QueryArg, ErrorType> | undefined,
+  result: ResultType | undefined,
+  error: ErrorType | undefined,
   queryArg: QueryArg,
   assertEntityTypes: AssertEntityTypes
 ): readonly FullEntityDescription<string>[] {
   if (isFunction(description)) {
-    return description(result, queryArg).map(expandEntityDescription).map(assertEntityTypes);
+    return description(result as ResultType, error as undefined, queryArg)
+      .map(expandEntityDescription)
+      .map(assertEntityTypes);
   }
   if (Array.isArray(description)) {
     return description.map(expandEntityDescription).map(assertEntityTypes);

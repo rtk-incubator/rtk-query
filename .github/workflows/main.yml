@@ -92,4 +92,5 @@ jobs:
       - name: Test types
         run: |
           ./node_modules/.bin/tsc --version
+          ls
           ./node_modules/.bin/tsc --skipLibCheck -p test

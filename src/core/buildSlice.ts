@@ -1,4 +1,13 @@
-import { AsyncThunk, combineReducers, createAction, createSlice, PayloadAction } from '@reduxjs/toolkit';
+import {
+  AsyncThunk,
+  combineReducers,
+  createAction,
+  createSlice,
+  isAnyOf,
+  isFulfilled,
+  isRejectedWithValue,
+  PayloadAction,
+} from '@reduxjs/toolkit';
 import {
   CombinedState,
   QuerySubstateIdentifier,
@@ -14,8 +23,8 @@ import {
   SubscriptionState,
   ConfigState,
 } from './apiState';
-import type { MutationThunkArg, QueryThunkArg, ThunkResult } from './buildThunks';
-import { AssertEntityTypes, calculateProvidedBy, EndpointDefinitions } from '../endpointDefinitions';
+import { calculateProvidedByThunk, MutationThunkArg, QueryThunkArg, ThunkResult } from './buildThunks';
+import { AssertEntityTypes, EndpointDefinitions } from '../endpointDefinitions';
 import { applyPatches, Patch } from 'immer';
 import { onFocus, onFocusLost, onOffline, onOnline } from './setupListeners';
 import { isDocumentVisible, isOnline, copyWithStructuralSharing } from '../utils';
@@ -166,22 +175,6 @@ export function buildSlice({
     reducers: {},
     extraReducers(builder) {
       builder
-        .addCase(queryThunk.fulfilled, (draft, { payload, meta: { arg } }) => {
-          const { endpointName, queryCacheKey } = arg;
-          const providedEntities = calculateProvidedBy(
-            definitions[endpointName].provides,
-            payload.result,
-            arg.originalArgs,
-            assertEntityType
-          );
-          for (const { type, id } of providedEntities) {
-            const subscribedQueries = ((draft[type] ??= {})[id || '__internal_without_id'] ??= []);
-            const alreadySubscribed = subscribedQueries.includes(queryCacheKey);
-            if (!alreadySubscribed) {
-              subscribedQueries.push(queryCacheKey);
-            }
-          }
-        })
         .addCase(querySlice.actions.removeQueryResult, (draft, { payload: { queryCacheKey } }) => {
           for (const entityTypeSubscriptions of Object.values(draft)) {
             for (const idSubscriptions of Object.values(entityTypeSubscriptions)) {
@@ -189,6 +182,18 @@ export function buildSlice({
               if (foundAt !== -1) {
                 idSubscriptions.splice(foundAt, 1);
               }
+            }
+          }
+        })
+        .addMatcher(isAnyOf(isFulfilled(queryThunk), isRejectedWithValue(queryThunk)), (draft, action) => {
+          const providedEntities = calculateProvidedByThunk(action, 'provides', definitions, assertEntityType);
+          const { queryCacheKey } = action.meta.arg;
+
+          for (const { type, id } of providedEntities) {
+            const subscribedQueries = ((draft[type] ??= {})[id || '__internal_without_id'] ??= []);
+            const alreadySubscribed = subscribedQueries.includes(queryCacheKey);
+            if (!alreadySubscribed) {
+              subscribedQueries.push(queryCacheKey);
             }
           }
         });

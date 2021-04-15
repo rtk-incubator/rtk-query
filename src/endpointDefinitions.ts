@@ -53,16 +53,17 @@ export enum DefinitionType {
   mutation = 'mutation',
 }
 
-type GetResultDescriptionFn<EntityTypes extends string, ResultType, QueryArg> = (
-  result: ResultType,
+type GetResultDescriptionFn<EntityTypes extends string, ResultType, QueryArg, ErrorType> = (
+  result: ResultType | undefined,
+  error: ErrorType | undefined,
   arg: QueryArg
 ) => ReadonlyArray<EntityDescription<EntityTypes>>;
 
 export type FullEntityDescription<EntityType> = { type: EntityType; id?: number | string };
 type EntityDescription<EntityType> = EntityType | FullEntityDescription<EntityType>;
-type ResultDescription<EntityTypes extends string, ResultType, QueryArg> =
+type ResultDescription<EntityTypes extends string, ResultType, QueryArg, ErrorType> =
   | ReadonlyArray<EntityDescription<EntityTypes>>
-  | GetResultDescriptionFn<EntityTypes, ResultType, QueryArg>;
+  | GetResultDescriptionFn<EntityTypes, ResultType, QueryArg, ErrorType>;
 
 export interface QueryApi<ReducerPath extends string, Context extends {}> {
   dispatch: ThunkDispatch<any, any, AnyAction>;
@@ -81,7 +82,7 @@ export type QueryDefinition<
   Context = Record<string, any>
 > = BaseEndpointDefinition<QueryArg, BaseQuery, ResultType> & {
   type: DefinitionType.query;
-  provides?: ResultDescription<EntityTypes, ResultType, QueryArg>;
+  provides?: ResultDescription<EntityTypes, ResultType, QueryArg, BaseQueryError<BaseQuery>>;
   invalidates?: never;
   onStart?(arg: QueryArg, queryApi: QueryApi<ReducerPath, Context>): void;
   onError?(
@@ -115,7 +116,7 @@ export type MutationDefinition<
   Context = Record<string, any>
 > = BaseEndpointDefinition<QueryArg, BaseQuery, ResultType> & {
   type: DefinitionType.mutation;
-  invalidates?: ResultDescription<EntityTypes, ResultType, QueryArg>;
+  invalidates?: ResultDescription<EntityTypes, ResultType, QueryArg, BaseQueryError<BaseQuery>>;
   provides?: never;
   onStart?(arg: QueryArg, mutationApi: MutationApi<ReducerPath, Context>): void;
   onError?(
@@ -168,14 +169,17 @@ export type EndpointBuilder<BaseQuery extends BaseQueryFn, EntityTypes extends s
 
 export type AssertEntityTypes = <T extends FullEntityDescription<string>>(t: T) => T;
 
-export function calculateProvidedBy<ResultType, QueryArg>(
-  description: ResultDescription<string, ResultType, QueryArg> | undefined,
-  result: ResultType,
+export function calculateProvidedBy<ResultType, QueryArg, ErrorType>(
+  description: ResultDescription<string, ResultType, QueryArg, ErrorType> | undefined,
+  result: ResultType | undefined,
+  error: ErrorType | undefined,
   queryArg: QueryArg,
   assertEntityTypes: AssertEntityTypes
 ): readonly FullEntityDescription<string>[] {
   if (isFunction(description)) {
-    return description(result, queryArg).map(expandEntityDescription).map(assertEntityTypes);
+    return description(result as ResultType, error as undefined, queryArg)
+      .map(expandEntityDescription)
+      .map(assertEntityTypes);
   }
   if (Array.isArray(description)) {
     return description.map(expandEntityDescription).map(assertEntityTypes);

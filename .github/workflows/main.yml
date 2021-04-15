@@ -77,6 +77,11 @@ jobs:
           sed -i -re 's|(@rtk-incubator/rtk-query.*)\./src|\1./|' ./test/tsconfig.json
 
       - name: "@ts-ignore stuff that didn't exist pre-4.1 in the tests"
+        if: ${{ matrix.ts < 3.9 }}
+        run: |
+          sed -i 's/@ts-expect-error/@ts-ignore/' test/*.ts*
+
+      - name: "@ts-ignore stuff that didn't exist pre-4.1 in the tests"
         if: ${{ matrix.ts < 4.1 }}
         run: |
           sed -i 's/@pre41-ts-ignore/@ts-ignore/' test/*.ts*

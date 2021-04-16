@@ -6,7 +6,7 @@ import axios, { AxiosError, AxiosRequestConfig, AxiosResponse } from 'axios';
 
 import { expectExactType, hookWaitFor, setupApiStore } from './helpers';
 import { server } from './mocks/server';
-import { fireEvent, render, waitFor } from '@testing-library/react';
+import { fireEvent, render, waitFor, screen } from '@testing-library/react';
 import { useDispatch } from 'react-redux';
 import { AnyAction, ThunkDispatch } from '@reduxjs/toolkit';
 
@@ -405,22 +405,22 @@ describe('error handling in a component', () => {
       );
     }
 
-    const { getByText, getByTestId } = render(<User />, { wrapper: storeRef.wrapper });
+    render(<User />, { wrapper: storeRef.wrapper });
 
-    await waitFor(() => expect(getByTestId('isLoading').textContent).toBe('false'));
-    fireEvent.click(getByText('Update User'));
-    expect(getByTestId('isLoading').textContent).toBe('true');
-    await waitFor(() => expect(getByTestId('isLoading').textContent).toBe('false'));
+    await waitFor(() => expect(screen.getByTestId('isLoading').textContent).toBe('false'));
+    fireEvent.click(screen.getByText('Update User'));
+    expect(screen.getByTestId('isLoading').textContent).toBe('true');
+    await waitFor(() => expect(screen.getByTestId('isLoading').textContent).toBe('false'));
 
     // Make sure the hook and the unwrapped action return the same things in an error state
-    expect(getByTestId('error').textContent).toEqual(getByTestId('manuallySetError').textContent);
+    expect(screen.getByTestId('error').textContent).toEqual(screen.getByTestId('manuallySetError').textContent);
 
-    fireEvent.click(getByText('Update User'));
-    expect(getByTestId('isLoading').textContent).toBe('true');
-    await waitFor(() => expect(getByTestId('isLoading').textContent).toBe('false'));
-    await waitFor(() => expect(getByTestId('error').textContent).toBeFalsy());
-    await waitFor(() => expect(getByTestId('manuallySetError').textContent).toBeFalsy());
-    await waitFor(() => expect(getByTestId('data').textContent).toEqual(JSON.stringify(mockSuccessResponse)));
+    fireEvent.click(screen.getByText('Update User'));
+    expect(screen.getByTestId('isLoading').textContent).toBe('true');
+    await waitFor(() => expect(screen.getByTestId('isLoading').textContent).toBe('false'));
+    await waitFor(() => expect(screen.getByTestId('error').textContent).toBeFalsy());
+    await waitFor(() => expect(screen.getByTestId('manuallySetError').textContent).toBeFalsy());
+    await waitFor(() => expect(screen.getByTestId('data').textContent).toEqual(JSON.stringify(mockSuccessResponse)));
   });
 
   for (const track of [true, false]) {

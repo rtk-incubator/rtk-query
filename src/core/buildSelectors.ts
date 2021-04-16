@@ -53,6 +53,10 @@ type MutationResultSelector<Definition extends MutationDefinition<any, any, any,
   requestId: string | typeof skipSelector
 ) => (state: RootState) => MutationSubState<Definition> & RequestStatusFlags;
 
+export type MutationResultSelectorResult<
+  Definition extends MutationDefinition<any, any, any, any>
+> = MutationSubState<Definition> & RequestStatusFlags;
+
 const initialSubState = {
   status: QueryStatus.uninitialized as const,
 };

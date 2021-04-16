@@ -16,7 +16,7 @@ import {
   QueryArgFrom,
   ResultTypeFrom,
 } from '../endpointDefinitions';
-import { QueryResultSelectorResult, skipSelector } from '../core/buildSelectors';
+import { QueryResultSelectorResult, MutationResultSelectorResult, skipSelector } from '../core/buildSelectors';
 import { QueryActionCreatorResult, MutationActionCreatorResult } from '../core/buildInitiate';
 import { shallowEqual } from '../utils';
 import { Api } from '../apiTypes';
@@ -128,7 +128,62 @@ type UseQueryStateDefaultResult<D extends QueryDefinition<any, any, any, any>> =
   status: QueryStatus;
 };
 
-export type MutationHook<D extends MutationDefinition<any, any, any, any>> = () => [
+// USE MUTATION START
+export type MutationStateSelector<R, D extends MutationDefinition<any, any, any, any>> = (
+  state: MutationResultSelectorResult<D>,
+  defaultMutationStateSelector: DefaultMutationStateSelector<D>
+) => R;
+
+export type DefaultMutationStateSelector<D extends MutationDefinition<any, any, any, any>> = (
+  state: MutationResultSelectorResult<D>
+) => UseMutationStateDefaultResult<D>;
+
+export type UseMutationStateOptions<D extends MutationDefinition<any, any, any, any>, R> = {
+  selectFromResult?: MutationStateSelector<R, D>;
+};
+
+export type UseMutationStateResult<_ extends MutationDefinition<any, any, any, any>, R> = NoInfer<R>;
+
+type UseMutationStateBaseResult<D extends MutationDefinition<any, any, any, any>> = MutationSubState<D> & {
+  /**
+   * Query has not started yet.
+   */
+  isUninitialized: false;
+  /**
+   * Query is currently loading for the first time. No data yet.
+   */
+  isLoading: false;
+  /**
+   * Query is currently fetching, but might have data from an earlier request.
+   */
+  isFetching: false;
+  /**
+   * Query has data from a successful load.
+   */
+  isSuccess: false;
+  /**
+   * Query is currently in "error" state.
+   */
+  isError: false;
+};
+
+type UseMutationStateDefaultResult<D extends MutationDefinition<any, any, any, any>> = Id<
+  | Override<Extract<UseMutationStateBaseResult<D>, { status: QueryStatus.uninitialized }>, { isUninitialized: true }>
+  | Override<
+      UseMutationStateBaseResult<D>,
+      | { isLoading: true; data: undefined }
+      | ({ isSuccess: true; error: undefined } & Required<
+          Pick<UseMutationStateBaseResult<D>, 'data' | 'fulfilledTimeStamp'>
+        >)
+      | ({ isError: true } & Required<Pick<UseMutationStateBaseResult<D>, 'error'>>)
+    >
+>;
+
+// USE MUTATION END
+
+export type MutationHook<D extends MutationDefinition<any, any, any, any>> = <R = UseMutationStateDefaultResult<D>>(
+  options?: UseMutationStateOptions<D, R>
+) => [
   (
     arg: QueryArgFrom<D>
   ) => {
@@ -136,6 +191,10 @@ export type MutationHook<D extends MutationDefinition<any, any, any, any>> = () 
   },
   MutationSubState<D> & RequestStatusFlags
 ];
+
+const defaultMutationStateSelector: DefaultMutationStateSelector<any> = (currentState) => {
+  return currentState as UseMutationStateDefaultResult<any>;
+};
 
 const defaultQueryStateSelector: DefaultQueryStateSelector<any> = (currentState, lastResult) => {
   // data is the last known good request result we have tracked - or if none has been tracked yet the last good result for the current args
@@ -384,7 +443,7 @@ export function buildHooks<Definitions extends EndpointDefinitions>({
   }
 
   function buildMutationHook(name: string): MutationHook<any> {
-    return () => {
+    return ({ selectFromResult = defaultMutationStateSelector as MutationStateSelector<any, any> } = {}) => {
       const { select, initiate } = api.endpoints[name] as ApiEndpointMutation<
         MutationDefinition<any, any, any, any, any>,
         Definitions
@@ -415,8 +474,24 @@ export function buildHooks<Definitions extends EndpointDefinitions>({
         [dispatch, initiate]
       );
 
-      const mutationSelector = useMemo(() => select(requestId || skipSelector), [requestId, select]);
-      const currentState = useSelector(mutationSelector);
+      const mutationSelector = useMemo(
+        () =>
+          createSelector([select(requestId || skipSelector)], (subState) =>
+            selectFromResult(subState, defaultMutationStateSelector)
+          ),
+        [select, requestId, selectFromResult]
+      );
+
+      const currentState = useSelector(
+        (state: RootState<Definitions, any, any>) => mutationSelector(state),
+        shallowEqual
+      );
+
+      // We should check the result, and if it's null or an empty object, it should not rerender
+      // We should also track the last results and force an update if they're not deepEqual?
+
+      // const mutationSelector = useMemo(() => select(requestId || skipSelector), [requestId, select]);
+      // const currentState = useSelector(mutationSelector);
 
       return useMemo(() => [triggerMutation, currentState], [triggerMutation, currentState]);
     };

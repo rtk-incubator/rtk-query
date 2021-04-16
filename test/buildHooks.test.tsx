@@ -1038,7 +1038,7 @@ describe('hooks with createApi defaults set', () => {
     await waitFor(() => expect(screen.getByTestId('amount').textContent).toBe('1'));
   });
 
-  describe('selectFromResult behaviors', () => {
+  describe('selectFromResult (query) behaviors', () => {
     let startingId = 3;
     const initialPosts = [
       { id: 1, name: 'A sample post', fetched_at: new Date().toUTCString() },
@@ -1292,6 +1292,83 @@ describe('hooks with createApi defaults set', () => {
 
       fireEvent.click(addBtn);
       await waitFor(() => expect(screen.getByTestId('renderCount').textContent).toBe('3'));
+    });
+  });
+
+  describe('selectFromResult (mutation) behavior', () => {
+    const api = createApi({
+      baseQuery: async (arg: any) => {
+        await waitMs();
+        if ('amount' in arg?.body) {
+          amount += 1;
+        }
+        return { data: arg?.body ? { ...arg.body, ...(amount ? { amount } : {}) } : undefined };
+      },
+      endpoints: (build) => ({
+        increment: build.mutation<any, number>({
+          query: (amount) => ({
+            url: '',
+            method: 'POST',
+            body: {
+              amount,
+            },
+          }),
+        }),
+      }),
+    });
+
+    const storeRef = setupApiStore(defaultApi);
+
+    let getRenderCount: () => number = () => 0;
+
+    it('does not cause a rerender when using selectFromResult with an empty object', async () => {
+      function Counter() {
+        const [increment] = api.endpoints.increment.useMutation({
+          selectFromResult: () => ({}),
+        });
+        getRenderCount = useRenderCounter();
+
+        return (
+          <div>
+            <button data-testid="incrementButton" onClick={() => increment(1)}></button>
+          </div>
+        );
+      }
+
+      render(<Counter />, { wrapper: storeRef.wrapper });
+
+      expect(getRenderCount()).toBe(1);
+
+      fireEvent.click(screen.getByTestId('incrementButton'));
+
+      expect(getRenderCount()).toBe(2);
+      fireEvent.click(screen.getByTestId('incrementButton'));
+      fireEvent.click(screen.getByTestId('incrementButton'));
+      expect(getRenderCount()).toBe(2);
+    });
+
+    it('causes rerenders when NOT using selectFromResult', async () => {
+      function Counter() {
+        const [increment, data] = api.endpoints.increment.useMutation();
+        getRenderCount = useRenderCounter();
+        console.log('data', data);
+        return (
+          <div>
+            <button data-testid="incrementButton" onClick={() => increment(1)}></button>
+          </div>
+        );
+      }
+
+      render(<Counter />, { wrapper: storeRef.wrapper });
+
+      expect(getRenderCount()).toBe(1);
+
+      fireEvent.click(screen.getByTestId('incrementButton'));
+
+      expect(getRenderCount()).toBe(2);
+      fireEvent.click(screen.getByTestId('incrementButton'));
+      fireEvent.click(screen.getByTestId('incrementButton'));
+      expect(getRenderCount()).toBe(4);
     });
   });
 });

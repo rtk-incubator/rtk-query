@@ -9,9 +9,10 @@
     "target": "es2018",
     "jsx": "react",
     "baseUrl": ".",
+    "skipLibCheck": true,
     "paths": {
       "@rtk-incubator/rtk-query": ["../src"],
-      "@rtk-incubator/rtk-query/react": ["../src/react"],
+      "@rtk-incubator/rtk-query/*": ["../src/*"],
       "@internal/*": ["../src/*"]
     }
   }

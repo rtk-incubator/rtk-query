@@ -110,7 +110,7 @@
   ],
   "dependencies": {
     "@babel/runtime": "^7.12.5",
-    "immer": ">=8.0.0"
+    "immer": "^8.0.3"
   },
   "peerDependencies": {
     "@reduxjs/toolkit": "^1.5.0",
@@ -144,7 +144,8 @@
     "@testing-library/react": "^11.1.0",
     "@testing-library/react-hooks": "^3.4.2",
     "@testing-library/user-event": "^12.2.2",
-    "@types/node-fetch": "^2.5.9",
+    "@types/jest": "^26.0.21",
+    "@types/react-dom": "^17.0.2",
     "@types/react-redux": "^7.1.9",
     "@typescript-eslint/eslint-plugin": "^4.19.0",
     "@typescript-eslint/parser": "^4.19.0",
@@ -178,6 +179,6 @@
     "immer": "^8.0.0",
     "ts-jest": "^26.4.4",
     "jest": "^26.6.3",
-    "@types/jest": "^26.0.15"
+    "@types/jest": "26.0.15"
   }
 }

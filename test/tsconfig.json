@@ -14,7 +14,7 @@
     "skipLibCheck": true,
     "paths": {
       "@rtk-incubator/rtk-query": ["../src"],
-      "@rtk-incubator/rtk-query/react": ["../src/react"],
+      "@rtk-incubator/rtk-query/*": ["../src/*"],
       "@internal/*": ["../src/*"]
     }
   },
@@ -30,7 +30,7 @@
     "./createApi.test.ts",
     "./errorHandling.test.tsx",
     "./fakeBaseQuery.test.tsx",
-    // "./fetchBaseQuery.test.ts",
+    "./fetchBaseQuery.test.ts",
     "./helpers.tsx",
     "./jest.setup.ts",
     "./matchers.test.tsx",

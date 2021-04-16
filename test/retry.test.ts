@@ -265,7 +265,7 @@ describe('configuration', () => {
       backoff: async (attempt, maxRetries) => {
         const attempts = Math.min(attempt, maxRetries);
         const timeout = attempts * 300; // Scale up by 300ms per request, ex: 300ms, 600ms, 900ms, 1200ms...
-        await new Promise((resolve) => setTimeout((res) => resolve(res), timeout));
+        await new Promise((resolve) => setTimeout((res: any) => resolve(res), timeout));
       },
     });
     const api = createApi({

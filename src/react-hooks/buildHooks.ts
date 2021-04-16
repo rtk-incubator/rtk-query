@@ -177,6 +177,14 @@ type GenericPrefetchThunk = (
   options: PrefetchOptions
 ) => ThunkAction<void, any, any, AnyAction>;
 
+/**
+ *
+ * @param opts.api - An API with defined endpoints to create hooks for
+ * @param opts.moduleOptions.batch - The version of the `batchedUpdates` function to be used
+ * @param opts.moduleOptions.useDispatch - The version of the `useDispatch` hook to be used
+ * @param opts.moduleOptions.useSelector - The version of the `useSelector` hook to be used
+ * @returns An object containing functions to generate hooks based on an endpoint
+ */
 export function buildHooks<Definitions extends EndpointDefinitions>({
   api,
   moduleOptions: { batch, useDispatch, useSelector },

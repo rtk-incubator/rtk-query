@@ -3,7 +3,7 @@ import { createApi, fetchBaseQuery, QueryStatus } from '@rtk-incubator/rtk-query
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { rest } from 'msw';
-import { actionsReducer, matchSequence, setupApiStore, useRenderCounter, waitMs } from './helpers';
+import { actionsReducer, expectExactType, matchSequence, setupApiStore, useRenderCounter, waitMs } from './helpers';
 import { server } from './mocks/server';
 import { AnyAction } from 'redux';
 import { SubscriptionOptions } from '@internal/core/apiState';
@@ -1120,10 +1120,17 @@ describe('hooks with createApi defaults set', () => {
 
     const storeRef = setupApiStore(api);
 
+    // @pre41-ts-ignore
+    expectExactType(api.useGetPostsQuery)(api.endpoints.getPosts.useQuery);
+    // @pre41-ts-ignore
+    expectExactType(api.useUpdatePostMutation)(api.endpoints.updatePost.useMutation);
+    // @pre41-ts-ignore
+    expectExactType(api.useAddPostMutation)(api.endpoints.addPost.useMutation);
+
     test('useQueryState serves a deeply memoized value and does not rerender unnecessarily', async () => {
       function Posts() {
-        const { data: posts } = api.useGetPostsQuery();
-        const [addPost] = api.useAddPostMutation();
+        const { data: posts } = api.endpoints.getPosts.useQuery();
+        const [addPost] = api.endpoints.addPost.useMutation();
         return (
           <div>
             <button data-testid="addPost" onClick={() => addPost({ name: `some text ${posts?.length}` })}>
@@ -1180,8 +1187,8 @@ describe('hooks with createApi defaults set', () => {
 
     test('useQuery with selectFromResult option serves a deeply memoized value and does not rerender unnecessarily', async () => {
       function Posts() {
-        const { data: posts } = api.useGetPostsQuery();
-        const [addPost] = api.useAddPostMutation();
+        const { data: posts } = api.endpoints.getPosts.useQuery();
+        const [addPost] = api.endpoints.addPost.useMutation();
         return (
           <div>
             <button
@@ -1196,7 +1203,7 @@ describe('hooks with createApi defaults set', () => {
 
       function SelectedPost() {
         const [renderCount, setRenderCount] = React.useState(0);
-        const { post } = api.useGetPostsQuery(undefined, {
+        const { post } = api.endpoints.getPosts.useQuery(undefined, {
           selectFromResult: ({ data }) => ({ post: data?.find((post) => post.id === 1) }),
         });
 
@@ -1230,9 +1237,9 @@ describe('hooks with createApi defaults set', () => {
     test('useQuery with selectFromResult option serves a deeply memoized value, then ONLY updates when the underlying data changes', async () => {
       let expectablePost: Post | undefined;
       function Posts() {
-        const { data: posts } = api.useGetPostsQuery();
-        const [addPost] = api.useAddPostMutation();
-        const [updatePost] = api.useUpdatePostMutation();
+        const { data: posts } = api.endpoints.getPosts.useQuery();
+        const [addPost] = api.endpoints.addPost.useMutation();
+        const [updatePost] = api.endpoints.updatePost.useMutation();
 
         return (
           <div>
@@ -1251,7 +1258,7 @@ describe('hooks with createApi defaults set', () => {
 
       function SelectedPost() {
         const [renderCount, setRenderCount] = React.useState(0);
-        const { post } = api.useGetPostsQuery(undefined, {
+        const { post } = api.endpoints.getPosts.useQuery(undefined, {
           selectFromResult: ({ data }) => ({ post: data?.find((post) => post.id === 1) }),
         });
 
@@ -1305,7 +1312,7 @@ describe('hooks with createApi defaults set', () => {
         return { data: arg?.body ? { ...arg.body, ...(amount ? { amount } : {}) } : undefined };
       },
       endpoints: (build) => ({
-        increment: build.mutation<any, number>({
+        increment: build.mutation<{ amount: number }, number>({
           query: (amount) => ({
             url: '',
             method: 'POST',

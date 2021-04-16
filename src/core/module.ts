@@ -26,11 +26,19 @@ import { InternalSerializeQueryArgs } from '../defaultSerializeQueryArgs';
 import { SliceActions } from './buildSlice';
 import { BaseQueryFn } from '../baseQueryTypes';
 
+/**
+ * `ifOlderThan` - (default: `false` | `number`) - _number is value in seconds_
+ * - If specified, it will only run the query if the difference between `new Date()` and the last `fulfilledTimeStamp` is greater than the given value
+ *
+ * @overloadSummary
+ * `force`
+ * - If `force: true`, it will ignore the `ifOlderThan` value if it is set and the query will be run even if it exists in the cache.
+ */
 export type PrefetchOptions =
-  | { force?: boolean }
   | {
       ifOlderThan?: false | number;
-    };
+    }
+  | { force?: boolean };
 
 export const coreModuleName = Symbol();
 export type CoreModule = typeof coreModuleName;
@@ -44,26 +52,84 @@ declare module '../apiTypes' {
     EntityTypes extends string
   > {
     [coreModuleName]: {
+      /**
+       * This api's reducer should be mounted at `store[api.reducerPath]`.
+       *
+       * @example
+       * ```ts
+       * configureStore({
+       *   reducer: {
+       *     [api.reducerPath]: api.reducer,
+       *   },
+       *   middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(api.middleware),
+       * })
+       * ```
+       */
       reducerPath: ReducerPath;
+      /**
+       * Internal actions not part of the public API. Note: These are subject to change at any given time.
+       */
       internalActions: InternalActions;
+      /**
+       *  A standard redux reducer that enables core functionality. Make sure it's included in your store.
+       *
+       * @example
+       * ```ts
+       * configureStore({
+       *   reducer: {
+       *     [api.reducerPath]: api.reducer,
+       *   },
+       *   middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(api.middleware),
+       * })
+       * ```
+       */
       reducer: Reducer<CombinedState<Definitions, EntityTypes, ReducerPath>, AnyAction>;
+      /**
+       * This is a standard redux middleware and is responsible for things like polling, garbage collection and a handful of other things. Make sure it's included in your store.
+       *
+       * @example
+       * ```ts
+       * configureStore({
+       *   reducer: {
+       *     [api.reducerPath]: api.reducer,
+       *   },
+       *   middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(api.middleware),
+       * })
+       * ```
+       */
       middleware: Middleware<{}, RootState<Definitions, string, ReducerPath>, ThunkDispatch<any, any, AnyAction>>;
+      /**
+       * TODO
+       */
       util: {
+        /**
+         * TODO
+         */
         prefetchThunk<EndpointName extends QueryKeys<EndpointDefinitions>>(
           endpointName: EndpointName,
           arg: QueryArgFrom<Definitions[EndpointName]>,
           options: PrefetchOptions
         ): ThunkAction<void, any, any, AnyAction>;
+        /**
+         * TODO
+         */
         updateQueryResult: UpdateQueryResultThunk<Definitions, RootState<Definitions, string, ReducerPath>>;
+        /**
+         * TODO
+         */
         patchQueryResult: PatchQueryResultThunk<Definitions, RootState<Definitions, string, ReducerPath>>;
+        /**
+         * TODO
+         */
         resetApiState: SliceActions['resetApiState'];
+        /**
+         * TODO
+         */
         invalidateEntities: ActionCreatorWithPayload<Array<EntityTypes | FullEntityDescription<EntityTypes>>, string>;
       };
-      // If you actually care about the return value, use useQuery
-      usePrefetch<EndpointName extends QueryKeys<Definitions>>(
-        endpointName: EndpointName,
-        options?: PrefetchOptions
-      ): (arg: QueryArgFrom<Definitions[EndpointName]>, options?: PrefetchOptions) => void;
+      /**
+       * Endpoints based on the input endpoints provided to `createApi`, containing `select` and `action matchers`.
+       */
       endpoints: {
         [K in keyof Definitions]: Definitions[K] extends QueryDefinition<any, any, any, any, any>
           ? Id<ApiEndpointQuery<Definitions[K], Definitions>>
@@ -107,6 +173,14 @@ export type ListenerActions = {
 
 export type InternalActions = SliceActions & ListenerActions;
 
+/**
+ * Creates a module containing the basic redux logic for use with `buildCreateApi`.
+ *
+ * @example
+ * ```ts
+ * const createBaseApi = buildCreateApi(coreModule());
+ * ```
+ */
 export const coreModule = (): Module<CoreModule> => ({
   name: coreModuleName,
   init(

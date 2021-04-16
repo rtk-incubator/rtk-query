@@ -20,6 +20,9 @@ export type RefetchConfigOptions = {
   refetchOnFocus: boolean;
 };
 
+/**
+ * Strings describing the query state at any given time.
+ */
 export enum QueryStatus {
   uninitialized = 'uninitialized',
   pending = 'pending',

@@ -64,6 +64,21 @@ export type FetchBaseQueryMeta = { request: Request; response: Response };
 /**
  * This is a very small wrapper around fetch that aims to simplify requests.
  *
+ * @example
+ * ```ts
+ * const baseQuery = fetchBaseQuery({
+ *   baseUrl: 'https://api.your-really-great-app.com/v1/',
+ *   prepareHeaders: (headers, { getState }) => {
+ *     const token = (getState() as RootState).auth.token;
+ *     // If we have a token set in state, let's assume that we should be passing it.
+ *     if (token) {
+ *       headers.set('authorization', `Bearer ${token}`);
+ *     }
+ *     return headers;
+ *   },
+ * })
+ * ```
+ *
  * @param {string} baseUrl
  * The base URL for an API service.
  * Typically in the format of http://example.com/

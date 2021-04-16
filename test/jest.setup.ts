@@ -1,3 +1,4 @@
+//@ts-ignore
 import { default as nodeFetch, Request } from 'node-fetch';
 //@ts-ignore
 global.fetch = nodeFetch;

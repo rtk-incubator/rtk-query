@@ -4,7 +4,6 @@ import {
   MutationSubState,
   QueryStatus,
   QuerySubState,
-  RequestStatusFlags,
   SubscriptionOptions,
   QueryKeys,
   RootState,
@@ -35,7 +34,7 @@ export interface QueryHooks<Definition extends QueryDefinition<any, any, any, an
 }
 
 export interface MutationHooks<Definition extends MutationDefinition<any, any, any, any, any>> {
-  useMutation: MutationHook<Definition>;
+  useMutation: UseMutation<Definition>;
 }
 
 export type UseQuery<D extends QueryDefinition<any, any, any, any>> = <R = UseQueryStateDefaultResult<D>>(
@@ -128,7 +127,6 @@ type UseQueryStateDefaultResult<D extends QueryDefinition<any, any, any, any>> =
   status: QueryStatus;
 };
 
-// USE MUTATION START
 export type MutationStateSelector<R, D extends MutationDefinition<any, any, any, any>> = (
   state: MutationResultSelectorResult<D>,
   defaultMutationStateSelector: DefaultMutationStateSelector<D>
@@ -175,9 +173,7 @@ type UseMutationStateDefaultResult<D extends MutationDefinition<any, any, any, a
     >
 >;
 
-// USE MUTATION END
-
-export type MutationHook<D extends MutationDefinition<any, any, any, any>> = <R = UseMutationStateDefaultResult<D>>(
+export type UseMutation<D extends MutationDefinition<any, any, any, any>> = <R = UseMutationStateDefaultResult<D>>(
   options?: UseMutationStateOptions<D, R>
 ) => [
   (
@@ -185,7 +181,7 @@ export type MutationHook<D extends MutationDefinition<any, any, any, any>> = <R 
   ) => {
     unwrap: () => Promise<ResultTypeFrom<D>>;
   },
-  MutationSubState<D> & RequestStatusFlags
+  UseMutationStateResult<D, R>
 ];
 
 const defaultMutationStateSelector: DefaultMutationStateSelector<any> = (currentState) => {
@@ -232,6 +228,14 @@ type GenericPrefetchThunk = (
   options: PrefetchOptions
 ) => ThunkAction<void, any, any, AnyAction>;
 
+/**
+ *
+ * @param opts.api - An API with defined endpoints to create hooks for
+ * @param opts.moduleOptions.batch - The version of the `batchedUpdates` function to be used
+ * @param opts.moduleOptions.useDispatch - The version of the `useDispatch` hook to be used
+ * @param opts.moduleOptions.useSelector - The version of the `useSelector` hook to be used
+ * @returns An object containing functions to generate hooks based on an endpoint
+ */
 export function buildHooks<Definitions extends EndpointDefinitions>({
   api,
   moduleOptions: { batch, useDispatch, useSelector },
@@ -438,7 +442,7 @@ export function buildHooks<Definitions extends EndpointDefinitions>({
     };
   }
 
-  function buildMutationHook(name: string): MutationHook<any> {
+  function buildMutationHook(name: string): UseMutation<any> {
     return ({ selectFromResult = defaultMutationStateSelector as MutationStateSelector<any, any> } = {}) => {
       const { select, initiate } = api.endpoints[name] as ApiEndpointMutation<
         MutationDefinition<any, any, any, any, any>,

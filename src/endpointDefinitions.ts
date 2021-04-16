@@ -16,27 +16,37 @@ import { NEVER } from './fakeBaseQuery';
 const resultType = Symbol();
 const baseQuery = Symbol();
 
+interface EndpointDefinitionWithQuery<QueryArg, BaseQuery extends BaseQueryFn, ResultType> {
+  /**
+   * `query` is the only required property, and can be a function that returns either a `string` or an `object` which is passed to your `baseQuery`. If you are using [fetchBaseQuery](./fetchBaseQuery), this can return either a `string` or an `object` of properties in `FetchArgs`. If you use your own custom `baseQuery`, you can customize this behavior to your liking
+   */
+  query(arg: QueryArg): BaseQueryArg<BaseQuery>;
+  queryFn?: never;
+  /**
+   * A function to manipulate the data returned by a query or mutation
+   */
+  transformResponse?(
+    baseQueryReturnValue: BaseQueryResult<BaseQuery>,
+    meta: BaseQueryMeta<BaseQuery>
+  ): ResultType | Promise<ResultType>;
+}
+
+interface EndpointDefinitionWithQueryFn<QueryArg, BaseQuery extends BaseQueryFn, ResultType> {
+  queryFn(
+    arg: QueryArg,
+    api: BaseQueryApi,
+    extraOptions: BaseQueryExtraOptions<BaseQuery>,
+    baseQuery: (arg: Parameters<BaseQuery>[0]) => ReturnType<BaseQuery>
+  ): MaybePromise<QueryReturnValue<ResultType, BaseQueryError<BaseQuery>>>;
+  query?: never;
+  transformResponse?: never;
+}
+
 export type BaseEndpointDefinition<QueryArg, BaseQuery extends BaseQueryFn, ResultType> = (
   | ([CastAny<BaseQueryResult<BaseQuery>, {}>] extends [NEVER]
       ? never
-      : {
-          query(arg: QueryArg): BaseQueryArg<BaseQuery>;
-          queryFn?: never;
-          transformResponse?(
-            baseQueryReturnValue: BaseQueryResult<BaseQuery>,
-            meta: BaseQueryMeta<BaseQuery>
-          ): ResultType | Promise<ResultType>;
-        })
-  | {
-      queryFn(
-        arg: QueryArg,
-        api: BaseQueryApi,
-        extraOptions: BaseQueryExtraOptions<BaseQuery>,
-        baseQuery: (arg: Parameters<BaseQuery>[0]) => ReturnType<BaseQuery>
-      ): MaybePromise<QueryReturnValue<ResultType, BaseQueryError<BaseQuery>>>;
-      query?: never;
-      transformResponse?: never;
-    }
+      : EndpointDefinitionWithQuery<QueryArg, BaseQuery, ResultType>)
+  | EndpointDefinitionWithQueryFn<QueryArg, BaseQuery, ResultType>
 ) & {
   /* phantom type */
   [resultType]?: ResultType;
@@ -73,15 +83,22 @@ export interface QueryApi<ReducerPath extends string, Context extends {}> {
   context: Context;
 }
 
-export type QueryDefinition<
-  QueryArg,
-  BaseQuery extends BaseQueryFn,
+interface QueryExtraOptions<
   EntityTypes extends string,
   ResultType,
+  QueryArg,
+  BaseQuery extends BaseQueryFn,
   ReducerPath extends string = string,
   Context = Record<string, any>
-> = BaseEndpointDefinition<QueryArg, BaseQuery, ResultType> & {
+> {
   type: DefinitionType.query;
+  /**
+   * Used by `queries` to provide entities to the cache
+   * Expects an array of entity type strings, or an array of objects of entity types with ids.
+   * 1.  `['Post']` - equivalent to `b`
+   * 2.  `[{ type: 'Post' }]` - equivalent to `a`
+   * 3.  `[{ type: 'Post', id: 1 }]`
+   */
   provides?: ResultDescription<EntityTypes, ResultType, QueryArg, BaseQueryError<BaseQuery>>;
   invalidates?: never;
   onStart?(arg: QueryArg, queryApi: QueryApi<ReducerPath, Context>): void;
@@ -97,7 +114,17 @@ export type QueryDefinition<
     result: ResultType,
     meta: BaseQueryMeta<BaseQuery> | undefined
   ): void;
-};
+}
+
+export type QueryDefinition<
+  QueryArg,
+  BaseQuery extends BaseQueryFn,
+  EntityTypes extends string,
+  ResultType,
+  ReducerPath extends string = string,
+  Context = Record<string, any>
+> = BaseEndpointDefinition<QueryArg, BaseQuery, ResultType> &
+  QueryExtraOptions<EntityTypes, ResultType, QueryArg, BaseQuery, ReducerPath, Context>;
 
 export interface MutationApi<ReducerPath extends string, Context extends {}> {
   dispatch: ThunkDispatch<any, any, AnyAction>;
@@ -107,15 +134,19 @@ export interface MutationApi<ReducerPath extends string, Context extends {}> {
   context: Context;
 }
 
-export type MutationDefinition<
-  QueryArg,
-  BaseQuery extends BaseQueryFn,
+interface MutationExtraOptions<
   EntityTypes extends string,
   ResultType,
+  QueryArg,
+  BaseQuery extends BaseQueryFn,
   ReducerPath extends string = string,
   Context = Record<string, any>
-> = BaseEndpointDefinition<QueryArg, BaseQuery, ResultType> & {
+> {
   type: DefinitionType.mutation;
+  /**
+   * Used by `mutations` for [cache invalidation](../concepts/mutations#advanced-mutations-with-revalidation) purposes.
+   * Expects the same shapes as `provides`
+   */
   invalidates?: ResultDescription<EntityTypes, ResultType, QueryArg, BaseQueryError<BaseQuery>>;
   provides?: never;
   onStart?(arg: QueryArg, mutationApi: MutationApi<ReducerPath, Context>): void;
@@ -131,7 +162,17 @@ export type MutationDefinition<
     result: ResultType,
     meta: BaseQueryMeta<BaseQuery> | undefined
   ): void;
-};
+}
+
+export type MutationDefinition<
+  QueryArg,
+  BaseQuery extends BaseQueryFn,
+  EntityTypes extends string,
+  ResultType,
+  ReducerPath extends string = string,
+  Context = Record<string, any>
+> = BaseEndpointDefinition<QueryArg, BaseQuery, ResultType> &
+  MutationExtraOptions<EntityTypes, ResultType, QueryArg, BaseQuery, ReducerPath, Context>;
 
 export type EndpointDefinition<
   QueryArg,

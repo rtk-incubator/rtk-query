@@ -14,9 +14,30 @@
     "skipLibCheck": true,
     "paths": {
       "@rtk-incubator/rtk-query": ["../src"],
-      "@rtk-incubator/rtk-query/*": ["../src/*"],
+      "@rtk-incubator/rtk-query/react": ["../src/react"],
       "@internal/*": ["../src/*"]
     }
   },
-  "include": ["../src/*"]
+  "files": [
+    "./utils.test.ts",
+    "./apiProvider.test.tsx",
+    "./buildHooks.test.tsx",
+    "./buildMiddleware.test.tsx",
+    "./buildSlice.test.ts",
+    "./buildThunks.test.tsx",
+    "./cleanup.test.tsx",
+    "./copyWithStructuralSharing.test.ts",
+    "./createApi.test.ts",
+    "./errorHandling.test.tsx",
+    "./fakeBaseQuery.test.tsx",
+    // "./fetchBaseQuery.test.ts",
+    "./helpers.tsx",
+    "./jest.setup.ts",
+    "./matchers.test.tsx",
+    "./optimisticUpdates.test.tsx",
+    "./queryFn.test.tsx",
+    "./refetchingBehaviors.test.tsx",
+    "./retry.test.ts",
+    "./unionTypes.test.ts"
+  ]
 }

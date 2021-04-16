@@ -146,23 +146,19 @@ export type UseMutationStateResult<_ extends MutationDefinition<any, any, any, a
 
 type UseMutationStateBaseResult<D extends MutationDefinition<any, any, any, any>> = MutationSubState<D> & {
   /**
-   * Query has not started yet.
+   * Mutation has not started yet.
    */
   isUninitialized: false;
   /**
-   * Query is currently loading for the first time. No data yet.
+   * Mutation is currently loading for the first time. No data yet.
    */
   isLoading: false;
   /**
-   * Query is currently fetching, but might have data from an earlier request.
-   */
-  isFetching: false;
-  /**
-   * Query has data from a successful load.
+   * Mutation has data from a successful load.
    */
   isSuccess: false;
   /**
-   * Query is currently in "error" state.
+   * Mutation is currently in "error" state.
    */
   isError: false;
 };
@@ -486,12 +482,6 @@ export function buildHooks<Definitions extends EndpointDefinitions>({
         (state: RootState<Definitions, any, any>) => mutationSelector(state),
         shallowEqual
       );
-
-      // We should check the result, and if it's null or an empty object, it should not rerender
-      // We should also track the last results and force an update if they're not deepEqual?
-
-      // const mutationSelector = useMemo(() => select(requestId || skipSelector), [requestId, select]);
-      // const currentState = useSelector(mutationSelector);
 
       return useMemo(() => [triggerMutation, currentState], [triggerMutation, currentState]);
     };

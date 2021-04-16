@@ -26,16 +26,17 @@ The main point where you will define a service to use in your application.
 ```
 
 ### `baseQuery`
-The base query used by each endpoint if no `queryFn` option is specified. RTK Query exports a utility called [fetchBaseQuery](./fetchBaseQuery) as a lightweight wrapper around `fetch` for common use-cases.
+
+[summary](docblock://createApi.ts?token=CreateApiOptions.baseQuery)
 
 ```ts title="Simulating axios-like interceptors with a custom base query"
 const baseQuery = fetchBaseQuery({ baseUrl: '/' });
 
-const baseQueryWithReauth: BaseQueryFn<
-  string | FetchArgs,
-  unknown,
-  FetchBaseQueryError
-> = async (args, api, extraOptions) => {
+const baseQueryWithReauth: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQueryError> = async (
+  args,
+  api,
+  extraOptions
+) => {
   let result = await baseQuery(args, api, extraOptions);
   if (result.error && result.error.status === '401') {
     // try to get a new token
@@ -50,16 +51,16 @@ const baseQueryWithReauth: BaseQueryFn<
     }
   }
   return result;
-}
+};
 ```
 
 ### `entityTypes`
 
-An array of string entity type names. Specifying entity types is optional, but you should define them so that they can be used for caching and invalidation. When defining an entity type, you will be able to [provide](../concepts/mutations#provides) them with `provides` and [invalidate](../concepts/mutations#advanced-mutations-with-revalidation) them with `invalidates` when configuring [endpoints](#endpoints).
+[summary](docblock://createApi.ts?token=CreateApiOptions.entityTypes)
 
 ### `reducerPath`
 
-The `reducerPath` is a _unique_ key that your service will be mounted to in your store. If you call `createApi` more than once in your application, you will need to provide a unique value each time. Defaults to `api`.
+[summary](docblock://createApi.ts?token=CreateApiOptions.reducerPath)
 
 ```js title="apis.js"
 import { createApi, fetchBaseQuery } from '@rtk-incubator/rtk-query';
@@ -83,7 +84,8 @@ const apiTwo = createApi({
 
 ### `serializeQueryArgs`
 
-Accepts a custom function if you have a need to change the creation of cache keys for any reason. Defaults to:
+[summary](docblock://createApi.ts?token=CreateApiOptions.reducerPath)
+Defaults to:
 
 ```ts no-compile
 export const defaultSerializeQueryArgs: SerializeQueryArgs<any> = ({ endpoint, queryArgs }) => {
@@ -94,15 +96,15 @@ export const defaultSerializeQueryArgs: SerializeQueryArgs<any> = ({ endpoint, q
 
 ### `endpoints`
 
-Endpoints are just a set of operations that you want to perform against your server. You define them as an object using the builder syntax. There are two basic endpoint types: [`query`](../concepts/queries) and [`mutation`](../concepts/mutations).
+[summary](docblock://createApi.ts?token=CreateApiOptions.endpoints)
 
 #### Anatomy of an endpoint
 
 - `query` _(required)_
-  - `query` is the only required property, and can be a function that returns either a `string` or an `object` which is passed to your `baseQuery`. If you are using [fetchBaseQuery](./fetchBaseQuery), this can return either a `string` or an `object` of properties in `FetchArgs`. If you use your own custom `baseQuery`, you can customize this behavior to your liking
+  - [summary](docblock://endpointDefinitions.ts?token=EndpointDefinitionWithQuery.query)
 - `transformResponse` _(optional)_
 
-  - A function to manipulate the data returned by a query or mutation
+  - [summary](docblock://endpointDefinitions.ts?token=EndpointDefinitionWithQuery.transformResponse)
   - ```js title="Unpack a deeply nested collection"
     transformResponse: (response) => response.some.nested.collection;
     ```
@@ -115,15 +117,12 @@ Endpoints are just a set of operations that you want to perform against your ser
     ```
 
 - `provides` _(optional)_
-  - Used by `queries` to provide entities to the cache
-  - Expects an array of entity type strings, or an array of objects of entity types with ids.
-    1.  `['Post']` - equivalent to `b`
-    2.  `[{ type: 'Post' }]` - equivalent to `a`
-    3.  `[{ type: 'Post', id: 1 }]`
+
+  [summary](docblock://endpointDefinitions.ts?token=QueryExtraOptions.provides)
+
 - `invalidates` _(optional)_
 
-  - Used by `mutations` for [cache invalidation](../concepts/mutations#advanced-mutations-with-revalidation) purposes.
-  - Expects the same shapes as `provides`
+  [summary](docblock://endpointDefinitions.ts?token=MutationExtraOptions.invalidates)
 
 - `onStart`, `onError` and `onSuccess` _(optional)_ - Available to both [queries](../concepts/queries) and [mutations](../concepts/mutations)
   - Can be used in `mutations` for [optimistic updates](../concepts/optimistic-updates).

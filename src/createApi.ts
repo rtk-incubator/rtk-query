@@ -9,25 +9,68 @@ export interface CreateApiOptions<
   ReducerPath extends string = 'api',
   EntityTypes extends string = never
 > {
+  /**
+   * The base query used by each endpoint if no `queryFn` option is specified. RTK Query exports a utility called [fetchBaseQuery](./fetchBaseQuery) as a lightweight wrapper around `fetch` for common use-cases.
+   */
   baseQuery: BaseQuery;
+  /**
+   * An array of string entity type names. Specifying entity types is optional, but you should define them so that they can be used for caching and invalidation. When defining an entity type, you will be able to [provide](../concepts/mutations#provides) them with `provides` and [invalidate](../concepts/mutations#advanced-mutations-with-revalidation) them with `invalidates` when configuring [endpoints](#endpoints).
+   */
   entityTypes?: readonly EntityTypes[];
+  /**
+   * The `reducerPath` is a _unique_ key that your service will be mounted to in your store. If you call `createApi` more than once in your application, you will need to provide a unique value each time. Defaults to `api`.
+   */
   reducerPath?: ReducerPath;
+  /**
+   * Accepts a custom function if you have a need to change the creation of cache keys for any reason.
+   */
   serializeQueryArgs?: SerializeQueryArgs<BaseQueryArg<BaseQuery>>;
+  /**
+   * Endpoints are just a set of operations that you want to perform against your server. You define them as an object using the builder syntax. There are two basic endpoint types: [`query`](../concepts/queries) and [`mutation`](../concepts/mutations).
+   */
   endpoints(build: EndpointBuilder<BaseQuery, EntityTypes, ReducerPath>): Definitions;
+  /**
+   * Defaults to 60 (this value is in seconds). This is how long RTK Query will keep your data cached for after the last component unsubscribes. For example, if you query an endpoint, then unmount the component, then mount another component that makes the same request within the given time frame, the most recent value will be served from the cache.
+   */
   keepUnusedDataFor?: number;
+  /**
+   * Defaults to `false`. This setting allows you to control whether RTK Query will only serve a cached result, or if it should `refetch` when set to `true` or if an adequate amount of time has passed since the last successful query result.
+   * - `false` - Will not cause a query to be performed _unless_ it does not exist yet.
+   * - `true` - Will always refetch when a new subscriber to a query is added. Behaves the same as calling the `refetch` callback or passing `forceRefetch: true` in the action creator.
+   * - `number` - **Value is in seconds**. If a number is provided and there is an existing query in the cache, it will compare the current time vs the last fulfilled timestamp, and only refetch if enough time has elapsed.
+   *
+   * If you specify this option alongside `skip: true`, this **will not be evaluated** until `skip` is false.
+   */
   refetchOnMountOrArgChange?: boolean | number;
+  /**
+   * Defaults to `false`. This setting allows you to control whether RTK Query will try to refetch all subscribed queries after the application window regains focus.
+   *
+   * If you specify this option alongside `skip: true`, this **will not be evaluated** until `skip` is false.
+   */
   refetchOnFocus?: boolean;
+  /**
+   * Defaults to `false`. This setting allows you to control whether RTK Query will try to refetch all subscribed queries after regaining a network connection.
+   *
+   * If you specify this option alongside `skip: true`, this **will not be evaluated** until `skip` is false.
+   */
   refetchOnReconnect?: boolean;
 }
 
-export type CreateApi<Modules extends ModuleName> = <
-  BaseQuery extends BaseQueryFn,
-  Definitions extends EndpointDefinitions,
-  ReducerPath extends string = 'api',
-  EntityTypes extends string = never
->(
-  options: CreateApiOptions<BaseQuery, Definitions, ReducerPath, EntityTypes>
-) => Api<BaseQuery, Definitions, ReducerPath, EntityTypes, Modules>;
+export type CreateApi<Modules extends ModuleName> = {
+  /**
+   * Creates a service to use in your application. Contains only the basic redux logic (the core module).
+   *
+   * @link https://rtk-query-docs.netlify.app/api/createApi
+   */
+  <
+    BaseQuery extends BaseQueryFn,
+    Definitions extends EndpointDefinitions,
+    ReducerPath extends string = 'api',
+    EntityTypes extends string = never
+  >(
+    options: CreateApiOptions<BaseQuery, Definitions, ReducerPath, EntityTypes>
+  ): Api<BaseQuery, Definitions, ReducerPath, EntityTypes, Modules>;
+};
 
 /**
  * Builds a `createApi` method based on the provided `modules`.

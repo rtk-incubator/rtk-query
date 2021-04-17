@@ -1,1 +1,0 @@
-- **updateQueryResult** - used for [optimistic updates](../../../concepts/optimistic-updates).

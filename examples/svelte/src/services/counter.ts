@@ -39,7 +39,7 @@ export const counterApi = createApi({
         }),
         getCountById: build.query<CountResponse, string>({
             query: (id: string) => `${id}`,
-            provides: (result, error, id) => (result ? [{ type: 'Counter', id }] : []),
+            provides: (result, error, id) => [{ type: 'Counter', id }],
         }),
         incrementCountById: build.mutation<CountResponse, { id: string; amount: number }>({
             query: ({ id, amount }) => ({

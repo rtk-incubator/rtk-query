@@ -85,16 +85,16 @@ export interface QueryApi<ReducerPath extends string, Context extends {}> {
    */
   getState(): RootState<any, any, ReducerPath>;
   /**
-  * `extra` as provided as `thunk.extraArgument` to the `configureStore` `getDefaultMiddleware` option.
-  */
+   * `extra` as provided as `thunk.extraArgument` to the `configureStore` `getDefaultMiddleware` option.
+   */
   extra: unknown;
   /**
    * A unique ID generated for the mutation
    */
   requestId: string;
   /**
-  * A variable shared between `onStart`, `onError` and `onSuccess` of one request to pass data forward between them
-  */
+   * A variable shared between `onStart`, `onError` and `onSuccess` of one request to pass data forward between them
+   */
   context: Context;
 }
 

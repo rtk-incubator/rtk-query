@@ -156,7 +156,7 @@ export const api = createApi({
     }),
     getPost: build.query<Post, number>({
       query: (id) => `posts/${id}`,
-      provides: (result, error, id) => (result ? [{ type: 'Posts', id }] : []),
+      provides: (result, error, id) => [{ type: 'Posts', id }],
     }),
   }),
 });
@@ -211,7 +211,7 @@ export const api = createApi({
     }),
     getPost: build.query<Post, number>({
       query: (id) => `posts/${id}`,
-      provides: (result, error, id) => (result ? [{ type: 'Posts', id }] : []),
+      provides: (result, error, id) => [{ type: 'Posts', id }],
     }),
   }),
 });
@@ -272,12 +272,12 @@ export const postApi = createApi({
       // If any mutation is executed that `invalidate`s any of these entities, this query will re-run to be always up-to-date.
       // The `LIST` id is a "virtual id" we just made up to be able to invalidate this query specifically if a new `Posts` element was added.
       provides: (result) =>
-      // is result available?
-      result ? 
-        // successful query
-        [...result.map(({ id }) => ({ type: 'Posts', id })), { type: 'Posts', id: 'LIST' }] : 
-        // an error occured, but we still want to refetch this query when `{ type: 'Posts', id: 'LIST' }` is invalidated
-        [{ type: 'Posts', id: 'LIST' }],
+        // is result available?
+        result
+          ? // successful query
+            [...result.map(({ id }) => ({ type: 'Posts', id })), { type: 'Posts', id: 'LIST' }]
+          : // an error occurred, but we still want to refetch this query when `{ type: 'Posts', id: 'LIST' }` is invalidated
+            [{ type: 'Posts', id: 'LIST' }],
     }),
     addPost: build.mutation<Post, Partial<Post>>({
       query(body) {

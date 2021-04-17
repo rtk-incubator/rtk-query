@@ -28,23 +28,23 @@ export const api = generatedApi.enhanceEndpoints({
   endpoints: {
     // basic notation: just specify properties to be overridden
     getPetById: {
-      provides: (result, error, arg) => (result ? [{ type: 'Pet', id: arg.petId }] : []),
+      provides: (result, error, arg) => [{ type: 'Pet', id: arg.petId }],
     },
     findPetsByStatus: {
       provides: (result) =>
         // is result available?
-        result ? 
-          // successful query
-          [{ type: 'Pet', id: 'LIST' }, ...result.map((pet) => ({ type: 'Pet' as const, id: pet.id }))] : 
-          // an error occured, but we still want to refetch this query when `{ type: 'Pet', id: 'LIST' }` is invalidated
-          [{ type: 'Pet', id: 'LIST' }],
+        result
+          ? // successful query
+            [{ type: 'Pet', id: 'LIST' }, ...result.map((pet) => ({ type: 'Pet' as const, id: pet.id }))]
+          : // an error occurred, but we still want to refetch this query when `{ type: 'Pet', id: 'LIST' }` is invalidated
+            [{ type: 'Pet', id: 'LIST' }],
     },
     // alternate notation: callback that gets passed in `endpoint` - you can freely modify the object here
     addPet: (endpoint) => {
-      endpoint.invalidates = (response) => [{ type: 'Pet', id: response.id }];
+      endpoint.invalidates = (result) => [{ type: 'Pet', id: result.id }];
     },
     updatePet: {
-      invalidates: (response) => [{ type: 'Pet', id: response.id }],
+      invalidates: (result, error, arg) => [{ type: 'Pet', id: arg.petId }],
     },
     deletePet: {
       invalidates: (result, error, arg) => [{ type: 'Pet', id: arg.petId }],

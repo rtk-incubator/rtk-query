@@ -11,7 +11,7 @@ export const timeApi = createApi({
   endpoints: (build) => ({
     getTime: build.query<TimeResponse, string>({
       query: (id) => `time/${id}`,
-      provides: (result, error, id) => (result ? [{ type: 'Time', id }] : []),
+      provides: (result, error, id) => [{ type: 'Time', id }],
     }),
   }),
   refetchOnReconnect: true,

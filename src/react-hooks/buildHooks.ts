@@ -249,6 +249,17 @@ export type MutationHook<D extends MutationDefinition<any, any, any, any>> = () 
      *   .then((payload) => console.log('fulfilled', payload))
      *   .catch((error) => console.error('rejected', error));
      * ```
+     *
+     * @example
+     * ```ts
+     * // codeblock-meta title="Using .unwrap with async await"
+     * try {
+     *   const payload = await addPost({ id: 1, name: 'Example' }).unwrap();
+     *   console.log('fulfilled', payload)
+     * } catch (error) {
+     *   console.error('rejected', error);
+     * }
+     * ```
      */
     unwrap: () => Promise<ResultTypeFrom<D>>;
   },

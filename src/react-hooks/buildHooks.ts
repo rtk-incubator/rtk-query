@@ -42,8 +42,49 @@ export type UseQuery<D extends QueryDefinition<any, any, any, any>> = <R = UseQu
   arg: QueryArgFrom<D>,
   options?: UseQuerySubscriptionOptions & UseQueryStateOptions<D, R>
 ) => UseQueryStateResult<D, R> & ReturnType<UseQuerySubscription<D>>;
+
 interface UseQuerySubscriptionOptions extends SubscriptionOptions {
+  /**
+   * Prevents a query from automatically running.
+   *
+   * @remarks
+   * When skip is true:
+   *
+   * - **If the query has cached data:**
+   *   * The cached data **will not be used** on the initial load, and will ignore updates from any identical query until the `skip` condition is removed
+   *   * The query will have a status of `uninitialized`
+   *   * If `skip: false` is set after skipping the initial load, the cached result will be used
+   * - **If the query does not have cached data:**
+   *   * The query will have a status of `uninitialized`
+   *   * The query will not exist in the state when viewed with the dev tools
+   *   * The query will not automatically fetch on mount
+   *   * The query will not automatically run when additional components with the same query are added that do run
+   *
+   * @example
+   * ```ts
+   * // codeblock-meta title="Skip example"
+   * const Pokemon = ({ name, skip }: { name: string; skip: boolean }) => {
+   *   const { data, error, status } = useGetPokemonByNameQuery(name, {
+   *     skip,
+   *   });
+   *
+   *   return (
+   *     <div>
+   *       {name} - {status}
+   *     </div>
+   *   );
+   * };
+   * ```
+   */
   skip?: boolean;
+  /**
+   * Defaults to `false`. This setting allows you to control whether RTK Query will only serve a cached result, or if it should `refetch` when set to `true` or if an adequate amount of time has passed since the last successful query result.
+   * - `false` - Will not cause a query to be performed _unless_ it does not exist yet.
+   * - `true` - Will always refetch when a new subscriber to a query is added. Behaves the same as calling the `refetch` callback or passing `forceRefetch: true` in the action creator.
+   * - `number` - **Value is in seconds**. If a number is provided and there is an existing query in the cache, it will compare the current time vs the last fulfilled timestamp, and only refetch if enough time has elapsed.
+   *
+   * If you specify this option alongside `skip: true`, this **will not be evaluated** until `skip` is false.
+   */
   refetchOnMountOrArgChange?: boolean | number;
 }
 
@@ -80,7 +121,69 @@ export type UseQueryState<D extends QueryDefinition<any, any, any, any>> = <R = 
 ) => UseQueryStateResult<D, R>;
 
 export type UseQueryStateOptions<D extends QueryDefinition<any, any, any, any>, R> = {
+  /**
+   * Prevents a query from automatically running.
+   *
+   * @remarks
+   * When skip is true:
+   *
+   * - **If the query has cached data:**
+   *   * The cached data **will not be used** on the initial load, and will ignore updates from any identical query until the `skip` condition is removed
+   *   * The query will have a status of `uninitialized`
+   *   * If `skip: false` is set after skipping the initial load, the cached result will be used
+   * - **If the query does not have cached data:**
+   *   * The query will have a status of `uninitialized`
+   *   * The query will not exist in the state when viewed with the dev tools
+   *   * The query will not automatically fetch on mount
+   *   * The query will not automatically run when additional components with the same query are added that do run
+   *
+   * @example
+   * ```ts
+   * // codeblock-meta title="Skip example"
+   * const Pokemon = ({ name, skip }: { name: string; skip: boolean }) => {
+   *   const { data, error, status } = useGetPokemonByNameQuery(name, {
+   *     skip,
+   *   });
+   *
+   *   return (
+   *     <div>
+   *       {name} - {status}
+   *     </div>
+   *   );
+   * };
+   * ```
+   */
   skip?: boolean;
+  /**
+   * `selectFromResult` allows you to get a specific segment from a query result in a performant manner.
+   * When using this feature, the component will not rerender unless the underlying data of the selected item has changed.
+   * If the selected item is one element in a larger collection, it will disregard changes to elements in the same collection.
+   *
+   * @example
+   * ```ts
+   * // codeblock-meta title="Using selectFromResult to extract a single result"
+   * function PostsList() {
+   *   const { data: posts } = api.useGetPostsQuery();
+   *
+   *   return (
+   *     <ul>
+   *       {posts?.data?.map((post) => (
+   *         <PostById key={post.id} id={post.id} />
+   *       ))}
+   *     </ul>
+   *   );
+   * }
+   *
+   * function PostById({ id }: { id: number }) {
+   *   // Will select the post with the given id, and will only rerender if the given posts data changes
+   *   const { post } = api.useGetPostsQuery(undefined, {
+   *     selectFromResult: ({ data }) => ({ post: data?.find((post) => post.id === id) }),
+   *   });
+   *
+   *   return <li>{post?.name}</li>;
+   * }
+   * ```
+   */
   selectFromResult?: QueryStateSelector<R, D>;
 };
 
@@ -132,6 +235,21 @@ export type MutationHook<D extends MutationDefinition<any, any, any, any>> = () 
   (
     arg: QueryArgFrom<D>
   ) => {
+    /**
+     * Unwraps a mutation call to provide the raw response/error.
+     *
+     * @remarks
+     * If you need to access the error or success payload immediately after a mutation, you can chain .unwrap().
+     *
+     * @example
+     * ```ts
+     * // codeblock-meta title="Using .unwrap"
+     * addPost({ id: 1, name: 'Example' })
+     *   .unwrap()
+     *   .then((payload) => console.log('fulfilled', payload))
+     *   .catch((error) => console.error('rejected', error));
+     * ```
+     */
     unwrap: () => Promise<ResultTypeFrom<D>>;
   },
   MutationSubState<D> & RequestStatusFlags
@@ -260,6 +378,9 @@ export function buildHooks<Definitions extends EndpointDefinitions>({
 
       return useMemo(
         () => ({
+          /**
+           * A method to manually refetch data for the query
+           */
           refetch: () => void promiseRef.current?.refetch(),
         }),
         []

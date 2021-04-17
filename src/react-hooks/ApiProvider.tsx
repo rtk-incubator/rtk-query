@@ -8,7 +8,8 @@ import { Api } from '../apiTypes';
  * Can be used as a `Provider` if you **do not already have a Redux store**.
  *
  * @example
- * ```ts title="Basic usage - wrap your App with ApiProvider"
+ * ```ts
+ * // codeblock-meta title="Basic usage - wrap your App with ApiProvider"
  * import * as React from 'react';
  * import { ApiProvider } from '@rtk-incubator/rtk-query';
  *

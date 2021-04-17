@@ -147,7 +147,7 @@ const api = createApi({
   endpoints: (build) => ({
     getPosts: build.query<PostsResponse, void>({
       query: () => 'posts',
-      provides: (result) => result.map(({ id }) => ({ type: 'Posts', id })),
+      provides: (result) => result ? result.map(({ id }) => ({ type: 'Posts', id })) : [],
     }),
     addPost: build.mutation<Post, Partial<Post>>({
       query: (body) => ({

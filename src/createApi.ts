@@ -46,12 +46,16 @@ export interface CreateApiOptions<
    * Defaults to `false`. This setting allows you to control whether RTK Query will try to refetch all subscribed queries after the application window regains focus.
    *
    * If you specify this option alongside `skip: true`, this **will not be evaluated** until `skip` is false.
+   *
+   * Note: requires `setupListeners` to have been called.
    */
   refetchOnFocus?: boolean;
   /**
    * Defaults to `false`. This setting allows you to control whether RTK Query will try to refetch all subscribed queries after regaining a network connection.
    *
    * If you specify this option alongside `skip: true`, this **will not be evaluated** until `skip` is false.
+   *
+   * Note: requires `setupListeners` to have been called.
    */
   refetchOnReconnect?: boolean;
 }

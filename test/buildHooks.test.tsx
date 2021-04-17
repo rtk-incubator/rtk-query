@@ -1105,7 +1105,7 @@ describe('hooks with createApi defaults set', () => {
             method: 'PUT',
             body,
           }),
-          invalidates: (result) => (result ? [{ type: 'Posts', id: result.id }] : []),
+          invalidates: (result, error, { id }) => [{ type: 'Posts', id }],
         }),
         addPost: build.mutation<Post, Partial<Post>>({
           query: (body) => ({

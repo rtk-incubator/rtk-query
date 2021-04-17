@@ -28,13 +28,11 @@ export const api = generatedApi.enhanceEndpoints({
   endpoints: {
     // basic notation: just specify properties to be overridden
     getPetById: {
-      provides: (response) => [{ type: 'Pet', id: response.id }],
+      provides: (result) => (result ? [{ type: 'Pet', id: result.id }] : []),
     },
     findPetsByStatus: {
-      provides: (response) => [
-        { type: 'Pet', id: 'LIST' },
-        ...response.map((pet) => ({ type: 'Pet' as const, id: pet.id })),
-      ],
+      provides: (result) =>
+        result ? [{ type: 'Pet', id: 'LIST' }, ...result.map((pet) => ({ type: 'Pet' as const, id: pet.id }))] : [],
     },
     // alternate notation: callback that gets passed in `endpoint` - you can freely modify the object here
     addPet: (endpoint) => {
@@ -44,7 +42,7 @@ export const api = generatedApi.enhanceEndpoints({
       invalidates: (response) => [{ type: 'Pet', id: response.id }],
     },
     deletePet: {
-      invalidates: (_, arg) => [{ type: 'Pet', id: arg.petId }],
+      invalidates: (result, error, arg) => [{ type: 'Pet', id: arg.petId }],
     },
   },
 });

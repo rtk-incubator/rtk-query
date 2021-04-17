@@ -125,11 +125,11 @@ For RTK Query, _entities_ are just a name that you can give to a specific collec
 
 #### Provides
 
-A _query_ can _provide_ entities to the cache. The `provides` argument can both be an array of `string` (such as `['Posts']`), `{type: string, id?: string|number}` or a callback that returns such an array. That function will be passed the result as the first argument and the argument originally passed into the `query` method as the second argument.
+A _query_ can _provide_ entities to the cache. The `provides` argument can either be an array of `string` (such as `['Posts']`), `{type: string, id?: string|number}` or a callback that returns such an array. That function will be passed the result as the first argument, the response error as the second argument, and the argument originally passed into the `query` method as the third argument. Note that either result or error arguments may be undefined based on whether the query was successful or not.
 
 #### Invalidates
 
-A _mutation_ can _invalidate_ specific entities in the cache. The `invalidates` argument can both be an array of `string` (such as `['Posts']`), `{type: string, id?: string|number}` or a callback that returns such an array. That function will be passed the result as the first argument and the argument originally passed into the `query` method as the second argument.
+A _mutation_ can _invalidate_ specific entities in the cache. The `invalidates` argument can either be an array of `string` (such as `['Posts']`), `{type: string, id?: string|number}` or a callback that returns such an array. That function will be passed the result as the first argument, the response error as the second argument, and the argument originally passed into the `query` method as the second argument. Note that either result or error arguments may be undefined based on whether the query was successful or not.
 
 ### Scenarios and Behaviors
 
@@ -144,7 +144,7 @@ export const api = createApi({
   endpoints: (build) => ({
     getPosts: build.query<PostsResponse, void>({
       query: () => 'posts',
-      provides: (result) => [...result.map(({ id }) => ({ type: 'Posts', id }))],
+      provides: (result) => (result ? result.map(({ id }) => ({ type: 'Posts', id })) : []),
     }),
     addPost: build.mutation<Post, Partial<Post>>({
       query: (body) => ({
@@ -156,7 +156,7 @@ export const api = createApi({
     }),
     getPost: build.query<Post, number>({
       query: (id) => `posts/${id}`,
-      provides: (result, id) => [{ type: 'Posts', id }],
+      provides: (result, error, id) => (result ? [{ type: 'Posts', id }] : []),
     }),
   }),
 });
@@ -196,7 +196,8 @@ export const api = createApi({
   endpoints: (build) => ({
     getPosts: build.query<PostsResponse, void>({
       query: () => 'posts',
-      provides: (result) => [...result.map(({ id }) => ({ type: 'Posts', id })), { type: 'Posts', id: 'LIST' }],
+      provides: (result) =>
+        result ? [...result.map(({ id }) => ({ type: 'Posts', id })), { type: 'Posts', id: 'LIST' }] : [],
     }),
     addPost: build.mutation<Post, Partial<Post>>({
       query(body) {
@@ -210,7 +211,7 @@ export const api = createApi({
     }),
     getPost: build.query<Post, number>({
       query: (id) => `posts/${id}`,
-      provides: (_, id) => [{ type: 'Posts', id }],
+      provides: (result, error, id) => (result ? [{ type: 'Posts', id }] : []),
     }),
   }),
 });
@@ -270,7 +271,8 @@ export const postApi = createApi({
       // Provides a list of `Posts` by `id`.
       // If any mutation is executed that `invalidate`s any of these entities, this query will re-run to be always up-to-date.
       // The `LIST` id is a "virtual id" we just made up to be able to invalidate this query specifically if a new `Posts` element was added.
-      provides: (result) => [...result.map(({ id }) => ({ type: 'Posts', id })), { type: 'Posts', id: 'LIST' }],
+      provides: (result) =>
+        result ? [...result.map(({ id }) => ({ type: 'Posts', id })), { type: 'Posts', id: 'LIST' }] : [],
     }),
     addPost: build.mutation<Post, Partial<Post>>({
       query(body) {
@@ -286,7 +288,7 @@ export const postApi = createApi({
     }),
     getPost: build.query<Post, number>({
       query: (id) => `posts/${id}`,
-      provides: (_, id) => [{ type: 'Posts', id }],
+      provides: (result, error, id) => (result ? [{ type: 'Posts', id }] : []),
     }),
     updatePost: build.mutation<Post, Partial<Post>>({
       query(data) {
@@ -299,7 +301,7 @@ export const postApi = createApi({
       },
       // Invalidates all queries that subscribe to this Post `id` only.
       // In this case, `getPost` will be re-run. `getPosts` *might*  rerun, if this id was under it's results.
-      invalidates: (_, { id }) => [{ type: 'Posts', id }],
+      invalidates: (result, error, { id }) => [{ type: 'Posts', id }],
     }),
     deletePost: build.mutation<{ success: boolean; id: number }, number>({
       query(id) {
@@ -309,12 +311,18 @@ export const postApi = createApi({
         };
       },
       // Invalidates all queries that subscribe to this Post `id` only.
-      invalidates: (_, id) => [{ type: 'Posts', id }],
+      invalidates: (result, error, id) => [{ type: 'Posts', id }],
     }),
   }),
 });
 
-export const { useGetPostsQuery, useAddPostMutation, useGetPostQuery, useUpdatePostMutation, useDeletePostMutation } = api;
+export const {
+  useGetPostsQuery,
+  useAddPostMutation,
+  useGetPostQuery,
+  useUpdatePostMutation,
+  useDeletePostMutation,
+} = api;
 ```
 
 ### Example

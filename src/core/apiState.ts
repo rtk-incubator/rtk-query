@@ -101,6 +101,9 @@ export type MutationKeys<Definitions extends EndpointDefinitions> = {
 }[keyof Definitions];
 
 type BaseQuerySubState<D extends BaseEndpointDefinition<any, any, any>> = {
+  /**
+   * The argument originally passed into the hook or `initiate` action call
+   */
   originalArgs: QueryArgFrom<D>;
   /**
    * A unique ID associated with the request

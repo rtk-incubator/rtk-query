@@ -11,6 +11,34 @@ export interface CreateApiOptions<
 > {
   /**
    * The base query used by each endpoint if no `queryFn` option is specified. RTK Query exports a utility called [fetchBaseQuery](./fetchBaseQuery) as a lightweight wrapper around `fetch` for common use-cases.
+   *
+   * @example
+   *
+   * ```ts
+   * // codeblock-meta title="Simulating axios-like interceptors with a custom base query"
+   * const baseQuery = fetchBaseQuery({ baseUrl: '/' });
+   *
+   * const baseQueryWithReauth: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQueryError> = async (
+   *   args,
+   *   api,
+   *   extraOptions
+   * ) => {
+   *   let result = await baseQuery(args, api, extraOptions);
+   *   if (result.error && result.error.status === '401') {
+   *     // try to get a new token
+   *     const refreshResult = await baseQuery('/refreshToken', api, extraOptions);
+   *     if (refreshResult.data) {
+   *       // store the new token
+   *       api.dispatch(setToken(refreshResult.data));
+   *       // retry the initial query
+   *       result = await baseQuery(args, api, extraOptions);
+   *     } else {
+   *       api.dispatch(loggedOut());
+   *     }
+   *   }
+   *   return result;
+   * };
+   * ```
    */
   baseQuery: BaseQuery;
   /**
@@ -18,7 +46,30 @@ export interface CreateApiOptions<
    */
   entityTypes?: readonly EntityTypes[];
   /**
-   * The `reducerPath` is a _unique_ key that your service will be mounted to in your store. If you call `createApi` more than once in your application, you will need to provide a unique value each time. Defaults to `api`.
+   * The `reducerPath` is a _unique_ key that your service will be mounted to in your store. If you call `createApi` more than once in your application, you will need to provide a unique value each time. Defaults to `'api'`.
+   *
+   * @example
+   *
+   * ```js
+   * // codeblock-meta title="apis.js"
+   * import { createApi, fetchBaseQuery } from '@rtk-incubator/rtk-query';
+   *
+   * const apiOne = createApi({
+   *   reducerPath: 'apiOne',
+   *   baseQuery: fetchBaseQuery('/'),
+   *   endpoints: (builder) => ({
+   *     // ...endpoints
+   *   }),
+   * });
+   *
+   * const apiTwo = createApi({
+   *   reducerPath: 'apiTwo',
+   *   baseQuery: fetchBaseQuery('/'),
+   *   endpoints: (builder) => ({
+   *     // ...endpoints
+   *   }),
+   * });
+   * ```
    */
   reducerPath?: ReducerPath;
   /**
@@ -30,11 +81,11 @@ export interface CreateApiOptions<
    */
   endpoints(build: EndpointBuilder<BaseQuery, EntityTypes, ReducerPath>): Definitions;
   /**
-   * Defaults to 60 (this value is in seconds). This is how long RTK Query will keep your data cached for after the last component unsubscribes. For example, if you query an endpoint, then unmount the component, then mount another component that makes the same request within the given time frame, the most recent value will be served from the cache.
+   * Defaults to `60` _(this value is in seconds)_. This is how long RTK Query will keep your data cached for **after** the last component unsubscribes. For example, if you query an endpoint, then unmount the component, then mount another component that makes the same request within the given time frame, the most recent value will be served from the cache.
    */
   keepUnusedDataFor?: number;
   /**
-   * Defaults to `false`. This setting allows you to control whether RTK Query will only serve a cached result, or if it should `refetch` when set to `true` or if an adequate amount of time has passed since the last successful query result.
+   * Defaults to `false`. This setting allows you to control whether if a cached result is already available RTK Query will only serve a cached result, or if it should `refetch` when set to `true` or if an adequate amount of time has passed since the last successful query result.
    * - `false` - Will not cause a query to be performed _unless_ it does not exist yet.
    * - `true` - Will always refetch when a new subscriber to a query is added. Behaves the same as calling the `refetch` callback or passing `forceRefetch: true` in the action creator.
    * - `number` - **Value is in seconds**. If a number is provided and there is an existing query in the cache, it will compare the current time vs the last fulfilled timestamp, and only refetch if enough time has elapsed.

@@ -108,11 +108,11 @@ interface QueryExtraOptions<
 > {
   type: DefinitionType.query;
   /**
-   * Used by `queries` to provide entities to the cache.
-   * Expects an array of entity type strings, or an array of objects of entity types with ids.
-   * 1.  `['Post']` - equivalent to `ii`
-   * 2.  `[{ type: 'Post' }]` - equivalent to `i`
-   * 3.  `[{ type: 'Post', id: 1 }]`
+   * - Used by `queries` to provide entities to the cache.
+   * - Expects an array of entity type strings, or an array of objects of entity types with ids.
+   *   1.  `['Post']` - equivalent to `b`
+   *   2.  `[{ type: 'Post' }]` - equivalent to `a`
+   *   3.  `[{ type: 'Post', id: 1 }]`
    */
   provides?: ResultDescription<EntityTypes, ResultType, QueryArg, BaseQueryError<BaseQuery>>;
   /**
@@ -172,11 +172,17 @@ export interface MutationApi<ReducerPath extends string, Context extends {}> {
    * A method to get the current state
    */
   getState(): RootState<any, any, ReducerPath>;
+  /**
+   * `extra` as provided as `thunk.extraArgument` to the `configureStore` `getDefaultMiddleware` option.
+   */
   extra: unknown;
   /**
    * A unique ID generated for the mutation
    */
   requestId: string;
+  /**
+   * A variable shared between `onStart`, `onError` and `onSuccess` of one request to pass data forward between them
+   */
   context: Context;
 }
 
@@ -190,8 +196,8 @@ interface MutationExtraOptions<
 > {
   type: DefinitionType.mutation;
   /**
-   * Used by `mutations` for [cache invalidation](../concepts/mutations#advanced-mutations-with-revalidation) purposes.
-   * Expects the same shapes as `provides`
+   * - Used by `mutations` for [cache invalidation](../concepts/mutations#advanced-mutations-with-revalidation) purposes.
+   * - Expects the same shapes as `provides`.
    */
   invalidates?: ResultDescription<EntityTypes, ResultType, QueryArg, BaseQueryError<BaseQuery>>;
   /**

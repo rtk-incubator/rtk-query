@@ -20,6 +20,9 @@ export type RefetchConfigOptions = {
   refetchOnFocus: boolean;
 };
 
+/**
+ * Strings describing the query state at any given time.
+ */
 export enum QueryStatus {
   uninitialized = 'uninitialized',
   pending = 'pending',
@@ -126,9 +129,9 @@ type BaseMutationSubState<D extends BaseEndpointDefinition<any, any, any>> = {
 };
 
 export type MutationSubState<D extends BaseEndpointDefinition<any, any, any>> =
-  | ({
+  | (({
       status: QueryStatus.fulfilled;
-    } & WithRequiredProp<BaseMutationSubState<D>, 'data' | 'fulfilledTimeStamp'>)
+    } & WithRequiredProp<BaseMutationSubState<D>, 'data' | 'fulfilledTimeStamp'>) & { error: undefined })
   | ({
       status: QueryStatus.pending;
     } & BaseMutationSubState<D>)

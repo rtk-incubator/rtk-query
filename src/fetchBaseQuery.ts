@@ -59,8 +59,25 @@ export type FetchBaseQueryArgs = {
   fetchFn?: (input: RequestInfo, init?: RequestInit | undefined) => Promise<Response>;
 } & RequestInit;
 
+export type FetchBaseQueryMeta = { request: Request; response: Response };
+
 /**
  * This is a very small wrapper around fetch that aims to simplify requests.
+ *
+ * @example
+ * ```ts
+ * const baseQuery = fetchBaseQuery({
+ *   baseUrl: 'https://api.your-really-great-app.com/v1/',
+ *   prepareHeaders: (headers, { getState }) => {
+ *     const token = (getState() as RootState).auth.token;
+ *     // If we have a token set in state, let's assume that we should be passing it.
+ *     if (token) {
+ *       headers.set('authorization', `Bearer ${token}`);
+ *     }
+ *     return headers;
+ *   },
+ * })
+ * ```
  *
  * @param {string} baseUrl
  * The base URL for an API service.
@@ -83,7 +100,7 @@ export function fetchBaseQuery({
   prepareHeaders = (x) => x,
   fetchFn = fetch,
   ...baseFetchOptions
-}: FetchBaseQueryArgs = {}): BaseQueryFn<string | FetchArgs, unknown, FetchBaseQueryError, {}> {
+}: FetchBaseQueryArgs = {}): BaseQueryFn<string | FetchArgs, unknown, FetchBaseQueryError, {}, FetchBaseQueryMeta> {
   return async (arg, { signal, getState }) => {
     let {
       url,
@@ -105,12 +122,15 @@ export function fetchBaseQuery({
 
     config.headers = await prepareHeaders(new Headers(stripUndefined(headers)), { getState });
 
-    // Only set the content-type to json if there is an object that is not FormData()
-    if (!config.headers.has('content-type') && body && typeof body === 'object' && typeof body.append !== 'function') {
+    // Only set the content-type to json if appropriate. Will not be true for FormData, ArrayBuffer, Blob, etc.
+    const isJsonifiable = (body: any) =>
+      typeof body === 'object' && (isPlainObject(body) || Array.isArray(body) || typeof body.toJSON === 'function');
+
+    if (!config.headers.has('content-type') && isJsonifiable(body)) {
       config.headers.set('content-type', 'application/json');
     }
 
-    if (body && isPlainObject(body) && isJsonContentType(config.headers)) {
+    if (body && isJsonContentType(config.headers)) {
       config.body = JSON.stringify(body);
     }
 
@@ -122,11 +142,27 @@ export function fetchBaseQuery({
 
     url = joinUrls(baseUrl, url);
 
-    const response = await fetchFn(url, config);
+    const request = new Request(url, config);
+    const requestClone = request.clone();
+
+    const response = await fetchFn(request);
+    const responseClone = response.clone();
+
+    const meta = { request: requestClone, response: responseClone };
+
     const resultData = await handleResponse(response, responseHandler);
 
     return validateStatus(response, resultData)
-      ? { data: resultData }
-      : { error: { status: response.status, data: resultData } };
+      ? {
+          data: resultData,
+          meta,
+        }
+      : {
+          error: {
+            status: response.status,
+            data: resultData,
+          },
+          meta,
+        };
   };
 }

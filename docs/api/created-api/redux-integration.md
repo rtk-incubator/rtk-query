@@ -1,9 +1,51 @@
-#### reducerPath
+---
+id: redux-integration
+title: 'API Slices: Redux Integration'
+sidebar_label: Redux Integration
+hide_title: true
+---
 
-#### reducer
+# API Slices: Redux Integration
 
-A standard redux reducer that enables core functionality. Make sure it's [included in your store](../../introduction/getting-started#add-the-service-to-your-store).
+Internally, `createApi` will call [the Redux Toolkit `createSlice` API](https://redux-toolkit.js.org/api/createSlice) to generate a slice reducer and corresponding action creators with the appropriate logic for caching fetched data. It also automatically generates a custom Redux middleware that manages subscription counts and cache lifetimes.
 
-#### middleware
+The generated slice reducer and the middleware both need to be adding to your Redux store setup in `configureStore` in order to work correctly:
 
-This is a standard redux middleware and is responsible for things like [polling](../../concepts/polling), [garbage collection](#keepunuseddatafor) and a handful of other things. Make sure it's [included in your store](../../introduction/getting-started#add-the-service-to-your-store).
+```ts title="src/store.ts"
+import { configureStore, setupListeners } from '@reduxjs/toolkit';
+import { pokemonApi } from './services/pokemon';
+
+export const store = configureStore({
+  reducer: {
+    // Add the generated reducer as a specific top-level slice
+    [pokemonApi.reducerPath]: pokemonApi.reducer,
+  },
+  // Adding the api middleware enables caching, invalidation, polling,
+  // and other useful features of `rtk-query`.
+  middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(pokemonApi.middleware),
+});
+```
+
+## `reducerPath`
+
+```ts
+reducerPath: string;
+```
+
+Contains the `reducerPath` option provided to `createApi`. Use this as the root state key when adding the `reducer` function to the store so that the rest of the generated API logic can find the state correctly.
+
+## `reducer`
+
+```ts
+reducer: Reducer;
+```
+
+A standard Redux slice reducer function containing the logic for updating the cached data. Add this to the Redux store using the `reducerPath` you provided as the root state key.
+
+## `middleware`
+
+```ts
+middleware: Middleware;
+```
+
+A custom Redux middleware that contains logic for managing caching, invalidation, subscriptions, polling, and more. Add this to the store setup after other middleware.

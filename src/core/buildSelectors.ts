@@ -24,7 +24,7 @@ declare module './module' {
     Definition extends QueryDefinition<any, any, any, any, any>,
     Definitions extends EndpointDefinitions
   > {
-    select: QueryResultSelector<
+    select: QueryResultSelectorFactory<
       Definition,
       _RootState<Definitions, EntityTypesFrom<Definition>, ReducerPathFrom<Definition>>
     >;
@@ -34,14 +34,14 @@ declare module './module' {
     Definition extends MutationDefinition<any, any, any, any, any>,
     Definitions extends EndpointDefinitions
   > {
-    select: MutationResultSelector<
+    select: MutationResultSelectorFactory<
       Definition,
       _RootState<Definitions, EntityTypesFrom<Definition>, ReducerPathFrom<Definition>>
     >;
   }
 }
 
-type QueryResultSelector<Definition extends QueryDefinition<any, any, any, any>, RootState> = (
+type QueryResultSelectorFactory<Definition extends QueryDefinition<any, any, any, any>, RootState> = (
   queryArg: QueryArgFrom<Definition> | typeof skipSelector
 ) => (state: RootState) => QueryResultSelectorResult<Definition>;
 
@@ -49,7 +49,7 @@ export type QueryResultSelectorResult<
   Definition extends QueryDefinition<any, any, any, any>
 > = QuerySubState<Definition> & RequestStatusFlags;
 
-type MutationResultSelector<Definition extends MutationDefinition<any, any, any, any>, RootState> = (
+type MutationResultSelectorFactory<Definition extends MutationDefinition<any, any, any, any>, RootState> = (
   requestId: string | typeof skipSelector
 ) => (state: RootState) => MutationSubState<Definition> & RequestStatusFlags;
 
@@ -86,7 +86,7 @@ export function buildSelectors<InternalQueryArgs, Definitions extends EndpointDe
   function buildQuerySelector(
     endpointName: string,
     endpointDefinition: QueryDefinition<any, any, any, any>
-  ): QueryResultSelector<any, RootState> {
+  ): QueryResultSelectorFactory<any, RootState> {
     return (queryArgs) => {
       const selectQuerySubState = createSelector(
         selectInternalState,
@@ -100,7 +100,7 @@ export function buildSelectors<InternalQueryArgs, Definitions extends EndpointDe
     };
   }
 
-  function buildMutationSelector(): MutationResultSelector<any, RootState> {
+  function buildMutationSelector(): MutationResultSelectorFactory<any, RootState> {
     return (mutationId) => {
       const selectMutationSubstate = createSelector(
         selectInternalState,

@@ -23,7 +23,7 @@ This section documents the contents of that API structure.
 - [`util`](#util)
 - [`injectEndpoints`](#injectendpoints)
 - [`enhanceEndpoints`](#enhanceendpoints)
-- [`usePrefetch`](../concepts/prefetching#prefetching-with-react-hooks)
+- [`usePrefetch`](../../concepts/prefetching#prefetching-with-react-hooks)
 - [`Auto-generated hooks`](#auto-generated-hooks)
 
 ```ts title="All returned properties"

@@ -1,1 +1,1 @@
-- **prefetchThunk** - used for [prefetching](../concepts/prefetching).
+- **prefetchThunk** - used for [prefetching](../../../concepts/prefetching).

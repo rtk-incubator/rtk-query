@@ -209,4 +209,4 @@ If you specify `track: false` when manually dispatching queries, RTK Query will 
 
 ## Return value
 
-See [the "created Api" API reference](../created-api/overview)
+See [the "created Api" API reference](./created-api/overview)

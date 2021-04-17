@@ -33,16 +33,11 @@ module.exports = {
           type: 'category',
           label: 'Exports',
           collapsed: false,
-          items: [
-            'api/exports/createApi',
-            'api/exports/fetchBaseQuery',
-            'api/exports/ApiProvider',
-            'api/exports/setupListeners',
-          ],
+          items: ['api/createApi', 'api/fetchBaseQuery', 'api/ApiProvider', 'api/setupListeners'],
         },
         {
           type: 'category',
-          label: 'Api created by createApi',
+          label: 'Generated API Structures',
           collapsed: false,
           items: [
             'api/created-api/overview',

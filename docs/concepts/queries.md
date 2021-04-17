@@ -9,7 +9,7 @@ hide_title: true
 
 This is the most basic feature of RTK Query. A query operation can be performed with any data fetching library of your choice, but the general recommendation is that you only use queries for requests that retrieve data. For anything that alters data on the server or will possibly invalidate the cache, you should use a [Mutation](./mutations).
 
-By default, RTK Query ships with [`fetchBaseQuery`](../api/exports/fetchBaseQuery), which is a lightweight [`fetch`](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API) wrapper that automatically handles request headers and response parsing in a manner similar to common libraries like `axios`.
+By default, RTK Query ships with [`fetchBaseQuery`](../api/fetchBaseQuery), which is a lightweight [`fetch`](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API) wrapper that automatically handles request headers and response parsing in a manner similar to common libraries like `axios`.
 
 > Depending on your environment, you may need to polyfill `fetch` with `node-fetch` or `cross-fetch` if you choose to use `fetchBaseQuery` or `fetch` on its own.
 
@@ -54,11 +54,11 @@ There are 3 query-related hooks:
 - [skip](./conditional-fetching) - Defaults to `false`
 - [pollingInterval](./polling) - Defaults to `0` _(off)_
 - [selectFromResult](#selecting-data-from-a-query-result) - Optional, allows you to return a subset of a query
-- [refetchOnMountOrArgChange](../api/exports/createApi#refetchonmountorargchange) - Defaults to `false`
-- [refetchOnFocus](../api/exports/createApi#refetchonfocus) - Defaults to `false`
-- [refetchOnReconnect](../api/exports/createApi#refetchonreconnect) - Defaults to `false`
+- [refetchOnMountOrArgChange](../api/createApi#refetchonmountorargchange) - Defaults to `false`
+- [refetchOnFocus](../api/createApi#refetchonfocus) - Defaults to `false`
+- [refetchOnReconnect](../api/createApi#refetchonreconnect) - Defaults to `false`
 
-> All `refetch`-related options will override the defaults you may have set in [createApi](../api/exports/createApi)
+> All `refetch`-related options will override the defaults you may have set in [createApi](../api/createApi)
 
 #### Query Hook Return Types
 
@@ -111,7 +111,7 @@ The way that this component is setup would have some nice traits:
    - **Initial load** is defined as a query that is pending and does not have data in the cache
 
 2. When the request is re-triggered by the polling interval, it will add '...refetching' to the post name
-3. If a user closed this `PostDetail`, but then re-opened it within [the allowed time](../api/exports/createApi#keepunuseddatafor), they would immediately be served a cached result and polling would resume with the previous behavior.
+3. If a user closed this `PostDetail`, but then re-opened it within [the allowed time](../api/createApi#keepunuseddatafor), they would immediately be served a cached result and polling would resume with the previous behavior.
 
 ### Selecting data from a query result
 

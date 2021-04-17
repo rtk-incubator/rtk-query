@@ -33,7 +33,7 @@ module.exports = {
           position: 'right',
         },
         {
-          to: 'api/exports/createApi',
+          to: 'api/createApi',
           label: 'API',
           position: 'right',
         },
@@ -59,7 +59,7 @@ module.exports = {
               to: '/introduction/getting-started',
             },
             { label: 'Video Overview', to: '/introduction/video-overview' },
-            { label: 'API Reference', to: '/api/exports/createApi' },
+            { label: 'API Reference', to: '/api/createApi' },
             { label: 'Examples', to: '/examples/examples-overview' },
           ],
         },

@@ -1,6 +1,19 @@
-- [`reducerPath`](./redux=integration#reducerpath)
-- [`reducer`](./redux=integration#reducer)
-- [`middleware`](./redux=integration#middleware)
+---
+id: overview
+title: Overview
+sidebar_label: Overview
+hide_title: true
+---
+
+# Generated API Structures
+
+When you call [`createApi`](../createApi.md), it automatically generates and returns a structure containing Redux logic you can use to interact with the endpoints you defined. This structure includes a reducer to manage cached data, a middleware to manage cache lifetimes and subscriptions, and selectors and thunks for each endpoint. If you imported `createApi` from the React-specific entry point, it also includes auto-generated React hooks for use in your components.
+
+This section documents the contents of that API structure.
+
+- [`reducerPath`](./redux-integration#reducerpath)
+- [`reducer`](./redux-integration#reducer)
+- [`middleware`](./redux-integration#middleware)
 - [`endpoints`](./endpoints/overview)
   - **[endpointName]**
     - [`initiate`](./endpoints/initiate)
@@ -34,7 +47,7 @@ export const {
 } = api;
 ```
 
-#### hooks
+## Hooks
 
 Hooks are specifically for React Hooks users. Under each `api.endpoint.[endpointName]`, you will have `useQuery` or `useMutation` depending on the type. For example, if you had `getPosts` and `updatePost`, these options would be available:
 

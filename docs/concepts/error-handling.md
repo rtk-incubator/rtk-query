@@ -7,7 +7,7 @@ hide_title: true
 
 # `Error Handling`
 
-If your query or mutation happens to throw an error when using [fetchBaseQuery](../api/exports/fetchBaseQuery), it will be returned in the `error` property of the respective hook.
+If your query or mutation happens to throw an error when using [fetchBaseQuery](../api/fetchBaseQuery), it will be returned in the `error` property of the respective hook.
 
 ```ts title="Query Error"
 function PostsList() {
@@ -108,7 +108,7 @@ const api = createApi({
 });
 ```
 
-Ultimately, you can choose whatever library you prefer to use with your `baseQuery`, but it's important that you return the correct response format. If you haven't tried [`fetchBaseQuery`](../api/exports/fetchBaseQuery) yet, give it a chance!
+Ultimately, you can choose whatever library you prefer to use with your `baseQuery`, but it's important that you return the correct response format. If you haven't tried [`fetchBaseQuery`](../api/fetchBaseQuery) yet, give it a chance!
 
 ## Retrying on Error
 

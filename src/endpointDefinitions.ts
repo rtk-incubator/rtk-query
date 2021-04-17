@@ -76,10 +76,25 @@ type ResultDescription<EntityTypes extends string, ResultType, QueryArg, ErrorTy
   | GetResultDescriptionFn<EntityTypes, ResultType, QueryArg, ErrorType>;
 
 export interface QueryApi<ReducerPath extends string, Context extends {}> {
+  /**
+   * The dispatch method for the store
+   */
   dispatch: ThunkDispatch<any, any, AnyAction>;
+  /**
+   * A method to get the current state
+   */
   getState(): RootState<any, any, ReducerPath>;
+  /**
+   * `extra` as provided as `thunk.extraArgument` to the `configureStore` `getDefaultMiddleware` option.
+   */
   extra: unknown;
+  /**
+   * A unique ID generated for the mutation
+   */
   requestId: string;
+  /**
+   * A variable shared between `onStart`, `onError` and `onSuccess` of one request to pass data forward between them
+   */
   context: Context;
 }
 
@@ -93,21 +108,43 @@ interface QueryExtraOptions<
 > {
   type: DefinitionType.query;
   /**
-   * Used by `queries` to provide entities to the cache
-   * Expects an array of entity type strings, or an array of objects of entity types with ids.
-   * 1.  `['Post']` - equivalent to `b`
-   * 2.  `[{ type: 'Post' }]` - equivalent to `a`
-   * 3.  `[{ type: 'Post', id: 1 }]`
+   * - Used by `queries` to provide entities to the cache.
+   * - Expects an array of entity type strings, or an array of objects of entity types with ids.
+   *   1.  `['Post']` - equivalent to `b`
+   *   2.  `[{ type: 'Post' }]` - equivalent to `a`
+   *   3.  `[{ type: 'Post', id: 1 }]`
    */
   provides?: ResultDescription<EntityTypes, ResultType, QueryArg, BaseQueryError<BaseQuery>>;
+  /**
+   * Not to be used. A query should not invalidate entities in the cache.
+   */
   invalidates?: never;
+  /**
+   * Called when the query is triggered.
+   * @param arg - The argument supplied to the query
+   * @param queryApi - An object containing `dispatch`, `getState()`, `extra`, `request`Id`, `context`
+   */
   onStart?(arg: QueryArg, queryApi: QueryApi<ReducerPath, Context>): void;
+  /**
+   * Called when an error response is returned by the query.
+   * @param arg - The argument supplied to the query
+   * @param queryApi - A query API containing `dispatch`, `getState()`, `extra`, `request`Id`, `context`
+   * @param error - The error returned by the query
+   * @param meta - Meta item from the base query
+   */
   onError?(
     arg: QueryArg,
     queryApi: QueryApi<ReducerPath, Context>,
     error: unknown,
     meta: BaseQueryMeta<BaseQuery>
   ): void;
+  /**
+   * Called when a successful response is returned by the query.
+   * @param arg - The argument supplied to the query
+   * @param queryApi - A query API containing `dispatch`, `getState()`, `extra`, `request`Id`, `context`
+   * @param result - The response returned by the query
+   * @param meta - Meta item from the base query
+   */
   onSuccess?(
     arg: QueryArg,
     queryApi: QueryApi<ReducerPath, Context>,
@@ -127,10 +164,25 @@ export type QueryDefinition<
   QueryExtraOptions<EntityTypes, ResultType, QueryArg, BaseQuery, ReducerPath, Context>;
 
 export interface MutationApi<ReducerPath extends string, Context extends {}> {
+  /**
+   * The dispatch method for the store
+   */
   dispatch: ThunkDispatch<any, any, AnyAction>;
+  /**
+   * A method to get the current state
+   */
   getState(): RootState<any, any, ReducerPath>;
+  /**
+   * `extra` as provided as `thunk.extraArgument` to the `configureStore` `getDefaultMiddleware` option.
+   */
   extra: unknown;
+  /**
+   * A unique ID generated for the mutation
+   */
   requestId: string;
+  /**
+   * A variable shared between `onStart`, `onError` and `onSuccess` of one request to pass data forward between them
+   */
   context: Context;
 }
 
@@ -144,18 +196,40 @@ interface MutationExtraOptions<
 > {
   type: DefinitionType.mutation;
   /**
-   * Used by `mutations` for [cache invalidation](../concepts/mutations#advanced-mutations-with-revalidation) purposes.
-   * Expects the same shapes as `provides`
+   * - Used by `mutations` for [cache invalidation](../concepts/mutations#advanced-mutations-with-revalidation) purposes.
+   * - Expects the same shapes as `provides`.
    */
   invalidates?: ResultDescription<EntityTypes, ResultType, QueryArg, BaseQueryError<BaseQuery>>;
+  /**
+   * Not to be used. A mutation should not provide entities to the cache.
+   */
   provides?: never;
+  /**
+   * Called when the mutation is triggered.
+   * @param arg - The argument supplied to the query
+   * @param mutationApi - An object containing `dispatch`, `getState()`, `extra`, `request`Id`, `context`
+   */
   onStart?(arg: QueryArg, mutationApi: MutationApi<ReducerPath, Context>): void;
+  /**
+   * Called when an error response is returned by the mutation.
+   * @param arg - The argument supplied to the query
+   * @param mutationApi - A mutation API containing `dispatch`, `getState()`, `extra`, `request`Id`, `context`
+   * @param error - The error returned by the mutation
+   * @param meta - Meta item from the base query
+   */
   onError?(
     arg: QueryArg,
     mutationApi: MutationApi<ReducerPath, Context>,
     error: unknown,
     meta: BaseQueryMeta<BaseQuery>
   ): void;
+  /**
+   * Called when a successful response is returned by the mutation.
+   * @param arg - The argument supplied to the query
+   * @param mutationApi - A mutation API containing `dispatch`, `getState()`, `extra`, `request`Id`, `context`
+   * @param result - The response returned by the mutation
+   * @param meta - Meta item from the base query
+   */
   onSuccess?(
     arg: QueryArg,
     mutationApi: MutationApi<ReducerPath, Context>,
@@ -197,9 +271,58 @@ export function isMutationDefinition(
 }
 
 export type EndpointBuilder<BaseQuery extends BaseQueryFn, EntityTypes extends string, ReducerPath extends string> = {
+  /**
+   * An endpoint definition that retrieves data, and may provide entities to the cache.
+   *
+   * @example
+   * ```js
+   * // codeblock-meta title="Example of all query endpoint options"
+   * const api = createApi({
+   *  baseQuery,
+   *  endpoints: (build) => ({
+   *    getPost: build.query({
+   *      query: (id) => ({ url: `post/${id}` }),
+   *      // Pick out data and prevent nested properties in a hook or selector
+   *      transformResponse: (response) => response.data,
+   *      // The 2nd parameter is the destructured `queryApi`
+   *      onStart(id, { dispatch, getState, extra, requestId, context }) {},
+   *      // `result` is the server response
+   *      onSuccess(id, queryApi, result) {},
+   *      onError(id, queryApi) {},
+   *      provides: (result, error, id) => [{ type: 'Post', id }],
+   *    }),
+   *  }),
+   *});
+   *```
+   */
   query<ResultType, QueryArg>(
     definition: OmitFromUnion<QueryDefinition<QueryArg, BaseQuery, EntityTypes, ResultType>, 'type'>
   ): QueryDefinition<QueryArg, BaseQuery, EntityTypes, ResultType>;
+  /**
+   * An endpoint definition that alters data on the server or will possibly invalidate the cache.
+   *
+   * @example
+   * ```js
+   * // codeblock-meta title="Example of all mutation endpoint options"
+   * const api = createApi({
+   *   baseQuery,
+   *   endpoints: (build) => ({
+   *     updatePost: build.mutation({
+   *       query: ({ id, ...patch }) => ({ url: `post/${id}`, method: 'PATCH', body: patch }),
+   *       // Pick out data and prevent nested properties in a hook or selector
+   *       transformResponse: (response) => response.data,
+   *       // onStart, onSuccess, onError are useful for optimistic updates
+   *       // The 2nd parameter is the destructured `mutationApi`
+   *       onStart({ id, ...patch }, { dispatch, getState, extra, requestId, context }) {},
+   *       // `result` is the server response
+   *       onSuccess({ id }, mutationApi, result) {},
+   *       onError({ id }, { dispatch, getState, extra, requestId, context }) {},
+   *       invalidates: (result, error, id) => [{ type: 'Post', id }],
+   *     }),
+   *   }),
+   * });
+   * ```
+   */
   mutation<ResultType, QueryArg, Context = Record<string, any>>(
     definition: OmitFromUnion<
       MutationDefinition<QueryArg, BaseQuery, EntityTypes, ResultType, ReducerPath, Context>,

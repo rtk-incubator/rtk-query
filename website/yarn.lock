@@ -8418,10 +8418,10 @@ remark-squeeze-paragraphs@4.0.0:
   dependencies:
     mdast-squeeze-paragraphs "^4.0.0"
 
-remark-typescript-tools@^1.0.4:
-  version "1.0.4"
-  resolved "https://registry.yarnpkg.com/remark-typescript-tools/-/remark-typescript-tools-1.0.4.tgz#387ea0beab3502e59a1c70b1579f48e432b8c66d"
-  integrity sha512-bRDtrMve5riKqhz8hHE3ha/lmA72SVfml/R2ueF9MfJFnsluKwmt6pUORipnx6h3BGzFV55nPOW+vqEnT3FRww==
+remark-typescript-tools@1.0.5:
+  version "1.0.5"
+  resolved "https://registry.yarnpkg.com/remark-typescript-tools/-/remark-typescript-tools-1.0.5.tgz#c8da5064095d48f9e2cfc68f714c9d22e0316fba"
+  integrity sha512-ceLIYRXfwlF3MB6yY6rdYmG9Uq1PgxzYuPDMuQkkmgiuZRiVhhkQsS+sM2hnXDQ6YHHXdBL/9tlhFTH4APfQXw==
   dependencies:
     "@microsoft/tsdoc" "^0.12.21"
     prettier "^2.1.1"

@@ -26,7 +26,7 @@ const api = createApi({
       // `result` is the server response
       onSuccess(id, queryApi, result) {},
       onError(id, queryApi) {},
-      provides: (result, error, id) => (result ? [{ type: 'Post', id }] : []),
+      provides: (result, error, id) => [{ type: 'Post', id }],
     }),
   }),
 });

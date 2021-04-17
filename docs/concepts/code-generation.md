@@ -28,11 +28,16 @@ export const api = generatedApi.enhanceEndpoints({
   endpoints: {
     // basic notation: just specify properties to be overridden
     getPetById: {
-      provides: (result) => (result ? [{ type: 'Pet', id: result.id }] : []),
+      provides: (result, error, arg) => (result ? [{ type: 'Pet', id: arg.petId }] : []),
     },
     findPetsByStatus: {
       provides: (result) =>
-        result ? [{ type: 'Pet', id: 'LIST' }, ...result.map((pet) => ({ type: 'Pet' as const, id: pet.id }))] : [],
+        // is result available?
+        result ? 
+          // successful query
+          [{ type: 'Pet', id: 'LIST' }, ...result.map((pet) => ({ type: 'Pet' as const, id: pet.id }))] : 
+          // an error occured, but we still want to refetch this query when `{ type: 'Pet', id: 'LIST' }` is invalidated
+          [{ type: 'Pet', id: 'LIST' }],
     },
     // alternate notation: callback that gets passed in `endpoint` - you can freely modify the object here
     addPet: (endpoint) => {

@@ -72,7 +72,7 @@ export function getRequestStatusFlags(status: QueryStatus): RequestStatusFlags {
 
 export type SubscriptionOptions = {
   /**
-   * How frequently to automatically re-fetch data. Defaults to `0` (off).
+   * How frequently to automatically re-fetch data (in milliseconds). Defaults to `0` (off).
    */
   pollingInterval?: number;
   /**

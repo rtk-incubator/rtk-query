@@ -129,7 +129,7 @@ A _query_ can _provide_ entities to the cache. The `provides` argument can eithe
 
 #### Invalidates
 
-A _mutation_ can _invalidate_ specific entities in the cache. The `invalidates` argument can either be an array of `string` (such as `['Posts']`), `{type: string, id?: string|number}` or a callback that returns such an array. That function will be passed the result as the first argument, the response error as the second argument, and the argument originally passed into the `query` method as the second argument. Note that either result or error arguments may be undefined based on whether the query was successful or not.
+A _mutation_ can _invalidate_ specific entities in the cache. The `invalidates` argument can either be an array of `string` (such as `['Posts']`), `{type: string, id?: string|number}` or a callback that returns such an array. That function will be passed the result as the first argument, the response error as the second argument, and the argument originally passed into the `query` method as the second argument. Note that either result or error arguments may be undefined based on whether the mutation was successful or not.
 
 ### Scenarios and Behaviors
 
@@ -272,7 +272,12 @@ export const postApi = createApi({
       // If any mutation is executed that `invalidate`s any of these entities, this query will re-run to be always up-to-date.
       // The `LIST` id is a "virtual id" we just made up to be able to invalidate this query specifically if a new `Posts` element was added.
       provides: (result) =>
-        result ? [...result.map(({ id }) => ({ type: 'Posts', id })), { type: 'Posts', id: 'LIST' }] : [],
+      // is result available?
+      result ? 
+        // successful query
+        [...result.map(({ id }) => ({ type: 'Posts', id })), { type: 'Posts', id: 'LIST' }] : 
+        // an error occured, but we still want to refetch this query when `{ type: 'Posts', id: 'LIST' }` is invalidated
+        [{ type: 'Posts', id: 'LIST' }],
     }),
     addPost: build.mutation<Post, Partial<Post>>({
       query(body) {
@@ -288,7 +293,7 @@ export const postApi = createApi({
     }),
     getPost: build.query<Post, number>({
       query: (id) => `posts/${id}`,
-      provides: (result, error, id) => (result ? [{ type: 'Posts', id }] : []),
+      provides: (result, error, id) => [{ type: 'Posts', id }],
     }),
     updatePost: build.mutation<Post, Partial<Post>>({
       query(data) {

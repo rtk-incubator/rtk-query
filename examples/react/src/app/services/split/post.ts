@@ -14,7 +14,7 @@ export const apiWithPost = emptySplitApi.injectEndpoints({
     }),
     getPost: build.query<Post, number>({
       query: (id) => `posts/${id}`,
-      provides: (result, error, id) => (result ? [{ type: 'Posts', id }] : []),
+      provides: (result, error, id) => [{ type: 'Posts', id }],
     }),
     updatePost: build.mutation<Post, Partial<Post>>({
       query(data) {

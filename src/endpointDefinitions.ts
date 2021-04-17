@@ -89,6 +89,9 @@ export interface QueryApi<ReducerPath extends string, Context extends {}> {
    * A unique ID generated for the mutation
    */
   requestId: string;
+  /**
+  * A variable shared between `onStart`, `onError` and `onSuccess` of one request to pass data forward between them
+  */
   context: Context;
 }
 
@@ -277,7 +280,7 @@ export type EndpointBuilder<BaseQuery extends BaseQueryFn, EntityTypes extends s
    *      // `result` is the server response
    *      onSuccess(id, queryApi, result) {},
    *      onError(id, queryApi) {},
-   *      provides: (result, error, id) => (result ? [{ type: 'Post', id }] : []),
+   *      provides: (result, error, id) => [{ type: 'Post', id }],
    *    }),
    *  }),
    *});
@@ -305,7 +308,7 @@ export type EndpointBuilder<BaseQuery extends BaseQueryFn, EntityTypes extends s
    *       // `result` is the server response
    *       onSuccess({ id }, mutationApi, result) {},
    *       onError({ id }, { dispatch, getState, extra, requestId, context }) {},
-   *       invalidates: ['Post'],
+   *       invalidates: (result, error, id) => [{ type: 'Post', id }],
    *     }),
    *   }),
    * });

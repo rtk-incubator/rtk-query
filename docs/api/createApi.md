@@ -29,30 +29,7 @@ The main point where you will define a service to use in your application.
 
 [summary](docblock://createApi.ts?token=CreateApiOptions.baseQuery)
 
-```ts title="Simulating axios-like interceptors with a custom base query"
-const baseQuery = fetchBaseQuery({ baseUrl: '/' });
-
-const baseQueryWithReauth: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQueryError> = async (
-  args,
-  api,
-  extraOptions
-) => {
-  let result = await baseQuery(args, api, extraOptions);
-  if (result.error && result.error.status === '401') {
-    // try to get a new token
-    const refreshResult = await baseQuery('/refreshToken', api, extraOptions);
-    if (refreshResult.data) {
-      // store the new token
-      api.dispatch(setToken(refreshResult.data));
-      // retry the initial query
-      result = await baseQuery(args, api, extraOptions);
-    } else {
-      api.dispatch(loggedOut());
-    }
-  }
-  return result;
-};
-```
+[examples](docblock://createApi.ts?token=CreateApiOptions.baseQuery)
 
 ### `entityTypes`
 
@@ -62,29 +39,12 @@ const baseQueryWithReauth: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQue
 
 [summary](docblock://createApi.ts?token=CreateApiOptions.reducerPath)
 
-```js title="apis.js"
-import { createApi, fetchBaseQuery } from '@rtk-incubator/rtk-query';
-
-const apiOne = createApi({
-  reducerPath: 'apiOne',
-  baseQuery: fetchBaseQuery('/'),
-  endpoints: (builder) => ({
-    // ...endpoints
-  }),
-});
-
-const apiTwo = createApi({
-  reducerPath: 'apiTwo',
-  baseQuery: fetchBaseQuery('/'),
-  endpoints: (builder) => ({
-    // ...endpoints
-  }),
-});
-```
+[examples](docblock://createApi.ts?token=CreateApiOptions.reducerPath)
 
 ### `serializeQueryArgs`
 
-[summary](docblock://createApi.ts?token=CreateApiOptions.reducerPath)
+[summary](docblock://createApi.ts?token=CreateApiOptions.serializeQueryArgs)
+
 Defaults to:
 
 ```ts no-compile
@@ -147,7 +107,7 @@ const api = createApi({
   endpoints: (build) => ({
     getPosts: build.query<PostsResponse, void>({
       query: () => 'posts',
-      provides: (result) => result.map(({ id }) => ({ type: 'Posts', id })),
+      provides: (result) => result ? result.map(({ id }) => ({ type: 'Posts', id })) : [],
     }),
     addPost: build.mutation<Post, Partial<Post>>({
       query: (body) => ({
@@ -217,17 +177,11 @@ export const api = createApi({
 
 ### `keepUnusedDataFor`
 
-Defaults to `60` _(this value is in seconds)_. This is how long RTK Query will keep your data cached for **after** the last component unsubscribes. For example, if you query an endpoint, then unmount the component, then mount another component that makes the same request within the given time frame, the most recent value will be served from the cache.
+[summary](docblock://createApi.ts?token=CreateApiOptions.keepUnusedDataFor)
 
 ### `refetchOnMountOrArgChange`
 
-Defaults to `false`. This setting allows you to control whether RTK Query will only serve a cached result, or if it should `refetch` when set to `true` or if an adequate amount of time has passed since the last successful query result.
-
-- `false` - Will not cause a query to be performed _unless_ it does not exist yet.
-- `true` - Will always refetch when a new subscriber to a query is added. Behaves the same as calling the `refetch` callback or passing `forceRefetch: true` in the action creator.
-- `number` - **Value is in seconds**. If a number is provided and there is an existing query in the cache, it will compare the current time vs the last fulfilled timestamp, and only refetch if enough time has elapsed.
-
-If you specify this option alongside `skip: true`, this **will not be evaluated** until `skip` is false.
+[summary](docblock://createApi.ts?token=CreateApiOptions.refetchOnMountOrArgChange)
 
 :::note
 You can set this globally in `createApi`, but you can also override the default value and have more granular control by passing `refetchOnMountOrArgChange` to each individual hook call or when dispatching the [`initiate`](#initiate) action.
@@ -235,9 +189,7 @@ You can set this globally in `createApi`, but you can also override the default 
 
 ### `refetchOnFocus`
 
-Defaults to `false`. This setting allows you to control whether RTK Query will try to refetch all subscribed queries after the application window regains focus.
-
-If you specify this option alongside `skip: true`, this **will not be evaluated** until `skip` is false.
+[summary](docblock://createApi.ts?token=CreateApiOptions.refetchOnFocus)
 
 :::note
 You can set this globally in `createApi`, but you can also override the default value and have more granular control by passing `refetchOnFocus` to each individual hook call or when dispatching the [`initiate`](#initiate) action.
@@ -247,9 +199,7 @@ If you specify `track: false` when manually dispatching queries, RTK Query will 
 
 ### `refetchOnReconnect`
 
-Defaults to `false`. This setting allows you to control whether RTK Query will try to refetch all subscribed queries after regaining a network connection.
-
-If you specify this option alongside `skip: true`, this **will not be evaluated** until `skip` is false.
+[summary](docblock://createApi.ts?token=CreateApiOptions.refetchOnReconnect)
 
 :::note
 You can set this globally in `createApi`, but you can also override the default value and have more granular control by passing `refetchOnReconnect` to each individual hook call or when dispatching the [`initiate`](#initiate) action.

@@ -71,7 +71,8 @@ const retryWithBackoff: BaseQueryEnhancer<unknown, StaggerOptions, StaggerOption
  *
  * @example
  *
- * ```ts title="Retry every request 5 times by default"
+ * ```ts
+ * // codeblock-meta title="Retry every request 5 times by default"
  * // maxRetries: 5 is the default, and can be omitted. Shown for documentation purposes.
  * const staggeredBaseQuery = retry(fetchBaseQuery({ baseUrl: '/' }), { maxRetries: 5 });
  *

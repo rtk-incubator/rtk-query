@@ -71,8 +71,25 @@ export function getRequestStatusFlags(status: QueryStatus): RequestStatusFlags {
 }
 
 export type SubscriptionOptions = {
+  /**
+   * How frequently to automatically re-fetch data (in milliseconds). Defaults to `0` (off).
+   */
   pollingInterval?: number;
+  /**
+   * Defaults to `false`. This setting allows you to control whether RTK Query will try to refetch all subscribed queries after regaining a network connection.
+   *
+   * If you specify this option alongside `skip: true`, this **will not be evaluated** until `skip` is false.
+   *
+   * Note: requires `setupListeners` to have been called.
+   */
   refetchOnReconnect?: boolean;
+  /**
+   * Defaults to `false`. This setting allows you to control whether RTK Query will try to refetch all subscribed queries after the application window regains focus.
+   *
+   * If you specify this option alongside `skip: true`, this **will not be evaluated** until `skip` is false.
+   *
+   * Note: requires `setupListeners` to have been called.
+   */
   refetchOnFocus?: boolean;
 };
 export type Subscribers = { [requestId: string]: SubscriptionOptions };
@@ -84,14 +101,35 @@ export type MutationKeys<Definitions extends EndpointDefinitions> = {
 }[keyof Definitions];
 
 type BaseQuerySubState<D extends BaseEndpointDefinition<any, any, any>> = {
+  /**
+   * The argument originally passed into the hook or `initiate` action call
+   */
   originalArgs: QueryArgFrom<D>;
+  /**
+   * A unique ID associated with the request
+   */
   requestId: string;
+  /**
+   * The received data from the query
+   */
   data?: ResultTypeFrom<D>;
+  /**
+   * The received error if applicable
+   */
   error?:
     | SerializedError
     | (D extends QueryDefinition<any, infer BaseQuery, any, any> ? BaseQueryError<BaseQuery> : never);
+  /**
+   * The name of the endpoint associated with the query
+   */
   endpointName: string;
+  /**
+   * Time that the latest query started
+   */
   startedTimeStamp: number;
+  /**
+   * Time that the latest query was fulfilled
+   */
   fulfilledTimeStamp?: number;
 };
 

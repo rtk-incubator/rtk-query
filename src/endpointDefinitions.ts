@@ -84,6 +84,9 @@ export interface QueryApi<ReducerPath extends string, Context extends {}> {
    * A method to get the current state
    */
   getState(): RootState<any, any, ReducerPath>;
+  /**
+  * `extra` as provided as `thunk.extraArgument` to the `configureStore` `getDefaultMiddleware` option.
+  */
   extra: unknown;
   /**
    * A unique ID generated for the mutation

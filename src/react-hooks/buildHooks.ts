@@ -4,7 +4,6 @@ import {
   MutationSubState,
   QueryStatus,
   QuerySubState,
-  RequestStatusFlags,
   SubscriptionOptions,
   QueryKeys,
   RootState,
@@ -141,6 +140,8 @@ export type UseMutationStateOptions<D extends MutationDefinition<any, any, any, 
   selectFromResult?: MutationStateSelector<R, D>;
 };
 
+export type UseMutationStateResult<_ extends MutationDefinition<any, any, any, any>, R> = NoInfer<R>;
+
 type UseMutationStateBaseResult<D extends MutationDefinition<any, any, any, any>> = MutationSubState<D> & {
   /**
    * Mutation has not started yet.
@@ -180,7 +181,7 @@ export type UseMutation<D extends MutationDefinition<any, any, any, any>> = <R =
   ) => {
     unwrap: () => Promise<ResultTypeFrom<D>>;
   },
-  MutationSubState<D> & RequestStatusFlags
+  UseMutationStateResult<D, R>
 ];
 
 const defaultMutationStateSelector: DefaultMutationStateSelector<any> = (currentState) => {

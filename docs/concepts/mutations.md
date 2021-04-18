@@ -25,7 +25,7 @@ const api = createApi({
       // `result` is the server response
       onSuccess({ id }, mutationApi, result) {},
       onError({ id }, { dispatch, getState, extra, requestId, context }) {},
-      invalidates: ['Post'],
+      invalidatesTags: ['Post'],
     }),
   }),
 });
@@ -143,7 +143,7 @@ export const api = createApi({
   endpoints: (build) => ({
     getPosts: build.query<PostsResponse, void>({
       query: () => 'posts',
-      provides: (result) => (result ? result.map(({ id }) => ({ type: 'Posts', id })) : ['Posts']),
+      providesTags: (result) => (result ? result.map(({ id }) => ({ type: 'Posts', id })) : ['Posts']),
     }),
     addPost: build.mutation<Post, Partial<Post>>({
       query: (body) => ({
@@ -151,11 +151,11 @@ export const api = createApi({
         method: 'POST',
         body,
       }),
-      invalidates: ['Posts'],
+      invalidatesTags: ['Posts'],
     }),
     getPost: build.query<Post, number>({
       query: (id) => `posts/${id}`,
-      provides: (result, error, id) => [{ type: 'Posts', id }],
+      providesTags: (result, error, id) => [{ type: 'Posts', id }],
     }),
   }),
 });
@@ -195,7 +195,7 @@ export const api = createApi({
   endpoints: (build) => ({
     getPosts: build.query<PostsResponse, void>({
       query: () => 'posts',
-      provides: (result) =>
+      providesTags: (result) =>
         result
           ? [...result.map(({ id }) => ({ type: 'Posts', id })), { type: 'Posts', id: 'LIST' }]
           : [{ type: 'Posts', id: 'LIST' }],
@@ -208,11 +208,11 @@ export const api = createApi({
           body,
         };
       },
-      invalidates: [{ type: 'Posts', id: 'LIST' }],
+      invalidatesTags: [{ type: 'Posts', id: 'LIST' }],
     }),
     getPost: build.query<Post, number>({
       query: (id) => `posts/${id}`,
-      provides: (result, error, id) => [{ type: 'Posts', id }],
+      providesTags: (result, error, id) => [{ type: 'Posts', id }],
     }),
   }),
 });
@@ -272,7 +272,7 @@ export const postApi = createApi({
       // Provides a list of `Posts` by `id`.
       // If any mutation is executed that `invalidate`s any of these tags, this query will re-run to be always up-to-date.
       // The `LIST` id is a "virtual id" we just made up to be able to invalidate this query specifically if a new `Posts` element was added.
-      provides: (result) =>
+      providesTags: (result) =>
         // is result available?
         result
           ? // successful query
@@ -290,11 +290,11 @@ export const postApi = createApi({
       },
       // Invalidates all Post-type queries providing the `LIST` id - after all, depending of the sort order,
       // that newly created post could show up in any lists.
-      invalidates: [{ type: 'Posts', id: 'LIST' }],
+      invalidatesTags: [{ type: 'Posts', id: 'LIST' }],
     }),
     getPost: build.query<Post, number>({
       query: (id) => `posts/${id}`,
-      provides: (result, error, id) => [{ type: 'Posts', id }],
+      providesTags: (result, error, id) => [{ type: 'Posts', id }],
     }),
     updatePost: build.mutation<Post, Partial<Post>>({
       query(data) {
@@ -307,7 +307,7 @@ export const postApi = createApi({
       },
       // Invalidates all queries that subscribe to this Post `id` only.
       // In this case, `getPost` will be re-run. `getPosts` *might*  rerun, if this id was under it's results.
-      invalidates: (result, error, { id }) => [{ type: 'Posts', id }],
+      invalidatesTags: (result, error, { id }) => [{ type: 'Posts', id }],
     }),
     deletePost: build.mutation<{ success: boolean; id: number }, number>({
       query(id) {
@@ -317,7 +317,7 @@ export const postApi = createApi({
         };
       },
       // Invalidates all queries that subscribe to this Post `id` only.
-      invalidates: (result, error, id) => [{ type: 'Posts', id }],
+      invalidatesTags: (result, error, id) => [{ type: 'Posts', id }],
     }),
   }),
 });

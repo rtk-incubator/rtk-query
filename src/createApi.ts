@@ -7,7 +7,7 @@ export interface CreateApiOptions<
   BaseQuery extends BaseQueryFn,
   Definitions extends EndpointDefinitions,
   ReducerPath extends string = 'api',
-  EntityTypes extends string = never
+  TagTypes extends string = never
 > {
   /**
    * The base query used by each endpoint if no `queryFn` option is specified. RTK Query exports a utility called [fetchBaseQuery](./fetchBaseQuery) as a lightweight wrapper around `fetch` for common use-cases.
@@ -42,9 +42,11 @@ export interface CreateApiOptions<
    */
   baseQuery: BaseQuery;
   /**
-   * An array of string entity type names. Specifying entity types is optional, but you should define them so that they can be used for caching and invalidation. When defining an entity type, you will be able to [provide](../concepts/mutations#provides) them with `provides` and [invalidate](../concepts/mutations#advanced-mutations-with-revalidation) them with `invalidates` when configuring [endpoints](#endpoints).
+   * An array of string tag type names. Specifying tag types is optional, but you should define them so that they can be used for caching and invalidation. When defining an tag type, you will be able to [provide](../concepts/mutations#provides) them with `provides` and [invalidate](../concepts/mutations#advanced-mutations-with-revalidation) them with `invalidates` when configuring [endpoints](#endpoints).
    */
-  entityTypes?: readonly EntityTypes[];
+  tagTypes?: readonly TagTypes[];
+  /** @deprecated renamed to `tagTypes` */
+  entityTypes?: readonly TagTypes[];
   /**
    * The `reducerPath` is a _unique_ key that your service will be mounted to in your store. If you call `createApi` more than once in your application, you will need to provide a unique value each time. Defaults to `'api'`.
    *
@@ -79,7 +81,7 @@ export interface CreateApiOptions<
   /**
    * Endpoints are just a set of operations that you want to perform against your server. You define them as an object using the builder syntax. There are two basic endpoint types: [`query`](../concepts/queries) and [`mutation`](../concepts/mutations).
    */
-  endpoints(build: EndpointBuilder<BaseQuery, EntityTypes, ReducerPath>): Definitions;
+  endpoints(build: EndpointBuilder<BaseQuery, TagTypes, ReducerPath>): Definitions;
   /**
    * Defaults to `60` _(this value is in seconds)_. This is how long RTK Query will keep your data cached for **after** the last component unsubscribes. For example, if you query an endpoint, then unmount the component, then mount another component that makes the same request within the given time frame, the most recent value will be served from the cache.
    */
@@ -121,10 +123,10 @@ export type CreateApi<Modules extends ModuleName> = {
     BaseQuery extends BaseQueryFn,
     Definitions extends EndpointDefinitions,
     ReducerPath extends string = 'api',
-    EntityTypes extends string = never
+    TagTypes extends string = never
   >(
-    options: CreateApiOptions<BaseQuery, Definitions, ReducerPath, EntityTypes>
-  ): Api<BaseQuery, Definitions, ReducerPath, EntityTypes, Modules>;
+    options: CreateApiOptions<BaseQuery, Definitions, ReducerPath, TagTypes>
+  ): Api<BaseQuery, Definitions, ReducerPath, TagTypes, Modules>;
 };
 
 /**
@@ -148,6 +150,14 @@ export function buildCreateApi<Modules extends [Module<any>, ...Module<any>[]]>(
   ...modules: Modules
 ): CreateApi<Modules[number]['name']> {
   return function baseCreateApi(options) {
+    // remove in final release
+    if (options.entityTypes) {
+      if (typeof process !== 'undefined' && process.env.NODE_ENV === 'development') {
+        console.warn('`entityTypes` has been renamed to `tagTypes`, please change your code accordingly');
+      }
+      options.tagTypes ??= options.entityTypes;
+    }
+
     const optionsWithDefaults = {
       reducerPath: 'api',
       serializeQueryArgs: defaultSerializeQueryArgs,
@@ -156,7 +166,8 @@ export function buildCreateApi<Modules extends [Module<any>, ...Module<any>[]]>(
       refetchOnFocus: false,
       refetchOnReconnect: false,
       ...options,
-      entityTypes: [...(options.entityTypes || [])],
+      entityTypes: [], // remove in final release
+      tagTypes: [...(options.tagTypes || [])],
     };
 
     const context: ApiContext<EndpointDefinitions> = {
@@ -169,11 +180,19 @@ export function buildCreateApi<Modules extends [Module<any>, ...Module<any>[]]>(
 
     const api = {
       injectEndpoints,
-      enhanceEndpoints({ addEntityTypes, endpoints }) {
+      enhanceEndpoints({ addTagTypes, endpoints, addEntityTypes }) {
+        // remove in final release
         if (addEntityTypes) {
-          for (const eT of addEntityTypes) {
-            if (!optionsWithDefaults.entityTypes.includes(eT as any)) {
-              optionsWithDefaults.entityTypes.push(eT as any);
+          if (typeof process !== 'undefined' && process.env.NODE_ENV === 'development') {
+            console.warn('`addEntityTypes` has been renamed to `addTagTypes`, please change your code accordingly');
+          }
+          addTagTypes ??= addEntityTypes;
+        }
+
+        if (addTagTypes) {
+          for (const eT of addTagTypes) {
+            if (!optionsWithDefaults.tagTypes.includes(eT as any)) {
+              optionsWithDefaults.tagTypes.push(eT as any);
             }
           }
         }

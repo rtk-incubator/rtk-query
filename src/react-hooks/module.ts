@@ -33,7 +33,7 @@ declare module '../apiTypes' {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     ReducerPath extends string,
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    EntityTypes extends string
+    TagTypes extends string
   > {
     [reactHooksModuleName]: {
       /**

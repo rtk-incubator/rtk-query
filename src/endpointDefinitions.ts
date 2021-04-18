@@ -63,17 +63,17 @@ export enum DefinitionType {
   mutation = 'mutation',
 }
 
-type GetResultDescriptionFn<EntityTypes extends string, ResultType, QueryArg, ErrorType> = (
+type GetResultDescriptionFn<TagTypes extends string, ResultType, QueryArg, ErrorType> = (
   result: ResultType | undefined,
   error: ErrorType | undefined,
   arg: QueryArg
-) => ReadonlyArray<EntityDescription<EntityTypes>>;
+) => ReadonlyArray<TagDescription<TagTypes>>;
 
-export type FullEntityDescription<EntityType> = { type: EntityType; id?: number | string };
-type EntityDescription<EntityType> = EntityType | FullEntityDescription<EntityType>;
-type ResultDescription<EntityTypes extends string, ResultType, QueryArg, ErrorType> =
-  | ReadonlyArray<EntityDescription<EntityTypes>>
-  | GetResultDescriptionFn<EntityTypes, ResultType, QueryArg, ErrorType>;
+export type FullTagDescription<TagType> = { type: TagType; id?: number | string };
+type TagDescription<TagType> = TagType | FullTagDescription<TagType>;
+type ResultDescription<TagTypes extends string, ResultType, QueryArg, ErrorType> =
+  | ReadonlyArray<TagDescription<TagTypes>>
+  | GetResultDescriptionFn<TagTypes, ResultType, QueryArg, ErrorType>;
 
 export interface QueryApi<ReducerPath extends string, Context extends {}> {
   /**
@@ -99,7 +99,7 @@ export interface QueryApi<ReducerPath extends string, Context extends {}> {
 }
 
 interface QueryExtraOptions<
-  EntityTypes extends string,
+  TagTypes extends string,
   ResultType,
   QueryArg,
   BaseQuery extends BaseQueryFn,
@@ -108,15 +108,15 @@ interface QueryExtraOptions<
 > {
   type: DefinitionType.query;
   /**
-   * - Used by `queries` to provide entities to the cache.
-   * - Expects an array of entity type strings, or an array of objects of entity types with ids.
+   * - Used by `queries` to provide tags to the cache.
+   * - Expects an array of tag type strings, or an array of objects of tag types with ids.
    *   1.  `['Post']` - equivalent to `b`
    *   2.  `[{ type: 'Post' }]` - equivalent to `a`
    *   3.  `[{ type: 'Post', id: 1 }]`
    */
-  provides?: ResultDescription<EntityTypes, ResultType, QueryArg, BaseQueryError<BaseQuery>>;
+  provides?: ResultDescription<TagTypes, ResultType, QueryArg, BaseQueryError<BaseQuery>>;
   /**
-   * Not to be used. A query should not invalidate entities in the cache.
+   * Not to be used. A query should not invalidate tags in the cache.
    */
   invalidates?: never;
   /**
@@ -156,12 +156,12 @@ interface QueryExtraOptions<
 export type QueryDefinition<
   QueryArg,
   BaseQuery extends BaseQueryFn,
-  EntityTypes extends string,
+  TagTypes extends string,
   ResultType,
   ReducerPath extends string = string,
   Context = Record<string, any>
 > = BaseEndpointDefinition<QueryArg, BaseQuery, ResultType> &
-  QueryExtraOptions<EntityTypes, ResultType, QueryArg, BaseQuery, ReducerPath, Context>;
+  QueryExtraOptions<TagTypes, ResultType, QueryArg, BaseQuery, ReducerPath, Context>;
 
 export interface MutationApi<ReducerPath extends string, Context extends {}> {
   /**
@@ -187,7 +187,7 @@ export interface MutationApi<ReducerPath extends string, Context extends {}> {
 }
 
 interface MutationExtraOptions<
-  EntityTypes extends string,
+  TagTypes extends string,
   ResultType,
   QueryArg,
   BaseQuery extends BaseQueryFn,
@@ -199,9 +199,9 @@ interface MutationExtraOptions<
    * - Used by `mutations` for [cache invalidation](../concepts/mutations#advanced-mutations-with-revalidation) purposes.
    * - Expects the same shapes as `provides`.
    */
-  invalidates?: ResultDescription<EntityTypes, ResultType, QueryArg, BaseQueryError<BaseQuery>>;
+  invalidates?: ResultDescription<TagTypes, ResultType, QueryArg, BaseQueryError<BaseQuery>>;
   /**
-   * Not to be used. A mutation should not provide entities to the cache.
+   * Not to be used. A mutation should not provide tags to the cache.
    */
   provides?: never;
   /**
@@ -241,22 +241,22 @@ interface MutationExtraOptions<
 export type MutationDefinition<
   QueryArg,
   BaseQuery extends BaseQueryFn,
-  EntityTypes extends string,
+  TagTypes extends string,
   ResultType,
   ReducerPath extends string = string,
   Context = Record<string, any>
 > = BaseEndpointDefinition<QueryArg, BaseQuery, ResultType> &
-  MutationExtraOptions<EntityTypes, ResultType, QueryArg, BaseQuery, ReducerPath, Context>;
+  MutationExtraOptions<TagTypes, ResultType, QueryArg, BaseQuery, ReducerPath, Context>;
 
 export type EndpointDefinition<
   QueryArg,
   BaseQuery extends BaseQueryFn,
-  EntityTypes extends string,
+  TagTypes extends string,
   ResultType,
   ReducerPath extends string = string
 > =
-  | QueryDefinition<QueryArg, BaseQuery, EntityTypes, ResultType, ReducerPath>
-  | MutationDefinition<QueryArg, BaseQuery, EntityTypes, ResultType, ReducerPath>;
+  | QueryDefinition<QueryArg, BaseQuery, TagTypes, ResultType, ReducerPath>
+  | MutationDefinition<QueryArg, BaseQuery, TagTypes, ResultType, ReducerPath>;
 
 export type EndpointDefinitions = Record<string, EndpointDefinition<any, any, any, any>>;
 
@@ -270,9 +270,9 @@ export function isMutationDefinition(
   return e.type === DefinitionType.mutation;
 }
 
-export type EndpointBuilder<BaseQuery extends BaseQueryFn, EntityTypes extends string, ReducerPath extends string> = {
+export type EndpointBuilder<BaseQuery extends BaseQueryFn, TagTypes extends string, ReducerPath extends string> = {
   /**
-   * An endpoint definition that retrieves data, and may provide entities to the cache.
+   * An endpoint definition that retrieves data, and may provide tags to the cache.
    *
    * @example
    * ```js
@@ -296,8 +296,8 @@ export type EndpointBuilder<BaseQuery extends BaseQueryFn, EntityTypes extends s
    *```
    */
   query<ResultType, QueryArg>(
-    definition: OmitFromUnion<QueryDefinition<QueryArg, BaseQuery, EntityTypes, ResultType>, 'type'>
-  ): QueryDefinition<QueryArg, BaseQuery, EntityTypes, ResultType>;
+    definition: OmitFromUnion<QueryDefinition<QueryArg, BaseQuery, TagTypes, ResultType>, 'type'>
+  ): QueryDefinition<QueryArg, BaseQuery, TagTypes, ResultType>;
   /**
    * An endpoint definition that alters data on the server or will possibly invalidate the cache.
    *
@@ -325,28 +325,28 @@ export type EndpointBuilder<BaseQuery extends BaseQueryFn, EntityTypes extends s
    */
   mutation<ResultType, QueryArg, Context = Record<string, any>>(
     definition: OmitFromUnion<
-      MutationDefinition<QueryArg, BaseQuery, EntityTypes, ResultType, ReducerPath, Context>,
+      MutationDefinition<QueryArg, BaseQuery, TagTypes, ResultType, ReducerPath, Context>,
       'type'
     >
-  ): MutationDefinition<QueryArg, BaseQuery, EntityTypes, ResultType, ReducerPath, Context>;
+  ): MutationDefinition<QueryArg, BaseQuery, TagTypes, ResultType, ReducerPath, Context>;
 };
 
-export type AssertEntityTypes = <T extends FullEntityDescription<string>>(t: T) => T;
+export type AssertTagTypes = <T extends FullTagDescription<string>>(t: T) => T;
 
 export function calculateProvidedBy<ResultType, QueryArg, ErrorType>(
   description: ResultDescription<string, ResultType, QueryArg, ErrorType> | undefined,
   result: ResultType | undefined,
   error: ErrorType | undefined,
   queryArg: QueryArg,
-  assertEntityTypes: AssertEntityTypes
-): readonly FullEntityDescription<string>[] {
+  assertTagTypes: AssertTagTypes
+): readonly FullTagDescription<string>[] {
   if (isFunction(description)) {
     return description(result as ResultType, error as undefined, queryArg)
-      .map(expandEntityDescription)
-      .map(assertEntityTypes);
+      .map(expandTagDescription)
+      .map(assertTagTypes);
   }
   if (Array.isArray(description)) {
-    return description.map(expandEntityDescription).map(assertEntityTypes);
+    return description.map(expandTagDescription).map(assertTagTypes);
   }
   return [];
 }
@@ -355,7 +355,7 @@ function isFunction<T>(t: T): t is Extract<T, Function> {
   return typeof t === 'function';
 }
 
-function expandEntityDescription(description: EntityDescription<string>): FullEntityDescription<string> {
+function expandTagDescription(description: TagDescription<string>): FullTagDescription<string> {
   return typeof description === 'string' ? { type: description } : description;
 }
 
@@ -383,7 +383,7 @@ export type ReducerPathFrom<D extends EndpointDefinition<any, any, any, any>> = 
   ? RP
   : unknown;
 
-export type EntityTypesFrom<D extends EndpointDefinition<any, any, any, any>> = D extends EndpointDefinition<
+export type TagTypesFrom<D extends EndpointDefinition<any, any, any, any>> = D extends EndpointDefinition<
   any,
   any,
   infer RP,
@@ -392,7 +392,7 @@ export type EntityTypesFrom<D extends EndpointDefinition<any, any, any, any>> = 
   ? RP
   : unknown;
 
-export type ReplaceEntityTypes<Definitions extends EndpointDefinitions, NewEntityTypes extends string> = {
+export type ReplaceTagTypes<Definitions extends EndpointDefinitions, NewTagTypes extends string> = {
   [K in keyof Definitions]: Definitions[K] extends QueryDefinition<
     infer QueryArg,
     infer BaseQuery,
@@ -400,7 +400,7 @@ export type ReplaceEntityTypes<Definitions extends EndpointDefinitions, NewEntit
     infer ResultType,
     infer ReducerPath
   >
-    ? QueryDefinition<QueryArg, BaseQuery, NewEntityTypes, ResultType, ReducerPath>
+    ? QueryDefinition<QueryArg, BaseQuery, NewTagTypes, ResultType, ReducerPath>
     : Definitions[K] extends MutationDefinition<
         infer QueryArg,
         infer BaseQuery,
@@ -408,6 +408,6 @@ export type ReplaceEntityTypes<Definitions extends EndpointDefinitions, NewEntit
         infer ResultType,
         infer ReducerPath
       >
-    ? MutationDefinition<QueryArg, BaseQuery, NewEntityTypes, ResultType, ReducerPath>
+    ? MutationDefinition<QueryArg, BaseQuery, NewTagTypes, ResultType, ReducerPath>
     : never;
 };

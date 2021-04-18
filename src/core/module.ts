@@ -8,10 +8,10 @@ import {
   QueryArgFrom,
   QueryDefinition,
   MutationDefinition,
-  AssertEntityTypes,
+  AssertTagTypes,
   isQueryDefinition,
   isMutationDefinition,
-  FullEntityDescription,
+  FullTagDescription,
 } from '../endpointDefinitions';
 import { CombinedState, QueryKeys, RootState } from './apiState';
 import './buildSelectors';
@@ -49,7 +49,7 @@ declare module '../apiTypes' {
     BaseQuery extends BaseQueryFn,
     Definitions extends EndpointDefinitions,
     ReducerPath extends string,
-    EntityTypes extends string
+    TagTypes extends string
   > {
     [coreModuleName]: {
       /**
@@ -83,7 +83,7 @@ declare module '../apiTypes' {
        * })
        * ```
        */
-      reducer: Reducer<CombinedState<Definitions, EntityTypes, ReducerPath>, AnyAction>;
+      reducer: Reducer<CombinedState<Definitions, TagTypes, ReducerPath>, AnyAction>;
       /**
        * This is a standard redux middleware and is responsible for things like polling, garbage collection and a handful of other things. Make sure it's included in your store.
        *
@@ -125,7 +125,9 @@ declare module '../apiTypes' {
         /**
          * TODO
          */
-        invalidateEntities: ActionCreatorWithPayload<Array<EntityTypes | FullEntityDescription<EntityTypes>>, string>;
+        invalidateTags: ActionCreatorWithPayload<Array<TagTypes | FullTagDescription<TagTypes>>, string>;
+        /** @deprecated renamed to `invalidateTags` */
+        invalidateEntities: ActionCreatorWithPayload<Array<TagTypes | FullTagDescription<TagTypes>>, string>;
       };
       /**
        * Endpoints based on the input endpoints provided to `createApi`, containing `select` and `action matchers`.
@@ -187,7 +189,7 @@ export const coreModule = (): Module<CoreModule> => ({
     api,
     {
       baseQuery,
-      entityTypes,
+      tagTypes,
       reducerPath,
       serializeQueryArgs,
       keepUnusedDataFor,
@@ -199,13 +201,13 @@ export const coreModule = (): Module<CoreModule> => ({
   ) {
     assertCast<InternalSerializeQueryArgs<any>>(serializeQueryArgs);
 
-    const assertEntityType: AssertEntityTypes = (entity) => {
+    const assertTagType: AssertTagTypes = (tag) => {
       if (typeof process !== 'undefined' && process.env.NODE_ENV === 'development') {
-        if (!entityTypes.includes(entity.type as any)) {
-          console.error(`Entity type '${entity.type}' was used, but not specified in \`entityTypes\`!`);
+        if (!tagTypes.includes(tag.type as any)) {
+          console.error(`Tag type '${tag.type}' was used, but not specified in \`tagTypes\`!`);
         }
       }
-      return entity;
+      return tag;
     };
 
     Object.assign(api, {
@@ -240,7 +242,7 @@ export const coreModule = (): Module<CoreModule> => ({
       queryThunk,
       mutationThunk,
       reducerPath,
-      assertEntityType,
+      assertTagType,
       config: { refetchOnFocus, refetchOnReconnect, refetchOnMountOrArgChange, keepUnusedDataFor, reducerPath },
     });
 
@@ -258,7 +260,7 @@ export const coreModule = (): Module<CoreModule> => ({
       queryThunk,
       mutationThunk,
       api,
-      assertEntityType,
+      assertTagType,
     });
     safeAssign(api.util, middlewareActions);
 
@@ -274,6 +276,18 @@ export const coreModule = (): Module<CoreModule> => ({
       mutationThunk,
       api,
       serializeQueryArgs: serializeQueryArgs as any,
+    });
+
+    // remove in final release
+    Object.defineProperty(api.util, 'invalidateEntities', {
+      get() {
+        if (typeof process !== 'undefined' && process.env.NODE_ENV === 'development') {
+          console.warn(
+            '`api.util.invalidateEntities` has been renamed to `api.util.invalidateTags`, please change your code accordingly'
+          );
+        }
+        return api.util.invalidateTags;
+      },
     });
 
     return {

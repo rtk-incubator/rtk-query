@@ -17,7 +17,7 @@ The core concepts are:
 ```ts title="Example optimistic update mutation"
 const api = createApi({
   baseQuery,
-  entityTypes: ['Post'],
+  tagTypes: ['Post'],
   endpoints: (build) => ({
     getPost: build.query<Post, string>({ query: (id) => `post/${id}`, provides: ['Post'] }),
     updatePost: build.mutation<void, Pick<Post, 'id'> & Partial<Post>, { undoPost: Patch[] }>({

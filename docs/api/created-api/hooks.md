@@ -82,7 +82,7 @@ type UseQueryResult<T> = {
 
 #### Description
 
-A React hook that triggers fetches of data from an endpoint, and subscribes the component to read the request status and cached data from the Redux store. The component will re-render as the loading status changes and the data beomes available.
+A React hook that triggers fetches of data from an endpoint, and subscribes the component to read the request status and cached data from the Redux store. The component will re-render as the loading status changes and the data becomes available.
 
 The query arg is used as a cache key. Changing the query arg will tell the hook to re-fetch the data if it does not exist in the cache already, and the hook will return the data for that query arg once it's available.
 

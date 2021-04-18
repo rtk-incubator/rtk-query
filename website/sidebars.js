@@ -37,7 +37,7 @@ module.exports = {
         },
         {
           type: 'category',
-          label: 'Generated API Structures',
+          label: 'Generated API Slices',
           collapsed: false,
           items: [
             'api/created-api/overview',

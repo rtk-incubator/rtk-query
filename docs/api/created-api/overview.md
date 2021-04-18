@@ -95,11 +95,6 @@ Each API slice object has `injectEndpoints` and `enhanceEndpoints` functions to 
 
 The `internalActions` field contains a set of additional thunks that are used for internal behavior, such as managing updates based on focus.
 
-- [`internalActions`](#internalactions)
-- [`util`](#util)
-- [`usePrefetch`](../../concepts/prefetching#prefetching-with-react-hooks)
-- [`Auto-generated hooks`](#auto-generated-hooks)
-
 ## React Hooks
 
 The core RTK Query `createApi` method is UI-agnostic, in the same way that the Redux core library and Redux Toolkit are UI-agnostic. They are all plain JS logic that can be used anywhere.

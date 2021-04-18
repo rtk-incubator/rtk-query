@@ -212,8 +212,26 @@ export function buildCreateApi<Modules extends [Module<any>, ...Module<any>[]]>(
 
     function injectEndpoints(inject: Parameters<typeof api.injectEndpoints>[0]) {
       const evaluatedEndpoints = inject.endpoints({
-        query: (x) => ({ ...x, type: DefinitionType.query } as any),
-        mutation: (x) => ({ ...x, type: DefinitionType.mutation } as any),
+        query: (x) => {
+          // remove in final release
+          if (x.provides) {
+            if (typeof process !== 'undefined' && process.env.NODE_ENV === 'development') {
+              console.warn('`provides` has been renamed to `providesTags`, please change your code accordingly');
+            }
+            x.providesTags ??= x.provides;
+          }
+          return { ...x, type: DefinitionType.query } as any;
+        },
+        mutation: (x) => {
+          // remove in final release
+          if (x.invalidates) {
+            if (typeof process !== 'undefined' && process.env.NODE_ENV === 'development') {
+              console.warn('`invalidates` has been renamed to `invalidatesTags`, please change your code accordingly');
+            }
+            x.invalidatesTags ??= x.invalidates;
+          }
+          return { ...x, type: DefinitionType.mutation } as any;
+        },
       });
 
       for (const [endpointName, definition] of Object.entries(evaluatedEndpoints)) {

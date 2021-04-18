@@ -23,9 +23,9 @@ const api = createApi({
     if ('then' in result) return result.then((data: any) => ({ data, meta: 'meta' }));
     return { data: result, meta: 'meta' };
   },
-  entityTypes: ['Post'],
+  tagTypes: ['Post'],
   endpoints: (build) => ({
-    post: build.query<Post, string>({ query: (id) => `post/${id}`, provides: ['Post'] }),
+    post: build.query<Post, string>({ query: (id) => `post/${id}`, providesTags: ['Post'] }),
     updatePost: build.mutation<void, Pick<Post, 'id'> & Partial<Post>, { undoPost: Patch[] }>({
       query: ({ id, ...patch }) => ({ url: `post/${id}`, method: 'PATCH', body: patch }),
       onStart({ id, ...patch }, { dispatch, context }) {
@@ -38,7 +38,7 @@ const api = createApi({
       onError({ id }, { dispatch, context }) {
         dispatch(api.util.patchQueryResult('post', id, context.undoPost));
       },
-      invalidates: ['Post'],
+      invalidatesTags: ['Post'],
     }),
   }),
 });

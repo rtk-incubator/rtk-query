@@ -1330,7 +1330,7 @@ describe('hooks with createApi defaults set', () => {
 
     let getRenderCount: () => number = () => 0;
 
-    it('does not cause a rerender when using selectFromResult with an empty object', async () => {
+    it('causes no more than one rerender when using selectFromResult with an empty object', async () => {
       function Counter() {
         const [increment] = api.endpoints.increment.useMutation({
           selectFromResult: () => ({}),

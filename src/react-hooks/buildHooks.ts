@@ -134,7 +134,7 @@ export type MutationStateSelector<R, D extends MutationDefinition<any, any, any,
 
 export type DefaultMutationStateSelector<D extends MutationDefinition<any, any, any, any>> = (
   state: MutationResultSelectorResult<D>
-) => UseMutationStateDefaultResult<D>;
+) => MutationResultSelectorResult<D>;
 
 export type UseMutationStateOptions<D extends MutationDefinition<any, any, any, any>, R> = {
   selectFromResult?: MutationStateSelector<R, D>;
@@ -142,36 +142,6 @@ export type UseMutationStateOptions<D extends MutationDefinition<any, any, any, 
 
 export type UseMutationStateResult<_ extends MutationDefinition<any, any, any, any>, R> = NoInfer<R>;
 
-type UseMutationStateBaseResult<D extends MutationDefinition<any, any, any, any>> = MutationSubState<D> & {
-  /**
-   * Mutation has not started yet.
-   */
-  isUninitialized: false;
-  /**
-   * Mutation is currently loading for the first time. No data yet.
-   */
-  isLoading: false;
-  /**
-   * Mutation has data from a successful load.
-   */
-  isSuccess: false;
-  /**
-   * Mutation is currently in "error" state.
-   */
-  isError: false;
-};
-
-type UseMutationStateDefaultResult<D extends MutationDefinition<any, any, any, any>> = Id<
-  | Override<Extract<UseMutationStateBaseResult<D>, { status: QueryStatus.uninitialized }>, { isUninitialized: true }>
-  | Override<
-      UseMutationStateBaseResult<D>,
-      | { isLoading: true; data: undefined }
-      | ({ isSuccess: true; error: undefined } & Required<
-          Pick<UseMutationStateBaseResult<D>, 'data' | 'fulfilledTimeStamp'>
-        >)
-      | ({ isError: true } & Required<Pick<UseMutationStateBaseResult<D>, 'error'>>)
-    >
->;
 
 export type UseMutation<D extends MutationDefinition<any, any, any, any>> = <R = UseMutationStateDefaultResult<D>>(
   options?: UseMutationStateOptions<D, R>
@@ -185,7 +155,7 @@ export type UseMutation<D extends MutationDefinition<any, any, any, any>> = <R =
 ];
 
 const defaultMutationStateSelector: DefaultMutationStateSelector<any> = (currentState) => {
-  return currentState as UseMutationStateDefaultResult<any>;
+  return currentState;
 };
 
 const defaultQueryStateSelector: DefaultQueryStateSelector<any> = (currentState, lastResult) => {
@@ -482,10 +452,7 @@ export function buildHooks<Definitions extends EndpointDefinitions>({
         [select, requestId, selectFromResult]
       );
 
-      const currentState = useSelector(
-        (state: RootState<Definitions, any, any>) => mutationSelector(state),
-        shallowEqual
-      );
+      const currentState = useSelector(mutationSelector, shallowEqual);
 
       return useMemo(() => [triggerMutation, currentState], [triggerMutation, currentState]);
     };

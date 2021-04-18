@@ -114,10 +114,14 @@ interface QueryExtraOptions<
    *   2.  `[{ type: 'Post' }]` - equivalent to `a`
    *   3.  `[{ type: 'Post', id: 1 }]`
    */
+  providesTags?: ResultDescription<TagTypes, ResultType, QueryArg, BaseQueryError<BaseQuery>>;
+  /** @deprecated renamed to `providesTags` */
   provides?: ResultDescription<TagTypes, ResultType, QueryArg, BaseQueryError<BaseQuery>>;
   /**
    * Not to be used. A query should not invalidate tags in the cache.
    */
+  invalidatesTags?: never;
+  /** @deprecated */
   invalidates?: never;
   /**
    * Called when the query is triggered.
@@ -199,10 +203,14 @@ interface MutationExtraOptions<
    * - Used by `mutations` for [cache invalidation](../concepts/mutations#advanced-mutations-with-revalidation) purposes.
    * - Expects the same shapes as `provides`.
    */
+  invalidatesTags?: ResultDescription<TagTypes, ResultType, QueryArg, BaseQueryError<BaseQuery>>;
+  /** @deprecated renamed to `invalidatesTags` */
   invalidates?: ResultDescription<TagTypes, ResultType, QueryArg, BaseQueryError<BaseQuery>>;
   /**
    * Not to be used. A mutation should not provide tags to the cache.
    */
+  providesTags?: never;
+  /** @deprecated */
   provides?: never;
   /**
    * Called when the mutation is triggered.
@@ -289,7 +297,7 @@ export type EndpointBuilder<BaseQuery extends BaseQueryFn, TagTypes extends stri
    *      // `result` is the server response
    *      onSuccess(id, queryApi, result) {},
    *      onError(id, queryApi) {},
-   *      provides: (result, error, id) => [{ type: 'Post', id }],
+   *      providesTags: (result, error, id) => [{ type: 'Post', id }],
    *    }),
    *  }),
    *});
@@ -317,7 +325,7 @@ export type EndpointBuilder<BaseQuery extends BaseQueryFn, TagTypes extends stri
    *       // `result` is the server response
    *       onSuccess({ id }, mutationApi, result) {},
    *       onError({ id }, { dispatch, getState, extra, requestId, context }) {},
-   *       invalidates: (result, error, id) => [{ type: 'Post', id }],
+   *       invalidatesTags: (result, error, id) => [{ type: 'Post', id }],
    *     }),
    *   }),
    * });

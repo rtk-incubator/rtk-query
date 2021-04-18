@@ -84,7 +84,7 @@ export function usePrefetchImmediately<T extends EndpointNames>(
 ) {
   const dispatch = useDispatch();
   useEffect(() => {
-    dispatch(api.util.prefetchThunk(endpoint, arg, options));
+    dispatch(api.util.prefetch(endpoint, arg, options));
   }, []);
 }
 
@@ -96,10 +96,10 @@ usePrefetchImmediately('getUser', 5);
 
 If you're not using the `usePrefetch` hook, you can recreate the same behavior easily on your own in any framework.
 
-When dispatching the `prefetchThunk` as shown below you will see the same exact behavior as [described here](#what-to-expect-when-you-call-the-callback).
+When dispatching the `prefetch` thunk as shown below you will see the same exact behavior as [described here](#what-to-expect-when-you-call-the-callback).
 
 ```js title="Non-hook prefetching example"
-store.dispatch(api.util.prefetchThunk(endpointName, arg, { force: false, ifOlderThan: 10 }));
+store.dispatch(api.util.prefetch(endpointName, arg, { force: false, ifOlderThan: 10 }));
 ```
 
 You can also dispatch the query action, but you would be responsible for implementing any additional logic.

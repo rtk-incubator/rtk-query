@@ -294,7 +294,7 @@ export function buildThunks<
   const hasTheForce = (options: any): options is { force: boolean } => 'force' in options;
   const hasMaxAge = (options: any): options is { ifOlderThan: false | number } => 'ifOlderThan' in options;
 
-  const prefetchThunk = <EndpointName extends QueryKeys<EndpointDefinitions>>(
+  const prefetch = <EndpointName extends QueryKeys<EndpointDefinitions>>(
     endpointName: EndpointName,
     arg: any,
     options: PrefetchOptions
@@ -338,7 +338,7 @@ export function buildThunks<
     } as Matchers<Thunk, any>;
   }
 
-  return { queryThunk, mutationThunk, prefetchThunk, updateQueryResult, patchQueryResult, buildMatchThunkActions };
+  return { queryThunk, mutationThunk, prefetch, updateQueryResult, patchQueryResult, buildMatchThunkActions };
 }
 
 export function calculateProvidedByThunk(

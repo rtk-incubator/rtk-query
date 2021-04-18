@@ -33,7 +33,9 @@ export interface MutationHooks<Definition extends MutationDefinition<any, any, a
 /**
  * test description here
  */
-export type UseQuery<D extends QueryDefinition<any, any, any, any>> = <R = UseQueryStateDefaultResult<D>>(
+export type UseQuery<D extends QueryDefinition<any, any, any, any>> = <
+  R extends Record<string, any> = UseQueryStateDefaultResult<D>
+>(
   arg: QueryArgFrom<D>,
   options?: UseQuerySubscriptionOptions & UseQueryStateOptions<D, R>
 ) => UseQueryStateResult<D, R> & ReturnType<UseQuerySubscription<D>>;
@@ -99,7 +101,7 @@ export type UseLazyQuerySubscription<D extends QueryDefinition<any, any, any, an
   options?: SubscriptionOptions
 ) => [(arg: QueryArgFrom<D>) => void, QueryArgFrom<D> | UninitializedValue];
 
-export type QueryStateSelector<R, D extends QueryDefinition<any, any, any, any>> = (
+export type QueryStateSelector<R extends Record<string, any>, D extends QueryDefinition<any, any, any, any>> = (
   state: QueryResultSelectorResult<D>,
   lastResult: R | undefined,
   defaultQueryStateSelector: DefaultQueryStateSelector<D>
@@ -115,7 +117,7 @@ export type UseQueryState<D extends QueryDefinition<any, any, any, any>> = <R = 
   options?: UseQueryStateOptions<D, R>
 ) => UseQueryStateResult<D, R>;
 
-export type UseQueryStateOptions<D extends QueryDefinition<any, any, any, any>, R> = {
+export type UseQueryStateOptions<D extends QueryDefinition<any, any, any, any>, R extends Record<string, any>> = {
   /**
    * Prevents a query from automatically running.
    *
@@ -226,7 +228,7 @@ type UseQueryStateDefaultResult<D extends QueryDefinition<any, any, any, any>> =
   status: QueryStatus;
 };
 
-export type MutationStateSelector<R, D extends MutationDefinition<any, any, any, any>> = (
+export type MutationStateSelector<R extends Record<string, any>, D extends MutationDefinition<any, any, any, any>> = (
   state: MutationResultSelectorResult<D>,
   defaultMutationStateSelector: DefaultMutationStateSelector<D>
 ) => R;
@@ -235,13 +237,15 @@ export type DefaultMutationStateSelector<D extends MutationDefinition<any, any, 
   state: MutationResultSelectorResult<D>
 ) => MutationResultSelectorResult<D>;
 
-export type UseMutationStateOptions<D extends MutationDefinition<any, any, any, any>, R> = {
+export type UseMutationStateOptions<D extends MutationDefinition<any, any, any, any>, R extends Record<string, any>> = {
   selectFromResult?: MutationStateSelector<R, D>;
 };
 
 export type UseMutationStateResult<_ extends MutationDefinition<any, any, any, any>, R> = NoInfer<R>;
 
-export type UseMutation<D extends MutationDefinition<any, any, any, any>> = <R = MutationResultSelectorResult<D>>(
+export type UseMutation<D extends MutationDefinition<any, any, any, any>> = <
+  R extends Record<string, any> = MutationResultSelectorResult<D>
+>(
   options?: UseMutationStateOptions<D, R>
 ) => [
   (

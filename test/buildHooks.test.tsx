@@ -1300,6 +1300,36 @@ describe('hooks with createApi defaults set', () => {
       fireEvent.click(addBtn);
       await waitFor(() => expect(screen.getByTestId('renderCount').textContent).toBe('3'));
     });
+
+    test('useQuery with selectFromResult option has a type error if the result is not an object', async () => {
+      function SelectedPost() {
+        const _res1 = api.endpoints.getPosts.useQuery(undefined, {
+          // selectFromResult must always return an object
+          // @ts-expect-error
+          selectFromResult: ({ data }) => data?.length ?? 0,
+        });
+
+        const res2 = api.endpoints.getPosts.useQuery(undefined, {
+          // selectFromResult must always return an object
+          selectFromResult: ({ data }) => ({ size: data?.length ?? 0 }),
+        });
+
+        return (
+          <div>
+            <div data-testid="size2">{res2.size}</div>
+          </div>
+        );
+      }
+
+      render(
+        <div>
+          <SelectedPost />
+        </div>,
+        { wrapper: storeRef.wrapper }
+      );
+
+      expect(screen.getByTestId('length').textContent).toBe('0');
+    });
   });
 
   describe('selectFromResult (mutation) behavior', () => {
@@ -1425,6 +1455,24 @@ describe('hooks with createApi defaults set', () => {
       await waitFor(() => expect(screen.getByTestId('status').textContent).toBe('pending'));
       await waitFor(() => expect(screen.getByTestId('status').textContent).toBe('fulfilled'));
       expect(getRenderCount()).toBe(5);
+    });
+
+    it('useMutation with selectFromResult option has a type error if the result is not an object', async () => {
+      function Counter() {
+        const [increment] = api.endpoints.increment.useMutation({
+          // selectFromResult must always return an object
+          // @ts-expect-error
+          selectFromResult: () => 42,
+        });
+
+        return (
+          <div>
+            <button data-testid="incrementButton" onClick={() => increment(1)}></button>
+          </div>
+        );
+      }
+
+      render(<Counter />, { wrapper: storeRef.wrapper });
     });
   });
 });

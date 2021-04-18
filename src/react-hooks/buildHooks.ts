@@ -1,13 +1,6 @@
 import { AnyAction, createSelector, ThunkAction, ThunkDispatch } from '@reduxjs/toolkit';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import {
-  MutationSubState,
-  QueryStatus,
-  QuerySubState,
-  SubscriptionOptions,
-  QueryKeys,
-  RootState,
-} from '../core/apiState';
+import { QueryStatus, QuerySubState, SubscriptionOptions, QueryKeys, RootState } from '../core/apiState';
 import {
   EndpointDefinitions,
   MutationDefinition,
@@ -142,8 +135,7 @@ export type UseMutationStateOptions<D extends MutationDefinition<any, any, any, 
 
 export type UseMutationStateResult<_ extends MutationDefinition<any, any, any, any>, R> = NoInfer<R>;
 
-
-export type UseMutation<D extends MutationDefinition<any, any, any, any>> = <R = UseMutationStateDefaultResult<D>>(
+export type UseMutation<D extends MutationDefinition<any, any, any, any>> = <R = MutationResultSelectorResult<D>>(
   options?: UseMutationStateOptions<D, R>
 ) => [
   (

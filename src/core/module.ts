@@ -105,6 +105,12 @@ declare module '../apiTypes' {
         /**
          * TODO
          */
+        prefetch<EndpointName extends QueryKeys<EndpointDefinitions>>(
+          endpointName: EndpointName,
+          arg: QueryArgFrom<Definitions[EndpointName]>,
+          options: PrefetchOptions
+        ): ThunkAction<void, any, any, AnyAction>;
+        /* @deprecated */
         prefetchThunk<EndpointName extends QueryKeys<EndpointDefinitions>>(
           endpointName: EndpointName,
           arg: QueryArgFrom<Definitions[EndpointName]>,
@@ -227,7 +233,7 @@ export const coreModule = (): Module<CoreModule> => ({
       mutationThunk,
       patchQueryResult,
       updateQueryResult,
-      prefetchThunk,
+      prefetch,
       buildMatchThunkActions,
     } = buildThunks({
       baseQuery,
@@ -249,7 +255,7 @@ export const coreModule = (): Module<CoreModule> => ({
     safeAssign(api.util, {
       patchQueryResult,
       updateQueryResult,
-      prefetchThunk,
+      prefetch,
       resetApiState: sliceActions.resetApiState,
     });
     safeAssign(api.internalActions, sliceActions);
@@ -287,6 +293,16 @@ export const coreModule = (): Module<CoreModule> => ({
           );
         }
         return api.util.invalidateTags;
+      },
+    });
+    Object.defineProperty(api.util, 'prefetchThunk', {
+      get() {
+        if (typeof process !== 'undefined' && process.env.NODE_ENV === 'development') {
+          console.warn(
+            '`api.util.prefetchThunk` has been renamed to `api.util.prefetch`, please change your code accordingly'
+          );
+        }
+        return api.util.prefetch;
       },
     });
 

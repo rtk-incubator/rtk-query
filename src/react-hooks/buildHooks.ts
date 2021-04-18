@@ -336,7 +336,7 @@ export function buildHooks<Definitions extends EndpointDefinitions>({
     return useCallback(
       (arg: any, options?: PrefetchOptions) =>
         dispatch(
-          (api.util.prefetchThunk as GenericPrefetchThunk)(endpointName, arg, { ...stableDefaultOptions, ...options })
+          (api.util.prefetch as GenericPrefetchThunk)(endpointName, arg, { ...stableDefaultOptions, ...options })
         ),
       [endpointName, dispatch, stableDefaultOptions]
     );

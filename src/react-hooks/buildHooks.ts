@@ -146,9 +146,7 @@ export type UseMutation<D extends MutationDefinition<any, any, any, any>> = <R =
   UseMutationStateResult<D, R>
 ];
 
-const defaultMutationStateSelector: DefaultMutationStateSelector<any> = (currentState) => {
-  return currentState;
-};
+const defaultMutationStateSelector: DefaultMutationStateSelector<any> = (currentState) => currentState;
 
 const defaultQueryStateSelector: DefaultQueryStateSelector<any> = (currentState, lastResult) => {
   // data is the last known good request result we have tracked - or if none has been tracked yet the last good result for the current args

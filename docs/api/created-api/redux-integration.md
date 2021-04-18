@@ -9,7 +9,7 @@ hide_title: true
 
 Internally, `createApi` will call [the Redux Toolkit `createSlice` API](https://redux-toolkit.js.org/api/createSlice) to generate a slice reducer and corresponding action creators with the appropriate logic for caching fetched data. It also automatically generates a custom Redux middleware that manages subscription counts and cache lifetimes.
 
-The generated slice reducer and the middleware both need to be adding to your Redux store setup in `configureStore` in order to work correctly:
+The generated slice reducer and the middleware both need to be added to your Redux store setup in `configureStore` in order to work correctly:
 
 ```ts title="src/store.ts"
 import { configureStore, setupListeners } from '@reduxjs/toolkit';

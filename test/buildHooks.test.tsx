@@ -1328,7 +1328,7 @@ describe('hooks with createApi defaults set', () => {
         { wrapper: storeRef.wrapper }
       );
 
-      expect(screen.getByTestId('length').textContent).toBe('0');
+      expect(screen.getByTestId('size2').textContent).toBe('0');
     });
   });
 

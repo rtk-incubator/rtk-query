@@ -8,7 +8,7 @@ hide_table_of_contents: false
 
 # `setupListeners`
 
-A utility used to enable `refetchOnMount` and `refetchOnReconnect` behaviors. It requires the `dispatch` method from your store. Calling `setupListeners(store.dispatch)` will configure listeners with the recommended defaults, but you have the optional of providing a callback for more granular control.
+A utility used to enable `refetchOnMount` and `refetchOnReconnect` behaviors. It requires the `dispatch` method from your store. Calling `setupListeners(store.dispatch)` will configure listeners with the recommended defaults, but you have the option of providing a callback for more granular control.
 
 ```ts title="setupListeners default configuration"
 let initialized = false;
@@ -66,5 +66,5 @@ export function setupListeners(
 If you notice, `onFocus`, `onFocusLost`, `onOffline`, `onOnline` are all actions that are provided to the callback. Additionally, these actions are made available to `api.internalActions` and are able to be used by dispatching them like this:
 
 ```ts title="Manual onFocus event"
-dispatch(api.internalActions.onFocus());
+dispatch(api.internalActions.onFocus())
 ```

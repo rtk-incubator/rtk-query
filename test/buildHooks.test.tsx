@@ -3,7 +3,7 @@ import { createApi, fetchBaseQuery, QueryStatus } from '@rtk-incubator/rtk-query
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { rest } from 'msw';
-import { expectExactType, matchSequence, setupApiStore, useRenderCounter, waitMs } from './helpers';
+import { actionsReducer, expectExactType, matchSequence, setupApiStore, useRenderCounter, waitMs } from './helpers';
 import { server } from './mocks/server';
 import { AnyAction } from 'redux';
 import { SubscriptionOptions } from '@internal/core/apiState';
@@ -1038,7 +1038,7 @@ describe('hooks with createApi defaults set', () => {
     await waitFor(() => expect(screen.getByTestId('amount').textContent).toBe('1'));
   });
 
-  describe('selectFromResult behaviors', () => {
+  describe('selectFromResult (query) behaviors', () => {
     let startingId = 3;
     const initialPosts = [
       { id: 1, name: 'A sample post', fetched_at: new Date().toUTCString() },
@@ -1299,6 +1299,132 @@ describe('hooks with createApi defaults set', () => {
 
       fireEvent.click(addBtn);
       await waitFor(() => expect(screen.getByTestId('renderCount').textContent).toBe('3'));
+    });
+  });
+
+  describe('selectFromResult (mutation) behavior', () => {
+    const api = createApi({
+      baseQuery: async (arg: any) => {
+        await waitMs();
+        if ('amount' in arg?.body) {
+          amount += 1;
+        }
+        return { data: arg?.body ? { ...arg.body, ...(amount ? { amount } : {}) } : undefined };
+      },
+      endpoints: (build) => ({
+        increment: build.mutation<{ amount: number }, number>({
+          query: (amount) => ({
+            url: '',
+            method: 'POST',
+            body: {
+              amount,
+            },
+          }),
+        }),
+      }),
+    });
+
+    const storeRef = setupApiStore(defaultApi, {
+      ...actionsReducer,
+    });
+
+    let getRenderCount: () => number = () => 0;
+
+    it('causes no more than one rerender when using selectFromResult with an empty object', async () => {
+      function Counter() {
+        const [increment] = api.endpoints.increment.useMutation({
+          selectFromResult: () => ({}),
+        });
+        getRenderCount = useRenderCounter();
+
+        return (
+          <div>
+            <button data-testid="incrementButton" onClick={() => increment(1)}></button>
+          </div>
+        );
+      }
+
+      render(<Counter />, { wrapper: storeRef.wrapper });
+
+      expect(getRenderCount()).toBe(1);
+
+      fireEvent.click(screen.getByTestId('incrementButton'));
+      await waitMs(200); // give our baseQuery a chance to return
+      expect(getRenderCount()).toBe(2);
+
+      fireEvent.click(screen.getByTestId('incrementButton'));
+      await waitMs(200);
+      expect(getRenderCount()).toBe(3);
+
+      const { increment } = api.endpoints;
+
+      const completeSequence = [
+        increment.matchPending,
+        increment.matchFulfilled,
+        api.internalActions.unsubscribeMutationResult.match,
+        increment.matchPending,
+        increment.matchFulfilled,
+      ];
+
+      matchSequence(storeRef.store.getState().actions, ...completeSequence);
+    });
+
+    it('causes rerenders when only selected data changes', async () => {
+      function Counter() {
+        const [increment, { data }] = api.endpoints.increment.useMutation({
+          selectFromResult: ({ data }) => ({ data }),
+        });
+        getRenderCount = useRenderCounter();
+
+        return (
+          <div>
+            <button data-testid="incrementButton" onClick={() => increment(1)}></button>
+            <div data-testid="data">{JSON.stringify(data)}</div>
+          </div>
+        );
+      }
+
+      render(<Counter />, { wrapper: storeRef.wrapper });
+
+      expect(getRenderCount()).toBe(1);
+
+      fireEvent.click(screen.getByTestId('incrementButton'));
+      await waitFor(() => expect(screen.getByTestId('data').textContent).toBe(JSON.stringify({ amount: 1 })));
+      expect(getRenderCount()).toBe(3);
+
+      fireEvent.click(screen.getByTestId('incrementButton'));
+      await waitFor(() => expect(screen.getByTestId('data').textContent).toBe(JSON.stringify({ amount: 2 })));
+      expect(getRenderCount()).toBe(5);
+    });
+
+    it('causes the expected # of rerenders when NOT using selectFromResult', async () => {
+      function Counter() {
+        const [increment, data] = api.endpoints.increment.useMutation();
+        getRenderCount = useRenderCounter();
+
+        return (
+          <div>
+            <button data-testid="incrementButton" onClick={() => increment(1)}></button>
+            <div data-testid="status">{String(data.status)}</div>
+          </div>
+        );
+      }
+
+      render(<Counter />, { wrapper: storeRef.wrapper });
+
+      expect(getRenderCount()).toBe(1); // mount, uninitialized status in substate
+
+      fireEvent.click(screen.getByTestId('incrementButton'));
+
+      expect(getRenderCount()).toBe(2); // will be pending, isLoading: true,
+      await waitFor(() => expect(screen.getByTestId('status').textContent).toBe('pending'));
+      await waitFor(() => expect(screen.getByTestId('status').textContent).toBe('fulfilled'));
+      expect(getRenderCount()).toBe(3);
+
+      fireEvent.click(screen.getByTestId('incrementButton'));
+      await waitFor(() => expect(screen.getByTestId('status').textContent).toBe('pending'));
+      await waitFor(() => expect(screen.getByTestId('status').textContent).toBe('fulfilled'));
+      expect(getRenderCount()).toBe(5);
     });
   });
 });

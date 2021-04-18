@@ -328,7 +328,7 @@ describe.skip('TS only tests', () => {
       expectExactType(false as false)(result.isSuccess);
     }
     if (result.isLoading) {
-      expectExactType(undefined as string | undefined)(result.data);
+      expectExactType(undefined as undefined)(result.data);
       expectExactType(undefined as SerializedError | FetchBaseQueryError | undefined)(result.error);
 
       expectExactType(false as false)(result.isUninitialized);
@@ -373,7 +373,7 @@ describe.skip('TS only tests', () => {
       expectExactType(false as false)(result.isSuccess);
     }
     if (result.isLoading) {
-      expectExactType(undefined as string | undefined)(result.data);
+      expectExactType(undefined as undefined)(result.data);
       expectExactType(undefined as SerializedError | FetchBaseQueryError | undefined)(result.error);
 
       expectExactType(false as false)(result.isUninitialized);

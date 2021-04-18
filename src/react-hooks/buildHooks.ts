@@ -1,14 +1,6 @@
 import { AnyAction, createSelector, ThunkAction, ThunkDispatch } from '@reduxjs/toolkit';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import {
-  MutationSubState,
-  QueryStatus,
-  QuerySubState,
-  RequestStatusFlags,
-  SubscriptionOptions,
-  QueryKeys,
-  RootState,
-} from '../core/apiState';
+import { QueryStatus, QuerySubState, SubscriptionOptions, QueryKeys, RootState } from '../core/apiState';
 import {
   EndpointDefinitions,
   MutationDefinition,
@@ -16,7 +8,7 @@ import {
   QueryArgFrom,
   ResultTypeFrom,
 } from '../endpointDefinitions';
-import { QueryResultSelectorResult, skipSelector } from '../core/buildSelectors';
+import { QueryResultSelectorResult, MutationResultSelectorResult, skipSelector } from '../core/buildSelectors';
 import { QueryActionCreatorResult, MutationActionCreatorResult } from '../core/buildInitiate';
 import { shallowEqual } from '../utils';
 import { Api } from '../apiTypes';
@@ -35,7 +27,7 @@ export interface QueryHooks<Definition extends QueryDefinition<any, any, any, an
 }
 
 export interface MutationHooks<Definition extends MutationDefinition<any, any, any, any, any>> {
-  useMutation: MutationHook<Definition>;
+  useMutation: UseMutation<Definition>;
 }
 
 /**
@@ -234,7 +226,24 @@ type UseQueryStateDefaultResult<D extends QueryDefinition<any, any, any, any>> =
   status: QueryStatus;
 };
 
-export type MutationHook<D extends MutationDefinition<any, any, any, any>> = () => [
+export type MutationStateSelector<R, D extends MutationDefinition<any, any, any, any>> = (
+  state: MutationResultSelectorResult<D>,
+  defaultMutationStateSelector: DefaultMutationStateSelector<D>
+) => R;
+
+export type DefaultMutationStateSelector<D extends MutationDefinition<any, any, any, any>> = (
+  state: MutationResultSelectorResult<D>
+) => MutationResultSelectorResult<D>;
+
+export type UseMutationStateOptions<D extends MutationDefinition<any, any, any, any>, R> = {
+  selectFromResult?: MutationStateSelector<R, D>;
+};
+
+export type UseMutationStateResult<_ extends MutationDefinition<any, any, any, any>, R> = NoInfer<R>;
+
+export type UseMutation<D extends MutationDefinition<any, any, any, any>> = <R = MutationResultSelectorResult<D>>(
+  options?: UseMutationStateOptions<D, R>
+) => [
   (
     arg: QueryArgFrom<D>
   ) => {
@@ -266,8 +275,10 @@ export type MutationHook<D extends MutationDefinition<any, any, any, any>> = () 
      */
     unwrap: () => Promise<ResultTypeFrom<D>>;
   },
-  MutationSubState<D> & RequestStatusFlags
+  UseMutationStateResult<D, R>
 ];
+
+const defaultMutationStateSelector: DefaultMutationStateSelector<any> = (currentState) => currentState;
 
 const defaultQueryStateSelector: DefaultQueryStateSelector<any> = (currentState, lastResult) => {
   // data is the last known good request result we have tracked - or if none has been tracked yet the last good result for the current args
@@ -526,8 +537,8 @@ export function buildHooks<Definitions extends EndpointDefinitions>({
     };
   }
 
-  function buildMutationHook(name: string): MutationHook<any> {
-    return () => {
+  function buildMutationHook(name: string): UseMutation<any> {
+    return ({ selectFromResult = defaultMutationStateSelector as MutationStateSelector<any, any> } = {}) => {
       const { select, initiate } = api.endpoints[name] as ApiEndpointMutation<
         MutationDefinition<any, any, any, any, any>,
         Definitions
@@ -558,8 +569,15 @@ export function buildHooks<Definitions extends EndpointDefinitions>({
         [dispatch, initiate]
       );
 
-      const mutationSelector = useMemo(() => select(requestId || skipSelector), [requestId, select]);
-      const currentState = useSelector(mutationSelector);
+      const mutationSelector = useMemo(
+        () =>
+          createSelector([select(requestId || skipSelector)], (subState) =>
+            selectFromResult(subState, defaultMutationStateSelector)
+          ),
+        [select, requestId, selectFromResult]
+      );
+
+      const currentState = useSelector(mutationSelector, shallowEqual);
 
       return useMemo(() => [triggerMutation, currentState], [triggerMutation, currentState]);
     };

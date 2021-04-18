@@ -38,6 +38,9 @@ export interface MutationHooks<Definition extends MutationDefinition<any, any, a
   useMutation: MutationHook<Definition>;
 }
 
+/**
+ * test description here
+ */
 export type UseQuery<D extends QueryDefinition<any, any, any, any>> = <R = UseQueryStateDefaultResult<D>>(
   arg: QueryArgFrom<D>,
   options?: UseQuerySubscriptionOptions & UseQueryStateOptions<D, R>

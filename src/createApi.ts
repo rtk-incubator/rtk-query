@@ -202,6 +202,22 @@ export function buildCreateApi<Modules extends [Module<any>, ...Module<any>[]]>(
               partialDefinition(context.endpointDefinitions[endpointName]);
             }
             Object.assign(context.endpointDefinitions[endpointName] || {}, partialDefinition);
+            // remove in final release
+            const x = context.endpointDefinitions[endpointName];
+            if (x?.provides) {
+              if (typeof process !== 'undefined' && process.env.NODE_ENV === 'development') {
+                console.warn('`provides` has been renamed to `providesTags`, please change your code accordingly');
+              }
+              x.providesTags = x.provides;
+            }
+            if (x?.invalidates) {
+              if (typeof process !== 'undefined' && process.env.NODE_ENV === 'development') {
+                console.warn(
+                  '`invalidates` has been renamed to `invalidatesTags`, please change your code accordingly'
+                );
+              }
+              x.invalidatesTags = x.invalidates;
+            }
           }
         }
         return api;

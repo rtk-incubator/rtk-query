@@ -55,7 +55,7 @@ export function buildMiddleware<
     const result = next(action);
 
     if (isAnyOf(isFulfilled(mutationThunk), isRejectedWithValue(mutationThunk))(action)) {
-      invalidateTags(calculateProvidedByThunk(action, 'invalidates', endpointDefinitions, assertTagType), mwApi);
+      invalidateTags(calculateProvidedByThunk(action, 'invalidatesTags', endpointDefinitions, assertTagType), mwApi);
     }
 
     if (actions.invalidateTags.match(action)) {

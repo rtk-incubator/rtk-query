@@ -343,7 +343,7 @@ export function buildThunks<
 
 export function calculateProvidedByThunk(
   action: UnwrapPromise<ReturnType<ReturnType<QueryThunk>> | ReturnType<ReturnType<MutationThunk>>>,
-  type: 'provides' | 'invalidates',
+  type: 'providesTags' | 'invalidatesTags',
   endpointDefinitions: EndpointDefinitions,
   assertTagType: AssertTagTypes
 ) {

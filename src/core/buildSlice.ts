@@ -186,7 +186,7 @@ export function buildSlice({
           }
         })
         .addMatcher(isAnyOf(isFulfilled(queryThunk), isRejectedWithValue(queryThunk)), (draft, action) => {
-          const providedTags = calculateProvidedByThunk(action, 'provides', definitions, assertTagType);
+          const providedTags = calculateProvidedByThunk(action, 'providesTags', definitions, assertTagType);
           const { queryCacheKey } = action.meta.arg;
 
           for (const { type, id } of providedTags) {

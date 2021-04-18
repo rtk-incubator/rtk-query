@@ -194,8 +194,8 @@ export type CombinedState<D extends EndpointDefinitions, E extends string, Reduc
   config: ConfigState<ReducerPath>;
 };
 
-export type InvalidationState<EntityTypes extends string> = {
-  [_ in EntityTypes]: {
+export type InvalidationState<TagTypes extends string> = {
+  [_ in TagTypes]: {
     [id: string]: Array<QueryCacheKey>;
     [id: number]: Array<QueryCacheKey>;
   };
@@ -223,10 +223,6 @@ export type MutationState<D extends EndpointDefinitions> = {
   [requestId: string]: MutationSubState<D[string]> | undefined;
 };
 
-export type RootState<
-  Definitions extends EndpointDefinitions,
-  EntityTypes extends string,
-  ReducerPath extends string
-> = {
-  [P in ReducerPath]: CombinedState<Definitions, EntityTypes, P>;
+export type RootState<Definitions extends EndpointDefinitions, TagTypes extends string, ReducerPath extends string> = {
+  [P in ReducerPath]: CombinedState<Definitions, TagTypes, P>;
 };

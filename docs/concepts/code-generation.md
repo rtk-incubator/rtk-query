@@ -24,7 +24,7 @@ We recommend placing these generated types in one file that you do not modify (s
 import { api as generatedApi } from './petstore-api.generated';
 
 export const api = generatedApi.enhanceEndpoints({
-  addEntityTypes: ['Pet'],
+  addTagTypes: ['Pet'],
   endpoints: {
     // basic notation: just specify properties to be overridden
     getPetById: {

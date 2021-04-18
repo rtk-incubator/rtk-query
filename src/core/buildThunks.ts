@@ -4,7 +4,7 @@ import { BaseQueryFn, BaseQueryArg, BaseQueryError, QueryReturnValue } from '../
 import { RootState, QueryKeys, QueryStatus, QuerySubstateIdentifier } from './apiState';
 import { StartQueryActionCreatorOptions } from './buildInitiate';
 import {
-  AssertEntityTypes,
+  AssertTagTypes,
   calculateProvidedBy,
   EndpointDefinition,
   EndpointDefinitions,
@@ -345,13 +345,13 @@ export function calculateProvidedByThunk(
   action: UnwrapPromise<ReturnType<ReturnType<QueryThunk>> | ReturnType<ReturnType<MutationThunk>>>,
   type: 'provides' | 'invalidates',
   endpointDefinitions: EndpointDefinitions,
-  assertEntityType: AssertEntityTypes
+  assertTagType: AssertTagTypes
 ) {
   return calculateProvidedBy(
     endpointDefinitions[action.meta.arg.endpointName][type],
     isFulfilled(action) ? action.payload.result : undefined,
     isRejectedWithValue(action) ? action.payload : undefined,
     action.meta.arg.originalArgs,
-    assertEntityType
+    assertTagType
   );
 }

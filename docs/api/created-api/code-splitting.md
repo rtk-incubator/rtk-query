@@ -44,14 +44,14 @@ This method is primarily useful for code splitting and hot reloading.
 const enhanceEndpoints = (endpointOptions: EnhanceEndpointsOptions) => EnhancedApiSlice;
 
 interface EnhanceEndpointsOptions {
-  addEntityTypes?: readonly string[];
+  addTagTypes?: readonly string[];
   endpoints?: Record<string, Partial<EndpointDefinition>>;
 }
 ```
 
 #### Description
 
-Any provided entity types or endpoint definitions will be merged into the existing endpoint definitions for this API slice. Unlike `injectEndpoints`, the partial endpoint definitions will not _replace_ existing definitions, but are rather merged together on a per-definition basis (ie, `Object.assign(existingEndpoint, newPartialEndpoint)`).
+Any provided tag types or endpoint definitions will be merged into the existing endpoint definitions for this API slice. Unlike `injectEndpoints`, the partial endpoint definitions will not _replace_ existing definitions, but are rather merged together on a per-definition basis (ie, `Object.assign(existingEndpoint, newPartialEndpoint)`).
 
 Returns an updated and enhanced version of the API slice object, containing the combined endpoint definitions.
 

@@ -152,7 +152,7 @@ describe('wrong entityTypes log errors', () => {
     } while (result.status === 'pending');
 
     if (shouldError) {
-      expect(spy).toHaveBeenCalledWith("Entity type 'Users' was used, but not specified in `entityTypes`!");
+      expect(spy).toHaveBeenCalledWith("Tag type 'Users' was used, but not specified in `tagTypes`!");
     } else {
       expect(spy).not.toHaveBeenCalled();
     }
@@ -365,7 +365,7 @@ describe('endpoint definition typings', () => {
       storeRef.store.dispatch(api.endpoints.query2.initiate('in2'));
       await waitMs(1);
       debugger;
-      expect(spy).toHaveBeenCalledWith("Entity type 'missing' was used, but not specified in `entityTypes`!");
+      expect(spy).toHaveBeenCalledWith("Tag type 'missing' was used, but not specified in `tagTypes`!");
 
       // only type-test this part
       if (2 > 1) {

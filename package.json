@@ -32,13 +32,13 @@
   },
   "scripts": {
     "start": "tsdx watch",
-    "build": "rm -r dist; rollup -c && node post-build.js",
+    "build": "rimraf dist && rollup -c && node post-build.js",
     "test": "tsdx test",
     "lint": "tsdx lint",
     "prepare": "yarn build",
     "prepareExamples": "./prepare-examples.sh",
     "size": "size-limit",
-    "format": "prettier --write \"src/**/*.ts\" \"**/*.md\"",
+    "format": "prettier --write \"src/**/*.ts*\" \"test/**/*.ts*\"  \"**/*.md\"",
     "analyze": "size-limit --why",
     "list-unused-exports": "ts-unused-exports tsconfig.json"
   },
@@ -147,6 +147,7 @@
     "react-dom": "^16.14.0 || 17.0.0",
     "react-redux": "^7.2.1",
     "react-test-renderer": "^17.0.1",
+    "rimraf": "^3.0.2",
     "rollup": "^2.34.2",
     "rollup-plugin-terser": "^7.0.2",
     "shelljs": "^0.8.4",

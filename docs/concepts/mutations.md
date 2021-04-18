@@ -7,8 +7,7 @@ hide_title: true
 
 # Mutations
 
-Unlike `useQuery`, `useMutation` returns a tuple. The first item in the tuple is the `trigger` function and the second element contains an object with `status`, `error`, and `data`. Additionally, `useMutation` also makes `internalQueryArgs`, `originalArgs`,
-and `endpoint` available for inspection.
+Unlike `useQuery`, `useMutation` returns a tuple. The first item in the tuple is the `trigger` function and the second element contains an object with `status`, `error`, and `data`.
 
 Unlike the `useQuery` hook, the `useMutation` hook doesn't execute automatically. To run a mutation you have to call the trigger function returned as the first tuple value from the hook.
 

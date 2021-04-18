@@ -47,8 +47,8 @@ export type MutationDefinition<
   Context = Record<string, any>
 > = BaseEndpointDefinition<QueryArg, BaseQuery, ResultType> & {
   type: DefinitionType.mutation;
-  invalidates?: ResultDescription<TagTypes, ResultType, QueryArg>;
-  provides?: never;
+  invalidatesTags?: ResultDescription<TagTypes, ResultType, QueryArg>;
+  providesTags?: never;
   onStart?(arg: QueryArg, mutationApi: MutationApi<ReducerPath, Context>): void;
   onError?(
     arg: QueryArg,
@@ -124,11 +124,11 @@ For RTK Query, _tags_ are just a name that you can give to a specific collection
 
 #### Provides
 
-A _query_ can _provide_ tags to the cache. The `provides` argument can either be an array of `string` (such as `['Posts']`), `{type: string, id?: string|number}` or a callback that returns such an array. That function will be passed the result as the first argument, the response error as the second argument, and the argument originally passed into the `query` method as the third argument. Note that either the result or error arguments may be undefined based on whether the query was successful or not.
+A _query_ can _provide_ tags to the cache. The `providesTags` argument can either be an array of `string` (such as `['Posts']`), `{type: string, id?: string|number}` or a callback that returns such an array. That function will be passed the result as the first argument, the response error as the second argument, and the argument originally passed into the `query` method as the third argument. Note that either the result or error arguments may be undefined based on whether the query was successful or not.
 
 #### Invalidates
 
-A _mutation_ can _invalidate_ specific tags in the cache. The `invalidates` argument can either be an array of `string` (such as `['Posts']`), `{type: string, id?: string|number}` or a callback that returns such an array. That function will be passed the result as the first argument, the response error as the second argument, and the argument originally passed into the `query` method as the third argument. Note that either the result or error arguments may be undefined based on whether the mutation was successful or not.
+A _mutation_ can _invalidate_ specific tags in the cache. The `invalidatesTags` argument can either be an array of `string` (such as `['Posts']`), `{type: string, id?: string|number}` or a callback that returns such an array. That function will be passed the result as the first argument, the response error as the second argument, and the argument originally passed into the `query` method as the third argument. Note that either the result or error arguments may be undefined based on whether the mutation was successful or not.
 
 ### Scenarios and Behaviors
 

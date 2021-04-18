@@ -1,4 +1,4 @@
-import { MutationHook, UseLazyQuery, UseQuery } from './react-hooks/buildHooks';
+import { UseMutation, UseLazyQuery, UseQuery } from './react-hooks/buildHooks';
 import { DefinitionType, EndpointDefinitions, MutationDefinition, QueryDefinition } from './endpointDefinitions';
 
 export type TS41Hooks<Definitions extends EndpointDefinitions> = keyof Definitions extends infer Keys
@@ -16,7 +16,7 @@ export type TS41Hooks<Definitions extends EndpointDefinitions> = keyof Definitio
           }
       : Definitions[Keys] extends { type: DefinitionType.mutation }
       ? {
-          [K in Keys as `use${Capitalize<K>}Mutation`]: MutationHook<
+          [K in Keys as `use${Capitalize<K>}Mutation`]: UseMutation<
             Extract<Definitions[K], MutationDefinition<any, any, any, any>>
           >;
         }

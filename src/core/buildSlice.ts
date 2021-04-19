@@ -24,7 +24,7 @@ import {
   ConfigState,
 } from './apiState';
 import { calculateProvidedByThunk, MutationThunkArg, QueryThunkArg, ThunkResult } from './buildThunks';
-import { AssertEntityTypes, EndpointDefinitions } from '../endpointDefinitions';
+import { AssertTagTypes, EndpointDefinitions } from '../endpointDefinitions';
 import { applyPatches, Patch } from 'immer';
 import { onFocus, onFocusLost, onOffline, onOnline } from './setupListeners';
 import { isDocumentVisible, isOnline, copyWithStructuralSharing } from '../utils';
@@ -59,14 +59,14 @@ export function buildSlice({
   queryThunk,
   mutationThunk,
   context: { endpointDefinitions: definitions },
-  assertEntityType,
+  assertTagType,
   config,
 }: {
   reducerPath: string;
   queryThunk: AsyncThunk<ThunkResult, QueryThunkArg<any>, {}>;
   mutationThunk: AsyncThunk<ThunkResult, MutationThunkArg<any>, {}>;
   context: ApiContext<EndpointDefinitions>;
-  assertEntityType: AssertEntityTypes;
+  assertTagType: AssertTagTypes;
   config: Omit<ConfigState<string>, 'online' | 'focused'>;
 }) {
   const resetApiState = createAction(`${reducerPath}/resetApiState`);
@@ -176,8 +176,8 @@ export function buildSlice({
     extraReducers(builder) {
       builder
         .addCase(querySlice.actions.removeQueryResult, (draft, { payload: { queryCacheKey } }) => {
-          for (const entityTypeSubscriptions of Object.values(draft)) {
-            for (const idSubscriptions of Object.values(entityTypeSubscriptions)) {
+          for (const tagTypeSubscriptions of Object.values(draft)) {
+            for (const idSubscriptions of Object.values(tagTypeSubscriptions)) {
               const foundAt = idSubscriptions.indexOf(queryCacheKey);
               if (foundAt !== -1) {
                 idSubscriptions.splice(foundAt, 1);
@@ -186,10 +186,10 @@ export function buildSlice({
           }
         })
         .addMatcher(isAnyOf(isFulfilled(queryThunk), isRejectedWithValue(queryThunk)), (draft, action) => {
-          const providedEntities = calculateProvidedByThunk(action, 'provides', definitions, assertEntityType);
+          const providedTags = calculateProvidedByThunk(action, 'providesTags', definitions, assertTagType);
           const { queryCacheKey } = action.meta.arg;
 
-          for (const { type, id } of providedEntities) {
+          for (const { type, id } of providedTags) {
             const subscribedQueries = ((draft[type] ??= {})[id || '__internal_without_id'] ??= []);
             const alreadySubscribed = subscribedQueries.includes(queryCacheKey);
             if (!alreadySubscribed) {

@@ -857,15 +857,15 @@ describe('hooks tests', () => {
   describe('useQuery and useMutation invalidation behavior', () => {
     const api = createApi({
       baseQuery: fetchBaseQuery({ baseUrl: 'https://example.com' }),
-      entityTypes: ['User'],
+      tagTypes: ['User'],
       endpoints: (build) => ({
         checkSession: build.query<any, void>({
           query: () => '/me',
-          provides: ['User'],
+          providesTags: ['User'],
         }),
         login: build.mutation<any, any>({
           query: () => ({ url: '/login', method: 'POST' }),
-          invalidates: ['User'],
+          invalidatesTags: ['User'],
         }),
       }),
     });
@@ -875,7 +875,7 @@ describe('hooks tests', () => {
         return [...state, action];
       },
     });
-    test('initially failed useQueries that provide an entity will refetch after a mutation invalidates it', async () => {
+    test('initially failed useQueries that provide an tag will refetch after a mutation invalidates it', async () => {
       const checkSessionData = { name: 'matt' };
       server.use(
         rest.get('https://example.com/me', (req, res, ctx) => {
@@ -1093,11 +1093,11 @@ describe('hooks with createApi defaults set', () => {
 
     const api = createApi({
       baseQuery: fetchBaseQuery({ baseUrl: 'http://example.com/' }),
-      entityTypes: ['Posts'],
+      tagTypes: ['Posts'],
       endpoints: (build) => ({
         getPosts: build.query<PostsResponse, void>({
           query: () => ({ url: 'posts' }),
-          provides: (result) => (result ? result.map(({ id }) => ({ type: 'Posts', id })) : []),
+          providesTags: (result) => (result ? result.map(({ id }) => ({ type: 'Posts', id })) : []),
         }),
         updatePost: build.mutation<Post, Partial<Post>>({
           query: ({ id, ...body }) => ({
@@ -1105,7 +1105,7 @@ describe('hooks with createApi defaults set', () => {
             method: 'PUT',
             body,
           }),
-          invalidates: (result, error, { id }) => [{ type: 'Posts', id }],
+          invalidatesTags: (result, error, { id }) => [{ type: 'Posts', id }],
         }),
         addPost: build.mutation<Post, Partial<Post>>({
           query: (body) => ({
@@ -1113,7 +1113,7 @@ describe('hooks with createApi defaults set', () => {
             method: 'POST',
             body,
           }),
-          invalidates: ['Posts'],
+          invalidatesTags: ['Posts'],
         }),
       }),
     });

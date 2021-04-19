@@ -12,7 +12,7 @@ import {
   QueryDefinition,
   MutationDefinition,
   QueryArgFrom,
-  EntityTypesFrom,
+  TagTypesFrom,
   ReducerPathFrom,
 } from '../endpointDefinitions';
 import { InternalSerializeQueryArgs } from '../defaultSerializeQueryArgs';
@@ -26,7 +26,7 @@ declare module './module' {
   > {
     select: QueryResultSelectorFactory<
       Definition,
-      _RootState<Definitions, EntityTypesFrom<Definition>, ReducerPathFrom<Definition>>
+      _RootState<Definitions, TagTypesFrom<Definition>, ReducerPathFrom<Definition>>
     >;
   }
 
@@ -36,7 +36,7 @@ declare module './module' {
   > {
     select: MutationResultSelectorFactory<
       Definition,
-      _RootState<Definitions, EntityTypesFrom<Definition>, ReducerPathFrom<Definition>>
+      _RootState<Definitions, TagTypesFrom<Definition>, ReducerPathFrom<Definition>>
     >;
   }
 }

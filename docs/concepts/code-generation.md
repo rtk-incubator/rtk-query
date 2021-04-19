@@ -24,14 +24,14 @@ We recommend placing these generated types in one file that you do not modify (s
 import { api as generatedApi } from './petstore-api.generated';
 
 export const api = generatedApi.enhanceEndpoints({
-  addEntityTypes: ['Pet'],
+  addTagTypes: ['Pet'],
   endpoints: {
     // basic notation: just specify properties to be overridden
     getPetById: {
-      provides: (result, error, arg) => [{ type: 'Pet', id: arg.petId }],
+      providesTags: (result, error, arg) => [{ type: 'Pet', id: arg.petId }],
     },
     findPetsByStatus: {
-      provides: (result) =>
+      providesTags: (result) =>
         // is result available?
         result
           ? // successful query
@@ -41,13 +41,13 @@ export const api = generatedApi.enhanceEndpoints({
     },
     // alternate notation: callback that gets passed in `endpoint` - you can freely modify the object here
     addPet: (endpoint) => {
-      endpoint.invalidates = (result) => [{ type: 'Pet', id: result.id }];
+      endpoint.invalidatesTags = (result) => [{ type: 'Pet', id: result.id }];
     },
     updatePet: {
-      invalidates: (result, error, arg) => [{ type: 'Pet', id: arg.petId }],
+      invalidatesTags: (result, error, arg) => [{ type: 'Pet', id: arg.petId }],
     },
     deletePet: {
-      invalidates: (result, error, arg) => [{ type: 'Pet', id: arg.petId }],
+      invalidatesTags: (result, error, arg) => [{ type: 'Pet', id: arg.petId }],
     },
   },
 });

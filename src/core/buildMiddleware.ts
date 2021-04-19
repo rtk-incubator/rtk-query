@@ -12,12 +12,7 @@ import {
 import { QueryCacheKey, QueryStatus, QuerySubState, QuerySubstateIdentifier, RootState, Subscribers } from './apiState';
 import { Api, ApiContext } from '../apiTypes';
 import { calculateProvidedByThunk, MutationThunkArg, QueryThunkArg, ThunkResult } from './buildThunks';
-import {
-  AssertEntityTypes,
-  calculateProvidedBy,
-  EndpointDefinitions,
-  FullEntityDescription,
-} from '../endpointDefinitions';
+import { AssertTagTypes, calculateProvidedBy, EndpointDefinitions, FullTagDescription } from '../endpointDefinitions';
 import { onFocus, onOnline } from './setupListeners';
 import { flatten } from '../utils';
 
@@ -27,7 +22,7 @@ type TimeoutId = ReturnType<typeof setTimeout>;
 export function buildMiddleware<
   Definitions extends EndpointDefinitions,
   ReducerPath extends string,
-  EntityTypes extends string
+  TagTypes extends string
 >({
   reducerPath,
   context,
@@ -35,14 +30,14 @@ export function buildMiddleware<
   queryThunk,
   mutationThunk,
   api,
-  assertEntityType,
+  assertTagType,
 }: {
   reducerPath: ReducerPath;
   context: ApiContext<Definitions>;
   queryThunk: AsyncThunk<ThunkResult, QueryThunkArg<any>, {}>;
   mutationThunk: AsyncThunk<ThunkResult, MutationThunkArg<any>, {}>;
-  api: Api<any, EndpointDefinitions, ReducerPath, EntityTypes>;
-  assertEntityType: AssertEntityTypes;
+  api: Api<any, EndpointDefinitions, ReducerPath, TagTypes>;
+  assertTagType: AssertTagTypes;
 }) {
   type MWApi = MiddlewareAPI<ThunkDispatch<any, any, AnyAction>, RootState<Definitions, string, ReducerPath>>;
   const { removeQueryResult, unsubscribeQueryResult, updateSubscriptionOptions, resetApiState } = api.internalActions;
@@ -51,9 +46,7 @@ export function buildMiddleware<
   const currentPolls: QueryStateMeta<{ nextPollTimestamp: number; timeout?: TimeoutId; pollingInterval: number }> = {};
 
   const actions = {
-    invalidateEntities: createAction<Array<EntityTypes | FullEntityDescription<EntityTypes>>>(
-      `${reducerPath}/invalidateEntities`
-    ),
+    invalidateTags: createAction<Array<TagTypes | FullTagDescription<TagTypes>>>(`${reducerPath}/invalidateTags`),
   };
 
   const middleware: Middleware<{}, RootState<Definitions, string, ReducerPath>, ThunkDispatch<any, any, AnyAction>> = (
@@ -62,11 +55,11 @@ export function buildMiddleware<
     const result = next(action);
 
     if (isAnyOf(isFulfilled(mutationThunk), isRejectedWithValue(mutationThunk))(action)) {
-      invalidateEntities(calculateProvidedByThunk(action, 'invalidates', endpointDefinitions, assertEntityType), mwApi);
+      invalidateTags(calculateProvidedByThunk(action, 'invalidatesTags', endpointDefinitions, assertTagType), mwApi);
     }
 
-    if (actions.invalidateEntities.match(action)) {
-      invalidateEntities(calculateProvidedBy(action.payload, undefined, undefined, undefined, assertEntityType), mwApi);
+    if (actions.invalidateTags.match(action)) {
+      invalidateTags(calculateProvidedBy(action.payload, undefined, undefined, undefined, assertTagType), mwApi);
     }
 
     if (unsubscribeQueryResult.match(action)) {
@@ -145,20 +138,20 @@ export function buildMiddleware<
     });
   }
 
-  function invalidateEntities(entities: readonly FullEntityDescription<string>[], api: MWApi) {
+  function invalidateTags(tags: readonly FullTagDescription<string>[], api: MWApi) {
     const state = api.getState()[reducerPath];
 
     const toInvalidate = new Set<QueryCacheKey>();
-    for (const entity of entities) {
-      const provided = state.provided[entity.type];
+    for (const tag of tags) {
+      const provided = state.provided[tag.type];
       if (!provided) {
         continue;
       }
 
       let invalidateSubscriptions =
-        (entity.id !== undefined
+        (tag.id !== undefined
           ? // id given: invalidate all queries that provide this type & id
-            provided[entity.id]
+            provided[tag.id]
           : // no id: invalidate all queries that provide this type
             flatten(Object.values(provided))) ?? [];
 

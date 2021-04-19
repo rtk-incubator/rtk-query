@@ -4,7 +4,7 @@ import { BaseQueryFn, BaseQueryArg, BaseQueryError, QueryReturnValue } from '../
 import { RootState, QueryKeys, QueryStatus, QuerySubstateIdentifier } from './apiState';
 import { StartQueryActionCreatorOptions } from './buildInitiate';
 import {
-  AssertEntityTypes,
+  AssertTagTypes,
   calculateProvidedBy,
   EndpointDefinition,
   EndpointDefinitions,
@@ -294,7 +294,7 @@ export function buildThunks<
   const hasTheForce = (options: any): options is { force: boolean } => 'force' in options;
   const hasMaxAge = (options: any): options is { ifOlderThan: false | number } => 'ifOlderThan' in options;
 
-  const prefetchThunk = <EndpointName extends QueryKeys<EndpointDefinitions>>(
+  const prefetch = <EndpointName extends QueryKeys<EndpointDefinitions>>(
     endpointName: EndpointName,
     arg: any,
     options: PrefetchOptions
@@ -338,20 +338,20 @@ export function buildThunks<
     } as Matchers<Thunk, any>;
   }
 
-  return { queryThunk, mutationThunk, prefetchThunk, updateQueryResult, patchQueryResult, buildMatchThunkActions };
+  return { queryThunk, mutationThunk, prefetch, updateQueryResult, patchQueryResult, buildMatchThunkActions };
 }
 
 export function calculateProvidedByThunk(
   action: UnwrapPromise<ReturnType<ReturnType<QueryThunk>> | ReturnType<ReturnType<MutationThunk>>>,
-  type: 'provides' | 'invalidates',
+  type: 'providesTags' | 'invalidatesTags',
   endpointDefinitions: EndpointDefinitions,
-  assertEntityType: AssertEntityTypes
+  assertTagType: AssertTagTypes
 ) {
   return calculateProvidedBy(
     endpointDefinitions[action.meta.arg.endpointName][type],
     isFulfilled(action) ? action.payload.result : undefined,
     isRejectedWithValue(action) ? action.payload : undefined,
     action.meta.arg.originalArgs,
-    assertEntityType
+    assertTagType
   );
 }

@@ -15,8 +15,8 @@ The main point where you will define a service to use in your application.
 
 ```ts no-transpile
   baseQuery(args: InternalQueryArgs, api: QueryApi): any;
-  endpoints(build: EndpointBuilder<InternalQueryArgs, EntityTypes>): Definitions;
-  entityTypes?: readonly EntityTypes[];
+  endpoints(build: EndpointBuilder<InternalQueryArgs, TagTypes>): Definitions;
+  tagTypes?: readonly TagTypes[];
   reducerPath?: ReducerPath;
   serializeQueryArgs?: SerializeQueryArgs<InternalQueryArgs>;
   keepUnusedDataFor?: number; // value is in seconds
@@ -31,9 +31,9 @@ The main point where you will define a service to use in your application.
 
 [examples](docblock://createApi.ts?token=CreateApiOptions.baseQuery)
 
-### `entityTypes`
+### `tagTypes`
 
-[summary](docblock://createApi.ts?token=CreateApiOptions.entityTypes)
+[summary](docblock://createApi.ts?token=CreateApiOptions.tagTypes)
 
 ### `reducerPath`
 

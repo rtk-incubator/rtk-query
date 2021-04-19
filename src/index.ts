@@ -11,6 +11,7 @@ export { fetchBaseQuery } from './fetchBaseQuery';
 export type { FetchBaseQueryError, FetchArgs } from './fetchBaseQuery';
 export { retry } from './retry';
 export { setupListeners } from './core/setupListeners';
+export { skipSelector } from './core/buildSelectors';
 export type { CreateApi, CreateApiOptions } from './createApi';
 export { buildCreateApi } from './createApi';
 export { fakeBaseQuery } from './fakeBaseQuery';

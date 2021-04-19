@@ -43,6 +43,7 @@ Promise<{
 To use it, import it when you are [creating an API service definition](../introduction/getting-started#create-an-api-service).
 
 ```ts title="src/services/pokemon.ts"
+// Or from '@rtk-incubator/rtk-query/react'
 import { createApi, fetchBaseQuery } from '@rtk-incubator/rtk-query';
 
 export const pokemonApi = createApi({

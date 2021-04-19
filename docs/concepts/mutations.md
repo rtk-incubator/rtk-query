@@ -253,6 +253,7 @@ When `addPost` is fired, it will only cause the `PostsList` to go into an `isFet
 This is an example of a [CRUD service](https://en.wikipedia.org/wiki/Create,_read,_update_and_delete) for Posts. This implements the [Selectively invalidating lists](#selectively-invalidating-lists) strategy and will most likely serve as a good foundation for real applications.
 
 ```ts title="src/app/services/posts.ts"
+// Or from '@rtk-incubator/rtk-query/react'
 import { createApi, fetchBaseQuery } from '@rtk-incubator/rtk-query';
 
 export interface Post {

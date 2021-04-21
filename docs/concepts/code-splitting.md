@@ -47,7 +47,7 @@ You will get a warning if you inject an endpoint that already exists in developm
 
 ## Typing a "completely injected" API using `ApiWithInjectedEndpoints`
 
-:::danger This type is probably gonna be removed in the final release of RTK-Query as it should just not be necessary to do this. If you want to join the discussion on this, you can do so in [this PR]() :::
+:::danger This type is probably gonna be removed in the final release of RTK-Query as it should just not be necessary to do this. If you want to join the discussion on this, you can do so in [this PR](https://github.com/rtk-incubator/rtk-query/pull/218) :::
 
 However, doing this, you will never end up with one "big api definition" that has correct types for all endpoints. Under certain circumstances, that might be useful though. So you can use the `ApiWithInjectedEndpoints` to construct this "full api definition" yourself:
 

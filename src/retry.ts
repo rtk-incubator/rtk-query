@@ -21,7 +21,7 @@ async function defaultBackoff(attempt: number = 0, maxRetries: number = 5) {
   await new Promise((resolve) => setTimeout((res) => resolve(res), timeout));
 }
 
-interface StaggerOptions {
+export interface StaggerOptions {
   /**
    * How many times the query will be retried (default: 5)
    */

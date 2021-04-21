@@ -101,7 +101,7 @@ const featuresToPaths = {
   'Automatic garbage collection': '/api/createApi#keepunuseddatafor',
   Prefetching: '/concepts/prefetching',
   'Optimistic Updates': '/concepts/optimistic-updates',
-  'Auto-generated React Hooks': '/api/createApi#auto-generated-hooks',
+  'Auto-generated React Hooks': '/api/created-api/overview#react-hooks',
   'Runs on every framework': null,
   'Built with TypeScript': null,
 };

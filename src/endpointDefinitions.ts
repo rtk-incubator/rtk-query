@@ -56,7 +56,23 @@ export type BaseEndpointDefinition<QueryArg, BaseQuery extends BaseQueryFn, Resu
     BaseQueryExtraOptions<BaseQuery>,
     { extraOptions: BaseQueryExtraOptions<BaseQuery> },
     { extraOptions?: BaseQueryExtraOptions<BaseQuery> }
-  >;
+  > &
+  CacheEntryLifeCycle<QueryArg, ResultType>;
+
+type CleanupFn = () => void;
+interface CacheEntryLifeCycle<QueryArg, ResultType> {
+  cacheEntryAdded1?(arg: QueryArg, api: BaseQueryApi, cacheEntryContext: any): void;
+  cacheEntryCleared1?(arg: QueryArg, api: BaseQueryApi, cacheEntryContext: any): void;
+  cacheEntryAdded2?(arg: QueryArg, api: BaseQueryApi): CleanupFn | undefined;
+  cacheEntryAdded3?(
+    arg: QueryArg,
+    api: BaseQueryApi,
+    promises: {
+      firstValueResolved: Promise<ResultType>;
+      cleanup: Promise<void>;
+    }
+  ): void;
+}
 
 export enum DefinitionType {
   query = 'query',

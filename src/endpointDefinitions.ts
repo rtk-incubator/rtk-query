@@ -63,15 +63,15 @@ export enum DefinitionType {
   mutation = 'mutation',
 }
 
-type GetResultDescriptionFn<TagTypes extends string, ResultType, QueryArg, ErrorType> = (
+export type GetResultDescriptionFn<TagTypes extends string, ResultType, QueryArg, ErrorType> = (
   result: ResultType | undefined,
   error: ErrorType | undefined,
   arg: QueryArg
 ) => ReadonlyArray<TagDescription<TagTypes>>;
 
 export type FullTagDescription<TagType> = { type: TagType; id?: number | string };
-type TagDescription<TagType> = TagType | FullTagDescription<TagType>;
-type ResultDescription<TagTypes extends string, ResultType, QueryArg, ErrorType> =
+export type TagDescription<TagType> = TagType | FullTagDescription<TagType>;
+export type ResultDescription<TagTypes extends string, ResultType, QueryArg, ErrorType> =
   | ReadonlyArray<TagDescription<TagTypes>>
   | GetResultDescriptionFn<TagTypes, ResultType, QueryArg, ErrorType>;
 

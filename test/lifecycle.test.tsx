@@ -58,7 +58,7 @@ const api3 = createApi({
   endpoints: (build) => ({
     getPosts: build.query<Posts, Filter>({
       query: (arg) => ({ url: `posts` }),
-      async cacheEntryAdded3(arg, { dispatch }, { cleanup }) {
+      async cacheEntryAdded(arg, { dispatch }, { cleanup }) {
         const stopListening = ws.listen((received: Post[]) => {
           dispatch(
             api3.util.updateQueryResult('getPosts', arg, (draft) => {
@@ -79,7 +79,7 @@ const api3Extended = createApi({
   endpoints: (build) => ({
     getPosts: build.query<Posts, Filter>({
       query: (arg) => ({ url: `posts` }),
-      async cacheEntryAdded3(arg, { dispatch }, { firstValueResolved, cleanup }) {
+      async cacheEntryAdded(arg, { dispatch }, { firstValueResolved, cleanup }) {
         try {
           await firstValueResolved;
 

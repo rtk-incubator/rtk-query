@@ -61,17 +61,20 @@ export type BaseEndpointDefinition<QueryArg, BaseQuery extends BaseQueryFn, Resu
 
 type CleanupFn = () => void;
 interface CacheEntryLifeCycle<QueryArg, ResultType> {
+  /** @deprecated not implemented */
   cacheEntryAdded1?(arg: QueryArg, api: BaseQueryApi, cacheEntryContext: any): void;
+  /** @deprecated not implemented */
   cacheEntryCleared1?(arg: QueryArg, api: BaseQueryApi, cacheEntryContext: any): void;
+  /** @deprecated not implemented */
   cacheEntryAdded2?(arg: QueryArg, api: BaseQueryApi): CleanupFn | undefined;
-  cacheEntryAdded3?(
+  cacheEntryAdded?(
     arg: QueryArg,
     api: BaseQueryApi,
     promises: {
       firstValueResolved: Promise<ResultType>;
       cleanup: Promise<void>;
     }
-  ): void;
+  ): Promise<void> | void;
 }
 
 export enum DefinitionType {

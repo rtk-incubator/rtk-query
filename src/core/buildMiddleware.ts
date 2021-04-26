@@ -45,6 +45,13 @@ export function buildMiddleware<
   const currentRemovalTimeouts: QueryStateMeta<TimeoutId> = {};
   const currentPolls: QueryStateMeta<{ nextPollTimestamp: number; timeout?: TimeoutId; pollingInterval: number }> = {};
 
+  type CacheLifecycle = {
+    valueResolved?(value: unknown): unknown;
+    valueNeverResolved?(): void;
+    cleanup?(): void;
+  };
+  const lifecycleMap: Record<string, CacheLifecycle> = {};
+
   const actions = {
     invalidateTags: createAction<Array<TagTypes | FullTagDescription<TagTypes>>>(`${reducerPath}/invalidateTags`),
   };
@@ -93,6 +100,8 @@ export function buildMiddleware<
         delete currentRemovalTimeouts[key];
       }
     }
+
+    trackCacheLifeCycle(action, mwApi);
 
     return result;
   };
@@ -244,6 +253,53 @@ export function buildMiddleware<
 
     if (!currentPoll || nextPollTimestamp < currentPoll.nextPollTimestamp) {
       startNextPoll({ queryCacheKey }, api);
+    }
+  }
+
+  function trackCacheLifeCycle(action: any, api: MWApi) {
+    if (queryThunk.pending.match(action)) {
+      const queryCacheKey = action.meta.arg.queryCacheKey;
+      const state = api.getState()[reducerPath].queries[queryCacheKey];
+      if (state?.requestId !== action.meta.requestId) return;
+
+      const trigger = endpointDefinitions[action.meta.arg.endpointName].cacheEntryAdded;
+      if (!trigger) return;
+
+      const neverResolvedError = new Error('never resolved');
+      let lifecycle: CacheLifecycle = {};
+      const firstValueResolved = new Promise<void>((resolve, reject) => {
+        lifecycle.valueResolved = resolve;
+        lifecycle.valueNeverResolved = () => reject(neverResolvedError);
+      });
+      const cleanup = new Promise<void>((resolve) => {
+        lifecycle.cleanup = resolve;
+      });
+      lifecycleMap[queryCacheKey] = lifecycle;
+      const triggered = trigger(action.meta.arg.originalArgs, api, { firstValueResolved, cleanup });
+      Promise.resolve(triggered).catch((e) => {
+        if (e === neverResolvedError) return;
+        throw e;
+      });
+    }
+
+    if (queryThunk.fulfilled.match(action)) {
+      const queryCacheKey = action.meta.arg.queryCacheKey;
+      const lifecycle = lifecycleMap[queryCacheKey];
+      if (!lifecycle) return;
+      const { valueResolved } = lifecycle;
+      if (valueResolved) {
+        delete lifecycle.valueResolved;
+        delete lifecycle.valueNeverResolved;
+        valueResolved(action.payload);
+      }
+    }
+
+    if (removeQueryResult.match(action)) {
+      const queryCacheKey = action.payload.queryCacheKey;
+      const lifecycle = lifecycleMap[queryCacheKey];
+      if (!lifecycle) return;
+      delete lifecycleMap[queryCacheKey];
+      lifecycle.cleanup?.();
     }
   }
 }

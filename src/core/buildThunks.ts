@@ -1,6 +1,6 @@
 import { InternalSerializeQueryArgs } from '../defaultSerializeQueryArgs';
 import { Api, ApiContext } from '../apiTypes';
-import { BaseQueryFn, BaseQueryArg, BaseQueryError, QueryReturnValue } from '../baseQueryTypes';
+import { BaseQueryFn, BaseQueryError, QueryReturnValue } from '../baseQueryTypes';
 import { RootState, QueryKeys, QueryStatus, QuerySubstateIdentifier } from './apiState';
 import { StartQueryActionCreatorOptions } from './buildInitiate';
 import {
@@ -85,13 +85,13 @@ export interface Matchers<
   matchRejected: Matcher<RejectedAction<Thunk, Definition>>;
 }
 
-export interface QueryThunkArg<_InternalQueryArgs> extends QuerySubstateIdentifier, StartQueryActionCreatorOptions {
+export interface QueryThunkArg extends QuerySubstateIdentifier, StartQueryActionCreatorOptions {
   originalArgs: unknown;
   endpointName: string;
   startedTimeStamp: number;
 }
 
-export interface MutationThunkArg<_InternalQueryArgs> {
+export interface MutationThunkArg {
   originalArgs: unknown;
   endpointName: string;
   track?: boolean;
@@ -103,8 +103,8 @@ export interface ThunkResult {
   result: unknown;
 }
 
-export type QueryThunk = AsyncThunk<ThunkResult, QueryThunkArg<any>, {}>;
-export type MutationThunk = AsyncThunk<ThunkResult, MutationThunkArg<any>, {}>;
+export type QueryThunk = AsyncThunk<ThunkResult, QueryThunkArg, {}>;
+export type MutationThunk = AsyncThunk<ThunkResult, MutationThunkArg, {}>;
 
 function defaultTransformResponse(baseQueryReturnValue: unknown) {
   return baseQueryReturnValue;
@@ -145,10 +145,9 @@ export function buildThunks<
   baseQuery: BaseQuery;
   reducerPath: ReducerPath;
   context: ApiContext<Definitions>;
-  serializeQueryArgs: InternalSerializeQueryArgs<BaseQueryArg<BaseQuery>>;
+  serializeQueryArgs: InternalSerializeQueryArgs;
   api: Api<BaseQuery, EndpointDefinitions, ReducerPath, any>;
 }) {
-  type InternalQueryArgs = BaseQueryArg<BaseQuery>;
   type State = RootState<any, string, ReducerPath>;
 
   const patchQueryResult: PatchQueryResultThunk<EndpointDefinitions, State> = (endpointName, args, patches) => (
@@ -197,7 +196,7 @@ export function buildThunks<
 
   const executeEndpoint: AsyncThunkPayloadCreator<
     ThunkResult,
-    QueryThunkArg<InternalQueryArgs> | MutationThunkArg<InternalQueryArgs>,
+    QueryThunkArg | MutationThunkArg,
     { state: RootState<any, string, ReducerPath> }
   > = async (arg, { signal, rejectWithValue, ...api }) => {
     const endpointDefinition = endpointDefinitions[arg.endpointName];
@@ -254,42 +253,41 @@ export function buildThunks<
     }
   };
 
-  const queryThunk = createAsyncThunk<
-    ThunkResult,
-    QueryThunkArg<InternalQueryArgs>,
-    { state: RootState<any, string, ReducerPath> }
-  >(`${reducerPath}/executeQuery`, executeEndpoint, {
-    condition(arg, { getState }) {
-      const state = getState()[reducerPath];
-      const requestState = state?.queries?.[arg.queryCacheKey];
-      const baseFetchOnMountOrArgChange = state.config.refetchOnMountOrArgChange;
+  const queryThunk = createAsyncThunk<ThunkResult, QueryThunkArg, { state: RootState<any, string, ReducerPath> }>(
+    `${reducerPath}/executeQuery`,
+    executeEndpoint,
+    {
+      condition(arg, { getState }) {
+        const state = getState()[reducerPath];
+        const requestState = state?.queries?.[arg.queryCacheKey];
+        const baseFetchOnMountOrArgChange = state.config.refetchOnMountOrArgChange;
 
-      const fulfilledVal = requestState?.fulfilledTimeStamp;
-      const refetchVal = arg.forceRefetch ?? (arg.subscribe && baseFetchOnMountOrArgChange);
+        const fulfilledVal = requestState?.fulfilledTimeStamp;
+        const refetchVal = arg.forceRefetch ?? (arg.subscribe && baseFetchOnMountOrArgChange);
 
-      // Don't retry a request that's currently in-flight
-      if (requestState?.status === 'pending') return false;
+        // Don't retry a request that's currently in-flight
+        if (requestState?.status === 'pending') return false;
 
-      // Pull from the cache unless we explicitly force refetch or qualify based on time
-      if (fulfilledVal) {
-        if (refetchVal) {
-          // Return if its true or compare the dates because it must be a number
-          return refetchVal === true || (Number(new Date()) - Number(fulfilledVal)) / 1000 >= refetchVal;
+        // Pull from the cache unless we explicitly force refetch or qualify based on time
+        if (fulfilledVal) {
+          if (refetchVal) {
+            // Return if its true or compare the dates because it must be a number
+            return refetchVal === true || (Number(new Date()) - Number(fulfilledVal)) / 1000 >= refetchVal;
+          }
+          // Value is cached and we didn't specify to refresh, skip it.
+          return false;
         }
-        // Value is cached and we didn't specify to refresh, skip it.
-        return false;
-      }
 
-      return true;
-    },
-    dispatchConditionRejection: true,
-  });
+        return true;
+      },
+      dispatchConditionRejection: true,
+    }
+  );
 
-  const mutationThunk = createAsyncThunk<
-    ThunkResult,
-    MutationThunkArg<InternalQueryArgs>,
-    { state: RootState<any, string, ReducerPath> }
-  >(`${reducerPath}/executeMutation`, executeEndpoint);
+  const mutationThunk = createAsyncThunk<ThunkResult, MutationThunkArg, { state: RootState<any, string, ReducerPath> }>(
+    `${reducerPath}/executeMutation`,
+    executeEndpoint
+  );
 
   const hasTheForce = (options: any): options is { force: boolean } => 'force' in options;
   const hasMaxAge = (options: any): options is { ifOlderThan: false | number } => 'ifOlderThan' in options;
@@ -329,7 +327,7 @@ export function buildThunks<
   }
 
   function buildMatchThunkActions<
-    Thunk extends AsyncThunk<any, QueryThunkArg<any>, any> | AsyncThunk<any, MutationThunkArg<any>, any>
+    Thunk extends AsyncThunk<any, QueryThunkArg, any> | AsyncThunk<any, MutationThunkArg, any>
   >(thunk: Thunk, endpointName: string) {
     return {
       matchPending: isAllOf(isPending(thunk), matchesEndpoint(endpointName)),

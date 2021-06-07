@@ -42,11 +42,7 @@
     "analyze": "size-limit --why",
     "list-unused-exports": "ts-unused-exports tsconfig.json"
   },
-  "husky": {
-    "hooks": {
-      "pre-commit": "tsdx lint"
-    }
-  },
+  "husky": {},
   "size-limit": [
     {
       "name": "ESM full",

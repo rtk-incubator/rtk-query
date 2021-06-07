@@ -6,3 +6,10 @@
 
 [build.environment]
 NODE_VERSION = "10"
+
+
+[[redirects]]
+  from = "*"
+  to = "https://deploy-preview-1016--redux-starter-kit-docs.netlify.app/rtk-query/overview"
+  status = 301
+  force = true

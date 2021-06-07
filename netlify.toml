@@ -6,3 +6,10 @@
 
 [build.environment]
 NODE_VERSION = "10"
+
+
+[[redirects]]
+  from = "*"
+  to = "https://redux-toolkit.js.org/rtk-query/overview"
+  status = 301
+  force = true

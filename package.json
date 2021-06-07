@@ -1,7 +1,7 @@
 {
   "name": "@rtk-incubator/rtk-query",
   "repository": "https://github.com/rtk-incubator/rtk-query",
-  "version": "0.3.0-alpha.0",
+  "version": "0.3.0",
   "license": "MIT",
   "public": true,
   "author": "Lenz Weber",
@@ -42,11 +42,7 @@
     "analyze": "size-limit --why",
     "list-unused-exports": "ts-unused-exports tsconfig.json"
   },
-  "husky": {
-    "hooks": {
-      "pre-commit": "tsdx lint"
-    }
-  },
+  "husky": {},
   "size-limit": [
     {
       "name": "ESM full",

@@ -9,49 +9,13 @@
   </a>
 </p>
 
-## Introduction
+# Introduction
 
 RTK Query is an advanced data fetching and caching tool, designed to simplify common cases for loading data in a web application. It is built on top of [Redux Toolkit](https://redux-toolkit.js.org/) and uses Redux internally for its architecture.
 
-It features:
+## RTK Query was released in Redux Toolkit 1.6
 
-- Declarative API definitions
-- Runs on every framework
-- Supports any protocol
-- Caching
-- Automatic re-fetching
-- Polling
-- Parallel queries
-- Dependent queries
-- Paginated queries
-- Skip queries
-- Lagged queries
-- Automatic garbage collection
-- Prefetching
-- Optimistic Updates
-- Auto-generated React Hooks
-- Built with TypeScript
+This repo was used for early alpha development, and is now closed.
 
-... and plenty of other goodies.
+Please visit the RTK Query live docs at https://redux-toolkit.js.org/rtk-query/overview, and see https://github.com/reduxjs/redux-toolkit for issues.
 
-## Getting started
-
-```sh title="Example installation"
-yarn add @rtk-incubator/rtk-query @reduxjs/toolkit
-```
-
-Or with npm:
-
-```sh
-npm install @rtk-incubator/rtk-query @reduxjs/toolkit
-```
-
-Then follow along with the [Getting Started instructions](https://rtk-query-docs.netlify.app/introduction/getting-started).
-
-## Documentation
-
-[View the RTK Query docs](https://rtk-query-docs.netlify.app/)
-
-## Examples
-
-[View the examples](https://rtk-query-docs.netlify.app/examples/examples-overview)

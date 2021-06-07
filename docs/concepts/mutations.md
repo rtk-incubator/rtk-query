@@ -32,7 +32,7 @@ const api = createApi({
 ```
 
 :::info
-Notice the `onStart`, `onSuccess`, `onError` methods? Be sure to check out how they can be used for [optimistic updates](./optimistic-updates)
+Notice the `onStart`, `onSuccess`, `onError` methods? Be sure to check out how they can be used for [optimistic updates](./optimistic-updates.md)
 :::
 
 ### Type interfaces

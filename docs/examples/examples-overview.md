@@ -7,7 +7,7 @@ hide_title: true
 
 # `About the examples`
 
-Currently, there are [several examples](https://github.com/rtk-incubator/rtk-query/tree/main/examples) that exist in the repo that you're able to run locally. These are not meant to be what you base your application on, but exist to show _very specific_ behaviors that you may not actually want or need in your application. For most users, the basic examples in the [Queries](../concepts/queries) and [Mutations](../concepts/mutations) sections will cover the majority of your needs.
+Currently, there are [several examples](https://github.com/rtk-incubator/rtk-query/tree/main/examples) that exist in the repo that you're able to run locally. These are not meant to be what you base your application on, but exist to show _very specific_ behaviors that you may not actually want or need in your application. For most users, the basic examples in the [Queries](../concepts/queries.md) and [Mutations](../concepts/mutations.md) sections will cover the majority of your needs.
 
 As a part of the CI setup, the examples are automatically built and deployed via the magic and goodwill of CodeSandbox CI. If you're interested, you can always [see the latest builds for every PR](https://ci.codesandbox.io/status/rtk-incubator/rtk-query) at any time.
 
